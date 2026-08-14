@@ -133,7 +133,7 @@ export default function Footer() {
 
             {/* WhatsApp row */}
             <a
-              href= "https://wa.me/918588879239"
+              href="https://wa.me/918588879239?text=Hi%20TutorWave%2C%20I%20am%20looking%20for%20a%20tutor."
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2.5 group"
