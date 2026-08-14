@@ -145,7 +145,7 @@ export default function Footer() {
               </div>
               <div>
                 <div className="text-xs font-semibold text-white/80 group-hover:text-white transition-colors">Chat on WhatsApp</div>
-                <div className="text-xs text-white/40">+91 XXXXXXXXXX</div>
+                <div className="text-xs text-white/40">+91 8588879239</div>
               </div>
             </a>
           </div>
