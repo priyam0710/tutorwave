@@ -105,7 +105,7 @@ export default function HomeFooter() {
                 </svg>
               </a>
             </div>
-            <a href="https://wa.me/919999000000" target="_blank" rel="noopener noreferrer"
+            <a href="https://wa.me/918588879239" target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-2.5 group">
               <div className="w-9 h-9 flex items-center justify-center rounded-full bg-[#25D366] flex-shrink-0">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
@@ -114,7 +114,7 @@ export default function HomeFooter() {
               </div>
               <div>
                 <div className="text-xs font-semibold text-white/80 group-hover:text-white transition-colors">Chat on WhatsApp</div>
-                <div className="text-xs text-white/40">+91 XXXXXXXXXX</div>
+                <div className="text-xs text-white/40">+91 8588879239</div>
               </div>
             </a>
           </div>
