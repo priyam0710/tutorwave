@@ -107,7 +107,7 @@ export default function Footer() {
               </a>
               {/* YouTube */}
               <a
-                href="https://youtube.com/@tutorwaveyt"
+                href= "www.youtube.com/@tutorwaveyt"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="TutorWave on YouTube"
