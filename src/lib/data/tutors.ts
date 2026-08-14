@@ -1,0 +1,164 @@
+export interface Tutor {
+  id: string;
+  name: string;
+  slug: string;
+  photo: string;
+  photoAlt: string;
+  subjects: string[];
+  classes: string[];
+  boards: string[];
+  experience: number; // years
+  qualifications: string[];
+  locations: string[];
+  teachingMode: ('home' | 'online' | 'both')[];
+  verified: boolean;
+  rating: number;
+  reviewCount: number;
+  bio: string;
+  availability: string;
+  gender: 'male' | 'female';
+  languages: string[];
+}
+
+export const tutors: Tutor[] = [
+{
+  id: 'tutor-001',
+  name: 'Priya Sharma',
+  slug: 'priya-sharma',
+  photo: "https://img.rocket.new/generatedImages/rocket_gen_img_15efa2193-1786689318059.png",
+  photoAlt: 'Priya Sharma, experienced Mathematics and Science tutor in Noida',
+  subjects: ['Mathematics', 'Science', 'Physics'],
+  classes: ['Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10'],
+  boards: ['CBSE', 'ICSE'],
+  experience: 6,
+  qualifications: ['B.Sc. Mathematics (Delhi University)', 'B.Ed.'],
+  locations: ['Noida Sector 50', 'Noida Sector 62', 'Greater Noida West'],
+  teachingMode: ['home', 'online'],
+  verified: true,
+  rating: 4.8,
+  reviewCount: 34,
+  bio: 'I have been teaching Mathematics and Science for over 6 years. My approach focuses on building strong conceptual foundations rather than rote learning. I work with students from Class 6 to Class 10 and have helped many students improve their board exam scores significantly.',
+  availability: 'Weekdays 3pm–8pm, Weekends 9am–6pm',
+  gender: 'female',
+  languages: ['English', 'Hindi']
+},
+{
+  id: 'tutor-002',
+  name: 'Rahul Verma',
+  slug: 'rahul-verma',
+  photo: "https://img.rocket.new/generatedImages/rocket_gen_img_13907f863-1772137966294.png",
+  photoAlt: 'Rahul Verma, Physics and Chemistry tutor for Class 11-12 in Delhi',
+  subjects: ['Physics', 'Chemistry', 'Mathematics'],
+  classes: ['Class 11', 'Class 12'],
+  boards: ['CBSE', 'IIT-JEE'],
+  experience: 8,
+  qualifications: ['B.Tech. IIT Delhi', 'M.Tech.'],
+  locations: ['South Delhi', 'Saket', 'Vasant Kunj', 'Hauz Khas'],
+  teachingMode: ['home', 'online'],
+  verified: true,
+  rating: 4.9,
+  reviewCount: 52,
+  bio: 'IIT Delhi graduate with 8 years of teaching experience in Physics, Chemistry and Mathematics for Class 11-12 and IIT-JEE preparation. I focus on problem-solving techniques and exam strategy.',
+  availability: 'Weekdays 4pm–9pm, Saturdays 10am–6pm',
+  gender: 'male',
+  languages: ['English', 'Hindi']
+},
+{
+  id: 'tutor-003',
+  name: 'Anjali Gupta',
+  slug: 'anjali-gupta',
+  photo: "https://img.rocket.new/generatedImages/rocket_gen_img_1e7575f93-1765298093270.png",
+  photoAlt: 'Anjali Gupta, English and Hindi tutor for primary and middle school in Gurgaon',
+  subjects: ['English', 'Hindi', 'Social Science'],
+  classes: ['Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5', 'Class 6', 'Class 7', 'Class 8'],
+  boards: ['CBSE', 'ICSE'],
+  experience: 5,
+  qualifications: ['M.A. English Literature (JNU)', 'B.Ed.'],
+  locations: ['Gurgaon Sector 56', 'DLF Phase 2', 'Sohna Road'],
+  teachingMode: ['home', 'online'],
+  verified: true,
+  rating: 4.7,
+  reviewCount: 28,
+  bio: 'I specialize in English and Hindi for primary and middle school students. My teaching style is interactive and encourages reading, writing and communication skills. I have a particular focus on making language learning enjoyable.',
+  availability: 'Weekdays 2pm–7pm, Weekends flexible',
+  gender: 'female',
+  languages: ['English', 'Hindi']
+},
+{
+  id: 'tutor-004',
+  name: 'Amit Khanna',
+  slug: 'amit-khanna',
+  photo: "https://img.rocket.new/generatedImages/rocket_gen_img_1a3f615c6-1786689318155.png",
+  photoAlt: 'Amit Khanna, Biology and Chemistry tutor for NEET preparation in Delhi NCR',
+  subjects: ['Biology', 'Chemistry'],
+  classes: ['Class 11', 'Class 12'],
+  boards: ['CBSE', 'NEET'],
+  experience: 7,
+  qualifications: ['M.Sc. Biochemistry (Delhi University)', 'B.Ed.'],
+  locations: ['East Delhi', 'Mayur Vihar', 'Noida Sector 18'],
+  teachingMode: ['home', 'online'],
+  verified: true,
+  rating: 4.8,
+  reviewCount: 41,
+  bio: 'I have been preparing students for NEET and board exams for 7 years. My teaching focuses on deep understanding of biological concepts and systematic approach to Chemistry. Several of my students have cleared NEET with good scores.',
+  availability: 'Weekdays 5pm–9pm, Weekends 9am–5pm',
+  gender: 'male',
+  languages: ['English', 'Hindi']
+},
+{
+  id: 'tutor-005',
+  name: 'Neha Agarwal',
+  slug: 'neha-agarwal',
+  photo: "https://img.rocket.new/generatedImages/rocket_gen_img_1f1e521a4-1763301826296.png",
+  photoAlt: 'Neha Agarwal, Mathematics tutor for primary and middle school in Ghaziabad',
+  subjects: ['Mathematics', 'EVS', 'Science'],
+  classes: ['Nursery', 'LKG', 'UKG', 'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5'],
+  boards: ['CBSE', 'ICSE'],
+  experience: 4,
+  qualifications: ['B.Sc. Mathematics', 'B.Ed.', 'Montessori Certification'],
+  locations: ['Indirapuram', 'Vaishali', 'Kaushambi'],
+  teachingMode: ['home', 'online'],
+  verified: true,
+  rating: 4.9,
+  reviewCount: 22,
+  bio: 'I specialize in early childhood education and primary school tutoring. With Montessori training and 4 years of experience, I make learning fun and engaging for young children. I focus on building strong foundational skills in Maths and English.',
+  availability: 'Weekdays 9am–1pm and 4pm–7pm',
+  gender: 'female',
+  languages: ['English', 'Hindi']
+},
+{
+  id: 'tutor-006',
+  name: 'Vikram Singh',
+  slug: 'vikram-singh',
+  photo: "https://img.rocket.new/generatedImages/rocket_gen_img_1d46202c3-1786689317765.png",
+  photoAlt: 'Vikram Singh, Computer Science and Mathematics tutor in Noida',
+  subjects: ['Computer Science', 'Mathematics', 'Physics'],
+  classes: ['Class 9', 'Class 10', 'Class 11', 'Class 12'],
+  boards: ['CBSE'],
+  experience: 5,
+  qualifications: ['B.Tech. Computer Science (GGSIPU)', 'MCA'],
+  locations: ['Noida Sector 76', 'Noida Sector 100', 'Greater Noida'],
+  teachingMode: ['home', 'online'],
+  verified: true,
+  rating: 4.7,
+  reviewCount: 19,
+  bio: 'Software professional turned educator with 5 years of teaching experience. I teach Computer Science, Mathematics and Physics for Class 9-12. My practical industry experience helps students understand real-world applications of what they learn.',
+  availability: 'Weekdays 6pm–9pm, Weekends 10am–6pm',
+  gender: 'male',
+  languages: ['English', 'Hindi']
+}];
+
+
+export function getTutorBySlug(slug: string): Tutor | undefined {
+  return tutors.find((t) => t.slug === slug);
+}
+
+export function getTutorsBySubject(subject: string): Tutor[] {
+  return tutors.filter((t) => t.subjects.includes(subject));
+}
+
+export function getTutorsByLocation(location: string): Tutor[] {
+  return tutors.filter((t) =>
+  t.locations.some((l) => l.toLowerCase().includes(location.toLowerCase()))
+  );
+}
