@@ -107,7 +107,7 @@ export default function Footer() {
               </a>
               {/* YouTube */}
               <a
-                href="https://youtube.com"
+                href="https://youtube.com/@tutorwaveyt?si=pDa1BQjJN18gOOOi"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="TutorWave on YouTube"
@@ -133,7 +133,7 @@ export default function Footer() {
 
             {/* WhatsApp row */}
             <a
-              href="https://wa.me/919999000000"
+              href="https://wa.me/918588879239"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2.5 group"
