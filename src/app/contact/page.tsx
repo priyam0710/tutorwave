@@ -124,7 +124,6 @@ export default function ContactPage() {
                   </svg>
                 </div>
                 <div>
-                  <p className="font-semibold text-[#0D1118] text-sm mb-0.5">WhatsApp</p>
                   <h3>
   <a
     href="https://wa.me/918588879239"
