@@ -50,29 +50,32 @@ export default function HomeTutorSearch() {
         <div className="bg-white border border-[#374151] rounded-2xl shadow-[0_4px_24px_rgba(15,23,42,0.10)] px-6 py-5">
           <div className="flex flex-col md:flex-row gap-3 md:gap-0 items-stretch md:items-center">
 
-            {/* Class */}
+ {/* Class */}
 <div className="flex-1 min-w-0 md:px-4">
   <div className="flex flex-col gap-0.5">
     <span className="text-[10px] font-bold uppercase tracking-wider text-[#9CA3AF]">
-      class
+      Class
     </span>
 
-  <div className="relative">
-    <select
-      value={selectedClass}
-      onChange={(e) => setSelectedClass(e?.target?.value)}
-      className={selectCls}
-    >
-      {classOptions?.map((opt) => (
-        <option key={opt} value={opt}>{opt}</option>
-      ))}
-    </select>
+    <div className="relative">
+      <select
+        value={selectedClass}
+        onChange={(e) => setSelectedClass(e?.target?.value)}
+        className={selectCls}
+      >
+        {classOptions?.map((opt) => (
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
+        ))}
+      </select>
 
-    <ChevronDown
-      size={16}
-      strokeWidth={2}
-      className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-[#6B7280]"
-    />
+      <ChevronDown
+        size={16}
+        strokeWidth={2}
+        className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-[#6B7280]"
+      />
+    </div>
   </div>
 </div>
 
