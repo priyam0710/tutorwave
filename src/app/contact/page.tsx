@@ -135,6 +135,12 @@ export default function ContactPage() {
   </a>
 </h3>
                   <p className="text-[#6B7280] text-sm">Send us a message on WhatsApp for quick enquiries.</p>
+                  <a
+  href="mailto:teamtutorwave@gmail.com"
+  className="block rounded-2xl transition-all duration-200 hover:border-[#0A6FF7] hover:shadow-md"
+>
+  {/* existing Email card content */}
+</a>
                 </div>
               </div>
 
