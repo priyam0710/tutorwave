@@ -12,7 +12,7 @@ export default function WhatsAppButton() {
 
   return (
     <a
-      href="https://wa.me/919999000000?text=Hi%20TutorWave%2C%20I%20need%20a%20home%20tutor%20in%20Delhi%20NCR"
+      href="https://wa.me/918588879239?text=Hi%20TutorWave%2C%20I%20need%20a%20home%20tutor%20in%20Delhi%20NCR"
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat with TutorWave on WhatsApp"
