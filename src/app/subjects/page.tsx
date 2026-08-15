@@ -70,7 +70,7 @@ export default function SubjectsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
           <div className="flex flex-wrap items-center gap-3">
             <span className="text-sm font-semibold text-[#6B7280]">Boards covered:</span>
-            {['CBSE', 'ICSE', 'IIT-JEE', 'NEET', 'State Board']?.map((board) => (
+            {['CBSE', 'ICSE', 'IB','NIOS', 'State Board']?.map((board) => (
               <span key={board} className="px-3 py-1 bg-[#EBF4FF] text-[#0A6FF7] text-sm font-semibold rounded-full">
                 {board}
               </span>
