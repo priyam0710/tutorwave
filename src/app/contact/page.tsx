@@ -124,8 +124,17 @@ export default function ContactPage() {
                   </svg>
                 </div>
                 <div>
-                  <p className="font-semibold text-[#0D1118] text-sm mb-0.5">WhatsApp
-                  href="https://wa.me/918588879239" target="_blank" rel="noopener noreferrer"</p>
+                  <p className="font-semibold text-[#0D1118] text-sm mb-0.5">WhatsApp</p>
+                  <h3>
+  <a
+    href="https://wa.me/918588879239"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="hover:text-[#0A6FF7] transition-colors"
+  >
+    WhatsApp
+  </a>
+</h3>
                   <p className="text-[#6B7280] text-sm">Send us a message on WhatsApp for quick enquiries.</p>
                 </div>
               </div>
