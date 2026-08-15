@@ -53,11 +53,11 @@ const faqCategories = [
       },
       {
         q: 'Which boards are supported?',
-        a: 'We support CBSE, ICSE, IB, IGCSE and State Board students.',
+        a: 'We support CBSE, ICSE, IB, IGCSE, NIOS and State Board students.',
       },
       {
         q: 'Which areas in Delhi NCR do you cover?',
-        a: 'TutorWave has a growing tutor network across Delhi, Noida, Gurgaon, Faridabad and Ghaziabad. Visit our Locations page for a detailed list of areas.',
+        a: 'TutorWave has a growing tutor network across Delhi, Noida,Greater Noida, Gurgaon, Faridabad and Ghaziabad. Visit our Locations page for a detailed list of areas.',
       },
     ],
   },
@@ -70,7 +70,7 @@ const faqCategories = [
       },
       {
         q: 'Is tutor registration free?',
-        a: 'Yes, registering as a tutor on TutorWave is free.',
+        a: 'A ₹499 one-time verification fee applies to complete your TutorWave registration. It is fully refundable if you don\'t receive any assignment within 1 year.',
       },
       {
         q: 'What subjects can I teach?',
