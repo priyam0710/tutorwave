@@ -26,6 +26,7 @@ const classOptions = [
 ];
 
 const subjectOptions = [
+  'All Subjects',
   'Mathematics',
   'Science',
   'Physics',
