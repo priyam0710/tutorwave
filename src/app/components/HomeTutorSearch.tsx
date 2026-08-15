@@ -54,7 +54,7 @@ export default function HomeTutorSearch() {
 <div className="flex-1 min-w-0 md:px-4">
   <div className="flex flex-col gap-0.5">
     <span className="text-[10px] font-bold uppercase tracking-wider text-[#9CA3AF]">
-      Subject
+      class
     </span>
 
   <div className="relative">
