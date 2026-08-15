@@ -46,7 +46,7 @@ export default function HomeTutorSearch() {
           What are you looking for?
         </p>
 
-        <div className="bg-white border border-[#E5E7EB] rounded-2xl shadow-sm px-6 py-5">
+        <div className="bg-white border border-[#374151] rounded-2xl shadow-[0_4px_24px_rgba(15,23,42,0.10)] px-6 py-5">
           <div className="flex flex-col md:flex-row gap-3 md:gap-0 items-stretch md:items-center">
 
             {/* Class */}
