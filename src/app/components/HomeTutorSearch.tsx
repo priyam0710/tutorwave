@@ -253,21 +253,13 @@ export default function HomeTutorSearch() {
                     className="w-full flex items-center justify-between text-left bg-transparent text-[#0D1118] text-sm font-medium outline-none cursor-pointer"
                   >
 
-                    <span
-                      className={
-                        selectedSubjects.length === 0
-                          ? 'text-[#6B7280] truncate'
-                          : 'text-[#0D1118] truncate'
-                      }
-                    >
-                      {selectedSubjects.length === 0
-                        ? 'Select Subject'
-                        : selectedSubjects.length === 1
-                        ? selectedSubjects[0]
-                        : `${selectedSubjects[0]} +${
-                            selectedSubjects.length - 1
-                          }`}
-                    </span>
+                   <span className="text-[#0D1118] truncate">
+  {selectedSubjects.length === 0
+    ? 'Select Subject'
+    : selectedSubjects.length === 1
+    ? selectedSubjects[0]
+    : `${selectedSubjects[0]} +${selectedSubjects.length - 1}`}
+</span>
 
                     <ChevronDown
                       size={16}
