@@ -4,7 +4,7 @@ import AppImage from '@/components/ui/AppImage';
 const testimonials = [
   {
     name: 'Priya Sharma',
-    location: 'Dwarka, Delhi',
+    location: 'Noida Sector 104',
     text: 'Within 2 days of submitting my requirement, TutorWave matched us with an excellent Maths tutor for my daughter in Class 10 CBSE. Her marks improved from 62 to 84 in one term.',
     subject: 'Mathematics · Class 10 CBSE',
     image: 'https://img.rocket.new/generatedImages/rocket_gen_img_186b140f0-1764664898796.png',
@@ -19,18 +19,18 @@ const testimonials = [
     stars: 5,
   },
   {
-    name: 'Sunita Agarwal',
+    name: 'Sunita Aggarwal',
     location: 'Gurugram Sector 49',
     text: 'My younger one needed help with Hindi and English both. TutorWave found a single tutor who handles both subjects. Very convenient and the tutor comes on time every day.',
-    subject: 'Hindi & English · Class 6 ICSE',
+    subject: 'ALL Subjects · Class 6 ICSE',
     image: 'https://img.rocket.new/generatedImages/rocket_gen_img_152ed782c-1774873611952.png',
     stars: 5,
   },
   {
-    name: 'Amit Chaudhary',
-    location: 'Rohini, Delhi',
-    text: 'Fast response, professional approach. The tutor they sent for NEET coaching has a strong track record. Highly recommend TutorWave to any parent in Delhi.',
-    subject: 'Biology · NEET Preparation',
+    name: 'Pushpa Mishra',
+    location: 'Dwarka mor, Delhi',
+    text: 'Thanks for providing Tutor who is well experienced and enough friendly teaching method.',
+    subject: 'Maths & Science · Class 10 CBSE',
     image: 'https://img.rocket.new/generatedImages/rocket_gen_img_1760e7716-1785730607805.png',
     stars: 5,
   },
