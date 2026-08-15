@@ -65,7 +65,7 @@ export default function HomeHeroSection() {
               {[
               { label: 'Verified Tutors' },
               { label: 'Home & Online Learning' },
-              { label: 'Classes 1–12' },
+              { label: 'Classes NUR–12 & MORE' },
               { label: 'Delhi NCR' }]?.
               map((item) =>
               <div key={item?.label} className="flex items-center gap-2">
@@ -113,7 +113,7 @@ export default function HomeHeroSection() {
                   </div>
                   <div>
                     <div className="text-xs font-bold text-[#0D1118] leading-none mb-0.5">Maths</div>
-                    <div className="text-[10px] text-[#6B7280]">Classes 6–12</div>
+                    <div className="text-[10px] text-[#6B7280]">Classes NUR–12 & more</div>
                   </div>
                 </div>
               </div>
