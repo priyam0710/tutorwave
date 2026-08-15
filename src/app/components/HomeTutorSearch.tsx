@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronDown } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 
 const classOptions = [
   'Select Class', 'Nursery', 'KG', 'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
@@ -24,18 +25,65 @@ const modeOptions = ['Select Mode', 'Home Tuition', 'Online Classes', 'Both'];
 export default function HomeTutorSearch() {
   const router = useRouter();
   const [selectedClass, setSelectedClass] = useState('');
-  const [selectedSubject, setSelectedSubject] = useState('');
+ const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
+const [isSubjectOpen, setIsSubjectOpen] = useState(false);
+const subjectDropdownRef = useRef<HTMLDivElement>(null);
   const [selectedLocation, setSelectedLocation] = useState('');
   const [selectedMode, setSelectedMode] = useState('');
 
-  const handleFind = () => {
-    const params = new URLSearchParams();
-    if (selectedClass && selectedClass !== 'Select Class') params?.set('class', selectedClass);
-    if (selectedSubject && selectedSubject !== 'Select Subject') params?.set('subject', selectedSubject);
-    if (selectedLocation && selectedLocation !== 'Select Location') params?.set('location', selectedLocation);
-    if (selectedMode && selectedMode !== 'Select Mode') params?.set('mode', selectedMode);
-    router?.push(`/tutors${params?.toString() ? '?' + params?.toString() : ''}`);
+  useEffect(() => {
+  const handleClickOutside = (event: MouseEvent) => {
+    if (
+      subjectDropdownRef.current &&
+      !subjectDropdownRef.current.contains(event.target as Node)
+    ) {
+      setIsSubjectOpen(false);
+    }
   };
+
+  document.addEventListener('mousedown', handleClickOutside);
+
+  return () => {
+    document.removeEventListener('mousedown', handleClickOutside);
+  };
+}, []);
+
+const handleFind = () => {
+  const params = new URLSearchParams();
+
+  if (
+    selectedClass &&
+    selectedClass !== 'Select Class'
+  ) {
+    params.set('class', selectedClass);
+  }
+
+  if (selectedSubjects.length > 0) {
+    params.set('subjects', selectedSubjects.join(','));
+  }
+
+  if (
+    selectedLocation &&
+    selectedLocation !== 'Select Location'
+  ) {
+    params.set('location', selectedLocation);
+  }
+
+  if (
+    selectedMode &&
+    selectedMode !== 'Select Mode'
+  ) {
+    params.set('mode', selectedMode);
+  }
+
+  router.push(
+    `/tutors${
+      params.toString()
+        ? '?' + params.toString()
+        : ''
+    }`
+  );
+};
 
   const selectCls = 'w-full bg-transparent text-[#0D1118] text-sm font-medium appearance-none outline-none cursor-pointer pr-6';
 
@@ -81,31 +129,114 @@ export default function HomeTutorSearch() {
 
             <div className="hidden md:block w-px h-10 bg-[#E5E7EB] flex-shrink-0" />
 
-            {/* Subject */}
-<div className="flex-1 min-w-0 md:px-4">
+{/* Subject - Multi Select */}
+<div className="flex-1 min-w-0 md:px-4" ref={subjectDropdownRef}>
   <div className="flex flex-col gap-0.5">
     <span className="text-[10px] font-bold uppercase tracking-wider text-[#9CA3AF]">
       Subject
     </span>
 
     <div className="relative">
-      <select
-        value={selectedSubject}
-        onChange={(e) => setSelectedSubject(e?.target?.value)}
-        className={selectCls}
+      {/* Dropdown Trigger */}
+      <button
+        type="button"
+        onClick={() => setIsSubjectOpen((prev) => !prev)}
+        className="w-full flex items-center justify-between text-left bg-transparent text-[#0D1118] text-sm font-medium outline-none cursor-pointer pr-1"
       >
-        {subjectOptions?.map((opt) => (
-          <option key={opt} value={opt}>
-            {opt}
-          </option>
-        ))}
-      </select>
+        <span
+          className={
+            selectedSubjects.length > 0
+              ? 'truncate'
+              : 'text-[#6B7280]'
+          }
+        >
+          {selectedSubjects.length === 0
+            ? 'Select Subject'
+            : selectedSubjects.length === 1
+              ? selectedSubjects[0]
+              : `${selectedSubjects[0]} +${selectedSubjects.length - 1}`}
+        </span>
 
-      <ChevronDown
-        size={16}
-        strokeWidth={2}
-        className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-[#6B7280]"
-      />
+        <ChevronDown
+          size={16}
+          strokeWidth={2}
+          className={`flex-shrink-0 text-[#6B7280] transition-transform duration-200 ${
+            isSubjectOpen ? 'rotate-180' : ''
+          }`}
+        />
+      </button>
+
+      {/* Dropdown Menu */}
+      {isSubjectOpen && (
+        <div className="absolute z-50 left-0 top-full mt-2 w-full min-w-[220px] bg-white border border-[#E5E7EB] rounded-xl shadow-[0_10px_30px_rgba(15,23,42,0.12)] overflow-hidden">
+          
+          {/* Options */}
+          <div className="max-h-64 overflow-y-auto py-2">
+            {subjectOptions
+              .filter((opt) => opt !== 'Select Subject')
+              .map((opt) => {
+                const isSelected = selectedSubjects.includes(opt);
+
+                return (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => {
+                      setSelectedSubjects((prev) =>
+                        isSelected
+                          ? prev.filter((subject) => subject !== opt)
+                          : [...prev, opt]
+                      );
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm text-[#0D1118] hover:bg-[#F8FAFC] transition-colors"
+                  >
+                    {/* Checkbox */}
+                    <span
+                      className={`w-4 h-4 flex-shrink-0 rounded border flex items-center justify-center transition-all ${
+                        isSelected
+                          ? 'bg-[#0A6FF7] border-[#0A6FF7]'
+                          : 'border-[#D1D5DB] bg-white'
+                      }`}
+                    >
+                      {isSelected && (
+                        <Check
+                          size={12}
+                          strokeWidth={3}
+                          className="text-white"
+                        />
+                      )}
+                    </span>
+
+                    <span className="truncate">
+                      {opt}
+                    </span>
+                  </button>
+                );
+              })}
+          </div>
+
+          {/* Bottom Action */}
+          <div className="border-t border-[#E5E7EB] px-4 py-3 flex items-center justify-between bg-[#FAFAFA]">
+            <span className="text-xs text-[#6B7280]">
+              {selectedSubjects.length === 0
+                ? 'No subjects selected'
+                : `${selectedSubjects.length} ${
+                    selectedSubjects.length === 1
+                      ? 'subject'
+                      : 'subjects'
+                  } selected`}
+            </span>
+
+            <button
+              type="button"
+              onClick={() => setIsSubjectOpen(false)}
+              className="text-xs font-bold text-[#0A6FF7] hover:text-[#0858C8] transition-colors"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   </div>
 </div>
