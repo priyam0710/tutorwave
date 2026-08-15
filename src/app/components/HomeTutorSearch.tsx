@@ -78,57 +78,94 @@ export default function HomeTutorSearch() {
             <div className="hidden md:block w-px h-10 bg-[#E5E7EB] flex-shrink-0" />
 
             {/* Subject */}
-            <div className="flex-1 min-w-0 md:px-4">
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#9CA3AF]">Subject</span>
-                <select
-                  value={selectedSubject}
-                  onChange={(e) => setSelectedSubject(e?.target?.value)}
-                  className={selectCls}
-                >
-                  {subjectOptions?.map((opt) => (
-                    <option key={opt} value={opt}>{opt}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
+<div className="flex-1 min-w-0 md:px-4">
+  <div className="flex flex-col gap-0.5">
+    <span className="text-[10px] font-bold uppercase tracking-wider text-[#9CA3AF]">
+      Subject
+    </span>
+
+    <div className="relative">
+      <select
+        value={selectedSubject}
+        onChange={(e) => setSelectedSubject(e?.target?.value)}
+        className={selectCls}
+      >
+        {subjectOptions?.map((opt) => (
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
+        ))}
+      </select>
+
+      <ChevronDown
+        size={16}
+        strokeWidth={2}
+        className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-[#6B7280]"
+      />
+    </div>
+  </div>
+</div>
+            <div className="hidden md:block w-px h-10 bg-[#E5E7EB] flex-shrink-0" />
+
+     {/* Location */}
+<div className="flex-1 min-w-0 md:px-4">
+  <div className="flex flex-col gap-0.5">
+    <span className="text-[10px] font-bold uppercase tracking-wider text-[#9CA3AF]">
+      Location
+    </span>
+
+    <div className="relative">
+      <select
+        value={selectedLocation}
+        onChange={(e) => setSelectedLocation(e?.target?.value)}
+        className={selectCls}
+      >
+        {locationOptions?.map((opt) => (
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
+        ))}
+      </select>
+
+      <ChevronDown
+        size={16}
+        strokeWidth={2}
+        className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-[#6B7280]"
+      />
+    </div>
+  </div>
+</div>
 
             <div className="hidden md:block w-px h-10 bg-[#E5E7EB] flex-shrink-0" />
 
-            {/* Location */}
-            <div className="flex-1 min-w-0 md:px-4">
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#9CA3AF]">Location</span>
-                <select
-                  value={selectedLocation}
-                  onChange={(e) => setSelectedLocation(e?.target?.value)}
-                  className={selectCls}
-                >
-                  {locationOptions?.map((opt) => (
-                    <option key={opt} value={opt}>{opt}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
+     {/* Mode */}
+<div className="flex-1 min-w-0 md:px-4">
+  <div className="flex flex-col gap-0.5">
+    <span className="text-[10px] font-bold uppercase tracking-wider text-[#9CA3AF]">
+      Home / Online
+    </span>
 
-            <div className="hidden md:block w-px h-10 bg-[#E5E7EB] flex-shrink-0" />
+    <div className="relative">
+      <select
+        value={selectedMode}
+        onChange={(e) => setSelectedMode(e?.target?.value)}
+        className={selectCls}
+      >
+        {modeOptions?.map((opt) => (
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
+        ))}
+      </select>
 
-            {/* Mode */}
-            <div className="flex-1 min-w-0 md:px-4">
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#9CA3AF]">Home / Online</span>
-                <select
-                  value={selectedMode}
-                  onChange={(e) => setSelectedMode(e?.target?.value)}
-                  className={selectCls}
-                >
-                  {modeOptions?.map((opt) => (
-                    <option key={opt} value={opt}>{opt}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
+      <ChevronDown
+        size={16}
+        strokeWidth={2}
+        className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-[#6B7280]"
+      />
+    </div>
+  </div>
+</div>
             <div className="hidden md:block w-px h-10 bg-[#E5E7EB] flex-shrink-0 md:ml-2" />
 
             {/* CTA */}
