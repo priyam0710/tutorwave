@@ -166,7 +166,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <p className="font-semibold text-[#0D1118] text-sm mb-0.5">Location</p>
-                  <p className="text-[#6B7280] text-sm">Delhi NCR, India</p>
+                  <p className="text-[#6B7280] text-sm">Shop no.-5, Defence Enclave, Sec -44 Noida(U.P.)</p>
                 </div>
               </div>
             </div>
