@@ -51,10 +51,11 @@ export default function HomeTutorSearch() {
           <div className="flex flex-col md:flex-row gap-3 md:gap-0 items-stretch md:items-center">
 
             {/* Class */}
-<div className="flex flex-col gap-0.5">
-  <span className="text-[10px] font-bold uppercase tracking-wider text-[#9CA3AF]">
-    Class
-  </span>
+<div className="flex-1 min-w-0 md:px-4">
+  <div className="flex flex-col gap-0.5">
+    <span className="text-[10px] font-bold uppercase tracking-wider text-[#9CA3AF]">
+      Subject
+    </span>
 
   <div className="relative">
     <select
