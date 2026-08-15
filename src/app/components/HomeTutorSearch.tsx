@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { ChevronDown } from 'lucide-react';
 
 const classOptions = [
   'Select Class', 'Nursery', 'KG', 'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
@@ -36,7 +37,7 @@ export default function HomeTutorSearch() {
     router?.push(`/tutors${params?.toString() ? '?' + params?.toString() : ''}`);
   };
 
-  const selectCls = 'w-full bg-transparent text-[#0D1118] text-sm font-medium appearance-none outline-none cursor-pointer';
+  const selectCls = 'w-full bg-transparent text-[#0D1118] text-sm font-medium appearance-none outline-none cursor-pointer pr-6';
 
   return (
     <section className="py-12 bg-[#F8FAFC] border-t border-b border-[#E5E7EB]">
@@ -50,20 +51,29 @@ export default function HomeTutorSearch() {
           <div className="flex flex-col md:flex-row gap-3 md:gap-0 items-stretch md:items-center">
 
             {/* Class */}
-            <div className="flex-1 min-w-0 md:px-4">
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#9CA3AF]">Class</span>
-                <select
-                  value={selectedClass}
-                  onChange={(e) => setSelectedClass(e?.target?.value)}
-                  className={selectCls}
-                >
-                  {classOptions?.map((opt) => (
-                    <option key={opt} value={opt}>{opt}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
+<div className="flex flex-col gap-0.5">
+  <span className="text-[10px] font-bold uppercase tracking-wider text-[#9CA3AF]">
+    Class
+  </span>
+
+  <div className="relative">
+    <select
+      value={selectedClass}
+      onChange={(e) => setSelectedClass(e?.target?.value)}
+      className={selectCls}
+    >
+      {classOptions?.map((opt) => (
+        <option key={opt} value={opt}>{opt}</option>
+      ))}
+    </select>
+
+    <ChevronDown
+      size={16}
+      strokeWidth={2}
+      className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-[#6B7280]"
+    />
+  </div>
+</div>
 
             <div className="hidden md:block w-px h-10 bg-[#E5E7EB] flex-shrink-0" />
 
