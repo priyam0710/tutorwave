@@ -7,16 +7,16 @@ import { ChevronDown } from 'lucide-react';
 const classOptions = [
   'Select Class', 'Nursery', 'KG', 'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
   'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12',
-  'IIT-JEE', 'NEET',
+  'IIT-JEE', 'NEET','other',
 ];
 
 const subjectOptions = [
-  'Select Subject', 'Mathematics', 'Science', 'Physics', 'Chemistry', 'Biology',
-  'English', 'Hindi', 'Social Science', 'Computer Science', 'Economics', 'Accountancy',
+  'Select Subject', 'All Subjects','Mathematics', 'Science', 'Physics', 'Chemistry', 'Biology',
+  'English', 'Hindi', 'Social Science', 'Computer Science', 'Economics', 'Accountancy','other',
 ];
 
 const locationOptions = [
-  'Select Location', 'Delhi', 'Noida', 'Greater Noida', 'Ghaziabad', 'Gurugram', 'Faridabad',
+  'Select Location', 'Delhi', 'Noida', 'Greater Noida', 'Ghaziabad', 'Gurugram', 'Faridabad','other',
 ];
 
 const modeOptions = ['Select Mode', 'Home Tuition', 'Online Classes', 'Both'];
