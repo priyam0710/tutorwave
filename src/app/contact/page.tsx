@@ -140,7 +140,6 @@ export default function ContactPage() {
     href="mailto:your-email@example.com"
     className="hover:text-[#0A6FF7] transition-colors"
   >
-    Email
   </a>
 </h3>
                 </div>
