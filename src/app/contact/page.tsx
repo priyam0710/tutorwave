@@ -125,6 +125,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <p className="font-semibold text-[#0D1118] text-sm mb-0.5">WhatsApp</p>
+                  <p href="https://wa.me/918588879239" target="_blank" rel="noopener noreferrer"</p>
                   <p className="text-[#6B7280] text-sm">Send us a message on WhatsApp for quick enquiries.</p>
                 </div>
               </div>
