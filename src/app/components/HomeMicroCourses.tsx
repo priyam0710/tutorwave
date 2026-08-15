@@ -49,7 +49,7 @@ export default function HomeMicroCourses() {
               className="font-sans font-bold text-[#0D1118] leading-tight"
               style={{ fontSize: 'clamp(1.5rem, 3vw, 2.2rem)', letterSpacing: '-0.025em' }}>
               
-              Learn More In Less Time.
+              Learn More In Less Time
             </h2>
             <p className="text-sm text-[#6B7280] mt-2 max-w-lg">
               Short, focused learning experiences designed to help students build useful skills and strengthen their fundamentals.
