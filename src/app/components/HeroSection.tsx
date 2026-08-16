@@ -117,7 +117,7 @@ export default function HeroSection() {
               {[
               { icon: '✓', label: 'Verified Tutors' },
               { icon: '⌂', label: 'Home & Online' },
-              { icon: '◈', label: 'Classes 1–12' },
+              { icon: '◈', label: 'Classes NUR–12' },
               { icon: '◉', label: 'All Subjects' }]?.
               map((item) =>
               <div key={item?.label} className="flex items-center gap-1.5">
