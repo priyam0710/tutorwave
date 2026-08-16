@@ -134,7 +134,6 @@ export default function AboutPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <div className="bg-[#EBF4FF] rounded-3xl p-8">
-              <p className="text-xs font-bold uppercase tracking-widest text-[#0A6FF7] mb-4">FOR PARENTS &amp; STUDENTS</p>
               <h3 className="text-2xl font-bold text-[#0D1118] mb-4" style={{ letterSpacing: '-0.015em' }}>
                 Find the right tutor for your child
               </h3>
@@ -152,7 +151,6 @@ export default function AboutPage() {
               </Link>
             </div>
             <div className="bg-[#0D1118] rounded-3xl p-8">
-              <p className="text-xs font-bold uppercase tracking-widest text-[#4BC2FD] mb-4">FOR TUTORS</p>
               <h3 className="text-2xl font-bold text-white mb-4" style={{ letterSpacing: '-0.015em' }}>
                 Discover genuine tuition opportunities
               </h3>
