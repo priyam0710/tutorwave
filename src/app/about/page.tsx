@@ -63,7 +63,13 @@ export default function AboutPage() {
               Delhi NCR&apos;s trusted home tuition platform
             </h1>
             <p className="text-lg text-[#6B7280] leading-relaxed">
-              TutorWave connects parents and students with suitable home tutors across Delhi NCR. Our mission is to make quality personalized learning accessible to every family.
+              TutorWave is a home tuition platform dedicated to helping students and families find the right learning support. We connect parents with verified and suitable tutors for personalized home and online tuition across Delhi NCR.
+
+We serve students from Nursery to Class 12, along with learners preparing for competitive examinations. Our tutor network includes experienced teachers, subject specialists, school educators, and dedicated tutors who bring different teaching strengths to every learning requirement.
+
+At TutorWave, we focus on making the entire process simple, reliable, and convenient — from finding a suitable tutor to getting the right academic support for each student.
+
+Our vision is to build a trusted education platform where every student can find the right guidance to learn, improve, and grow.
             </p>
           </div>
         </div>
