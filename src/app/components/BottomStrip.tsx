@@ -35,7 +35,7 @@ export default function BottomStrip() {
           {/* Micro Courses */}
           <div className="lg:col-span-1">
             <h3 className="font-sans font-bold text-[#0D1118] text-base mb-1">Micro Courses</h3>
-            <p className="text-xs font-semibold text-[#0A6FF7] mb-3">Short. Focused. Effective.</p>
+            <p className="text-xs font-semibold text-[#0A6FF7] mb-3">Short | Focused | Effective.</p>
             <p className="text-sm text-[#6B7280] leading-relaxed mb-4">
               Learn from expert tutors through our specially designed micro courses for school subjects and competitive exams.
             </p>
