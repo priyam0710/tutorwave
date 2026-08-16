@@ -492,7 +492,7 @@ export default function TutorRegistrationForm() {
               <InputField
                 label="Age"
                 required
-                type="number"
+                type="number" min="18"
                 placeholder="Your age"
                 value={formData.personal.age}
                 onChange={(value) =>
@@ -510,8 +510,6 @@ export default function TutorRegistrationForm() {
                 options={[
                   'Male',
                   'Female',
-                  'Other',
-                  'Prefer not to say',
                 ]}
                 onChange={(value) =>
                   updatePersonal(
