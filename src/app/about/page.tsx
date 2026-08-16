@@ -6,7 +6,7 @@ import WhatsAppButton from '@/app/components/WhatsAppButton';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'About TutorWave — Delhi NCR\'s Trusted Home Tuition Platform',
+  title: 'About TutorWave — Delhi NCR\'s Most Trusted Home Tuition Platform',
   description: 'Learn about TutorWave — our mission, values and how we connect parents with suitable home tutors across Delhi NCR.',
   alternates: {
     canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/about`,
@@ -83,9 +83,6 @@ export default function AboutPage() {
               <p className="text-[#6B7280] leading-relaxed mb-4">
                 We created a platform that simplifies this process — parents share their requirement once, and TutorWave works to identify suitable tutor options based on their specific needs.
               </p>
-              <p className="text-[#6B7280] leading-relaxed">
-                Our long-term vision is to become one of India&apos;s most trusted home tuition platforms, starting from Delhi NCR and expanding across India.
-              </p>
             </div>
             <div className="bg-[#F8FAFC] rounded-3xl p-10 border border-[#E5E7EB]">
               <p className="text-sm font-semibold text-[#0A6FF7] italic mb-4">Our tagline</p>
@@ -97,7 +94,7 @@ export default function AboutPage() {
                 <p className="text-lg font-bold text-[#0D1118] mt-1">Nursery to Class 12 &amp; Competitive Exams</p>
               </div>
               <div className="mt-6 pt-6 border-t border-[#E5E7EB]">
-                <p className="text-sm text-[#6B7280]">Primary market</p>
+                <p className="text-sm text-[#6B7280]">Our Service Area</p>
                 <p className="text-lg font-bold text-[#0D1118] mt-1">Delhi NCR, India</p>
               </div>
             </div>
