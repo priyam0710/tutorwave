@@ -1,641 +1,934 @@
-import React from 'react';
-import type { Metadata } from 'next';
-import Link from 'next/link';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import WhatsAppButton from '@/app/components/WhatsAppButton';
+"use client";
 
-export const metadata: Metadata = {
-  title: 'Become a Tutor — TutorWave',
-  description: 'Join TutorWave as a verified tutor. Teach what you love, grow your income, and connect with genuine students across Delhi NCR.',
-  alternates: {
-    canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/become-a-tutor`,
-  },
-  openGraph: {
-    type: 'website',
-    title: 'Become a Tutor — TutorWave',
-    description: 'Join TutorWave as a verified tutor. Teach what you love, grow your income, and connect with genuine students.',
-    url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/become-a-tutor`,
-    images: [
-      {
-        url: '/assets/images/app_logo.png',
-        width: 1200,
-        height: 630,
-        alt: 'Become a Tutor',
-      },
-    ],
-  },
+import React, { useState } from "react";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import WhatsAppButton from "@/app/components/WhatsAppButton";
+
+type TeachingCombination = {
+  classes: string;
+  subjects: string[];
 };
 
-const whyItems = [
-  {
-    title: 'Genuine, pre-qualified leads',
-    description: 'Every parent enquiry we share has been verified — real contact, confirmed subject and area. No cold leads, no wasted time.',
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-      </svg>
-    ),
-    accent: '#0A6FF7',
-    accentBg: '#EBF4FF',
-    stat: '100%',
-    statLabel: 'Verified leads',
-    wide: true,
-  },
-  {
-    title: 'Teach near your home',
-    description: 'We match you with students in your preferred localities — shorter commutes, more time teaching.',
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-        <path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    ),
-    accent: '#0C8F81',
-    accentBg: '#E6F7F5',
-    stat: 'Local',
-    statLabel: 'Matched students',
-    wide: false,
-  },
-  {
-    title: 'Flexible schedule',
-    description: 'Set your own availability. Mornings, evenings, weekends — teach when it works for you.',
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-    accent: '#B45309',
-    accentBg: '#FFF8E6',
-    stat: 'Flexible',
-    statLabel: 'Timing control',
-    wide: false,
-  },
-  {
-    title: 'Stable monthly income',
-    description: 'Active tutors on TutorWave build a consistent, growing income from home tuitions.',
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-    accent: '#F8AD03',
-    accentBg: '#FFF8E6',
-    stat: '₹15K–₹50K',
-    statLabel: 'Monthly income range',
-    wide: false,
-  },
+const classOptions = [
+  "Nursery",
+  "LKG",
+  "UKG",
+  "Class 1",
+  "Class 2",
+  "Class 3",
+  "Class 4",
+  "Class 5",
+  "Class 6",
+  "Class 7",
+  "Class 8",
+  "Class 9",
+  "Class 10",
+  "Class 11",
+  "Class 12",
 ];
 
-const registrationSteps = [
-  {
-    number: '01',
-    title: 'Create your profile',
-    description: 'Tell us your subjects, classes, preferred locations and availability.',
-  },
-  {
-    number: '02',
-    title: 'Submit your details',
-    description: 'Provide your qualifications and teaching experience for our team to review.',
-  },
-  {
-    number: '03',
-    title: 'Profile goes live',
-    description: 'Once approved, your profile is active and you start receiving matched opportunities.',
-  },
+const subjectOptions = [
+  "Mathematics",
+  "Science",
+  "Physics",
+  "Chemistry",
+  "Biology",
+  "English",
+  "Hindi",
+  "Social Science",
+  "Accountancy",
+  "Business Studies",
+  "Economics",
+  "Computer Science",
+  "Political Science",
+  "History",
+  "Geography",
+  "Psychology",
+  "Sociology",
+  "French",
+  "Sanskrit",
+  "Other",
 ];
 
-const verificationPoints = [
-  'Identity and contact verification',
-  'Qualification review',
-  'Subject and class confirmation',
-  'Location and availability check',
-  'Profile quality assessment',
+const boardOptions = [
+  "CBSE",
+  "ICSE",
+  "ISC",
+  "IB",
+  "IGCSE",
+  "State Board",
+  "NIOS",
+  "Other",
 ];
 
-const teachingModes = [
-  {
-    title: 'Home Teaching',
-    description: 'Visit students at their homes in your preferred localities. Build a personal, trusted relationship with families.',
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-        <polyline points="9 22 9 12 15 12 15 22" />
-      </svg>
-    ),
-    bg: 'bg-[#EBF4FF]',
-    color: 'text-[#0A6FF7]',
-  },
-  {
-    title: 'Online Teaching',
-    description: 'Teach from anywhere via video call. Reach students beyond your immediate locality.',
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-        <line x1="8" y1="21" x2="16" y2="21" />
-        <line x1="12" y1="17" x2="12" y2="21" />
-      </svg>
-    ),
-    bg: 'bg-[#E6F7F5]',
-    color: 'text-[#0C8F81]',
-  },
+const experienceOptions = [
+  "Fresher",
+  "Less than 1 year",
+  "1–3 years",
+  "3–5 years",
+  "5–10 years",
+  "10+ years",
 ];
 
-const flexibleItems = [
-  'Choose your own subjects and classes',
-  'Set your preferred teaching locations',
-  'Define your available hours',
-  'Accept or decline opportunities',
-  'Teach home, online, or both',
-  'Scale up or down as needed',
+const fluencyOptions = [
+  "Basic",
+  "Good",
+  "Very Good",
+  "Fluent",
 ];
 
-export default function BecomeTutorPage() {
-  return (
-    <main className="bg-white min-h-screen">
-      <Header />
-      {/* ── Hero ── */}
-      <section className="relative pt-28 pb-0 overflow-hidden bg-[#0D1118]">
-        {/* Background glow layers */}
-        <div
-          className="absolute top-0 left-0 w-[700px] h-[500px] pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse at top left, rgba(10,111,247,0.14) 0%, transparent 65%)' }}
-        />
-        <div
-          className="absolute top-0 right-0 w-[500px] h-[400px] pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse at top right, rgba(75,194,253,0.08) 0%, transparent 65%)' }}
-        />
-        {/* Accent dots */}
-        <div className="absolute top-20 right-24 w-3 h-3 rounded-full bg-[#F8AD03] opacity-60 pointer-events-none" />
-        <div className="absolute top-40 right-64 w-2 h-2 rounded-full bg-[#4BC2FD] opacity-40 pointer-events-none" />
-        <div className="absolute bottom-20 left-16 w-2.5 h-2.5 rounded-full bg-[#0C8F81] opacity-50 pointer-events-none" />
+export default function BecomeATutorPage() {
+  const [step, setStep] = useState(1);
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 relative z-10">
-          <nav className="flex items-center gap-2 text-xs text-white/40 mb-10" aria-label="Breadcrumb">
-            <Link href="/" className="hover:text-white/70 transition-colors">Home</Link>
-            <span>/</span>
-            <span className="text-white/60 font-medium">Become a Tutor</span>
-          </nav>
+  const [formData, setFormData] = useState({
+    fullName: "",
+    phone: "",
+    email: "",
+    age: "",
+    address: "",
+    qualification: "",
+    stream: "",
+    schoolingFrom: "",
+    college: "",
+    teachingExperience: "",
+    schoolExperience: "",
+    studentsTaughtFrom: "",
+    boards: [] as string[],
+    englishFluency: "",
+    offlineAreas: "",
+    onlineAvailable: false,
+    homeTuitionAvailable: true,
+  });
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-end pb-20 md:pb-28">
-            {/* Left — headline */}
-            <div>
-              <span className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/15 px-4 py-2 rounded-full text-white text-xs font-semibold tracking-wide mb-8">
-                <span className="w-2 h-2 rounded-full bg-[#F8AD03] animate-pulse" />
-                Now accepting tutors across Delhi NCR
-              </span>
+  const [teachingCombinations, setTeachingCombinations] = useState<
+    TeachingCombination[]
+  >([
+    {
+      classes: "",
+      subjects: [],
+    },
+  ]);
 
-              <h1
-                className="font-bold text-white mb-6 leading-tight"
-                style={{ fontSize: 'clamp(2.25rem, 5vw, 3.75rem)', letterSpacing: '-0.03em' }}
+  const updateField = (field: string, value: string | boolean) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const toggleBoard = (board: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      boards: prev.boards.includes(board)
+        ? prev.boards.filter((item) => item !== board)
+        : [...prev.boards, board],
+    }));
+  };
+
+  const updateCombination = (
+    index: number,
+    field: "classes" | "subjects",
+    value: string | string[]
+  ) => {
+    setTeachingCombinations((prev) =>
+      prev.map((item, i) =>
+        i === index
+          ? {
+              ...item,
+              [field]: value,
+            }
+          : item
+      )
+    );
+  };
+
+  const toggleSubject = (index: number, subject: string) => {
+    setTeachingCombinations((prev) =>
+      prev.map((item, i) => {
+        if (i !== index) return item;
+
+        return {
+          ...item,
+          subjects: item.subjects.includes(subject)
+            ? item.subjects.filter((s) => s !== subject)
+            : [...item.subjects, subject],
+        };
+      })
+    );
+  };
+
+  const addCombination = () => {
+    setTeachingCombinations((prev) => [
+      ...prev,
+      {
+        classes: "",
+        subjects: [],
+      },
+    ]);
+  };
+
+  const removeCombination = (index: number) => {
+    setTeachingCombinations((prev) =>
+      prev.filter((_, i) => i !== index)
+    );
+  };
+
+  const validateStep1 = () => {
+    if (!formData.fullName.trim()) {
+      alert("Please enter your full name.");
+      return false;
+    }
+
+    if (!formData.phone.trim()) {
+      alert("Please enter your phone number.");
+      return false;
+    }
+
+    if (!formData.age.trim()) {
+      alert("Please enter your age.");
+      return false;
+    }
+
+    return true;
+  };
+
+  const validateStep2 = () => {
+    const validCombination = teachingCombinations.some(
+      (item) => item.classes && item.subjects.length > 0
+    );
+
+    if (!validCombination) {
+      alert(
+        "Please add at least one class and subject combination."
+      );
+      return false;
+    }
+
+    return true;
+  };
+
+  const nextStep = () => {
+    if (step === 1 && !validateStep1()) return;
+    if (step === 2 && !validateStep2()) return;
+
+    setStep((prev) => Math.min(prev + 1, 3));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const previousStep = () => {
+    setStep((prev) => Math.max(prev - 1, 1));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateStep2()) {
+      setStep(2);
+      return;
+    }
+
+    setSubmitting(true);
+
+    const payload = {
+      ...formData,
+      teachingCombinations,
+      source: "TutorWave Website",
+      formType: "Tutor Registration",
+      submittedAt: new Date().toISOString(),
+    };
+
+    try {
+      const response = await fetch("/api/tutor-registration", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error("Submission failed");
+      }
+
+      setSuccess(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (error) {
+      console.error(error);
+      alert(
+        "Something went wrong while submitting your registration. Please try again or contact us on WhatsApp."
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <main className="min-h-screen bg-white">
+        <Header />
+
+        <section className="min-h-[70vh] flex items-center justify-center px-6 py-20 bg-[#F8FAFC]">
+          <div className="max-w-xl w-full bg-white border border-[#E5E7EB] rounded-3xl p-10 text-center shadow-sm">
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-[#EBF4FF] flex items-center justify-center text-[#0A6FF7]">
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
               >
-                Teach What You Love.
-                <br />
-                <span className="italic" style={{ color: '#4BC2FD' }}>Grow With TutorWave.</span>
-              </h1>
-
-              <p className="text-lg text-white/65 leading-relaxed mb-10 max-w-lg">
-                Join TutorWave&apos;s verified tutor network in Delhi NCR. Get genuine leads, teach near your home, and build a stable teaching income on your schedule.
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link
-                  href="#register"
-                  className="inline-flex items-center gap-2 bg-[#0A6FF7] text-white font-bold px-7 py-4 rounded-xl text-sm hover:bg-[#0858c8] transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
-                >
-                  Join TutorWave
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M5 12h14M12 5l7 7-7 7" />
-                  </svg>
-                </Link>
-                <Link
-                  href="/how-it-works"
-                  className="inline-flex items-center gap-2 px-7 py-4 rounded-xl font-semibold text-white border border-white/25 hover:border-white/50 hover:bg-white/8 transition-all duration-300 text-sm"
-                >
-                  How it works
-                </Link>
-              </div>
-            </div>
-
-            {/* Right — stat cards */}
-            <div className="hidden lg:grid grid-cols-2 gap-4">
-              {[
-                { value: '₹15K–₹50K', label: 'Monthly income range', sub: 'for active tutors', color: '#F8AD03' },
-                { value: 'Verified', label: 'Tutor badge', sub: 'after profile review', color: '#4BC2FD' },
-                { value: 'Local', label: 'Student matching', sub: 'in your preferred area', color: '#0C8F81' },
-                { value: 'Flexible', label: 'Teaching schedule', sub: 'you set your hours', color: '#0A6FF7' },
-              ]?.map((stat, i) => (
-                <div
-                  key={i}
-                  className="bg-white/6 border border-white/10 rounded-2xl p-5 backdrop-blur-sm"
-                >
-                  <div className="text-2xl font-bold mb-1" style={{ color: stat?.color, letterSpacing: '-0.02em' }}>
-                    {stat?.value}
-                  </div>
-                  <div className="text-sm font-semibold text-white mb-0.5">{stat?.label}</div>
-                  <div className="text-xs text-white/45">{stat?.sub}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom fade to white */}
-        <div className="h-16 bg-gradient-to-b from-[#0D1118] to-white" />
-      </section>
-      {/* ── Why TutorWave ── */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
-          <div className="max-w-2xl mb-14">
-            <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#0A6FF7] mb-4">Why TutorWave</span>
-            <h2
-              className="font-bold text-[#0D1118] mb-4 leading-tight"
-              style={{ fontSize: 'clamp(1.75rem, 3.5vw, 2.5rem)', letterSpacing: '-0.025em' }}
-            >
-              More students.
-              <span className="italic text-[#0A6FF7]"> Better opportunities.</span>
-            </h2>
-            <p className="text-[#6B7280] leading-relaxed">
-              We built TutorWave to make home tuition work better for tutors — not just parents.
-            </p>
-          </div>
-
-          {/* Bento grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {/* Featured — wide */}
-            <div
-              className="md:col-span-2 rounded-3xl p-8 md:p-10 flex flex-col justify-between min-h-[220px] relative overflow-hidden"
-              style={{ background: 'linear-gradient(135deg, #0A6FF7 0%, #4BC2FD 100%)' }}
-            >
-              <div
-                className="absolute -bottom-8 -right-8 w-40 h-40 rounded-full pointer-events-none"
-                style={{ background: 'rgba(255,255,255,0.08)' }}
-              />
-              <div className="flex items-start justify-between gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center text-white flex-shrink-0">
-                  {whyItems?.[0]?.icon}
-                </div>
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>{whyItems?.[0]?.stat}</div>
-                  <div className="text-xs text-white/65 font-medium">{whyItems?.[0]?.statLabel}</div>
-                </div>
-              </div>
-              <div className="mt-6">
-                <h3 className="text-xl font-bold text-white mb-2" style={{ letterSpacing: '-0.015em' }}>{whyItems?.[0]?.title}</h3>
-                <p className="text-sm text-white/75 leading-relaxed max-w-sm">{whyItems?.[0]?.description}</p>
-              </div>
-            </div>
-
-            {/* Single cards */}
-            {whyItems?.slice(1)?.map((item) => (
-              <div
-                key={item?.title}
-                className="bg-white border border-[#E5E7EB] rounded-3xl p-7 flex flex-col justify-between hover:shadow-md transition-shadow duration-300"
-              >
-                <div className="flex items-start justify-between gap-3 mb-5">
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0`} style={{ backgroundColor: item?.accentBg, color: item?.accent }}>
-                    {item?.icon}
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xl font-bold" style={{ color: item?.accent, letterSpacing: '-0.015em' }}>{item?.stat}</div>
-                    <div className="text-xs text-[#6B7280]">{item?.statLabel}</div>
-                  </div>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-base text-[#0D1118] mb-2">{item?.title}</h3>
-                  <p className="text-sm text-[#6B7280] leading-relaxed">{item?.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-      {/* ── How Tutor Registration Works ── */}
-      <section className="py-20 bg-[#F8FAFC]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div>
-              <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#0A6FF7] mb-4">Registration</span>
-              <h2
-                className="font-bold text-[#0D1118] mb-4 leading-tight"
-                style={{ fontSize: 'clamp(1.75rem, 3.5vw, 2.5rem)', letterSpacing: '-0.025em' }}
-              >
-                How tutor registration works.
-              </h2>
-              <p className="text-[#6B7280] leading-relaxed mb-10">
-                Getting started is straightforward. Three steps and you are ready to receive opportunities.
-              </p>
-
-              <div className="space-y-6">
-                {registrationSteps?.map((step, i) => (
-                  <div key={step?.number} className="flex items-start gap-5">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-2xl bg-[#0A6FF7] flex items-center justify-center">
-                      <span className="text-white text-xs font-bold">{step?.number}</span>
-                    </div>
-                    <div className="pt-1">
-                      <h3 className="font-semibold text-[#0D1118] mb-1">{step?.title}</h3>
-                      <p className="text-sm text-[#6B7280] leading-relaxed">{step?.description}</p>
-                    </div>
-                    {i < registrationSteps?.length - 1 && (
-                      <div className="absolute ml-5 mt-10 w-px h-6 bg-[#E5E7EB]" style={{ position: 'relative', left: '-100%', marginLeft: '-100%' }} />
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-10">
-                <Link
-                  href="#register"
-                  className="inline-flex items-center gap-2 bg-[#0A6FF7] text-white font-bold px-7 py-3.5 rounded-xl text-sm hover:bg-[#0858c8] transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
-                >
-                  Start Registration
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M5 12h14M12 5l7 7-7 7" />
-                  </svg>
-                </Link>
-              </div>
-            </div>
-
-            {/* Visual card */}
-            <div className="bg-white border border-[#E5E7EB] rounded-3xl p-8 md:p-10 shadow-sm">
-              <div className="flex items-center gap-3 mb-8">
-                <div className="w-10 h-10 rounded-2xl bg-[#EBF4FF] flex items-center justify-center text-[#0A6FF7]">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-                    <line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>
-                  </svg>
-                </div>
-                <div>
-                  <div className="text-sm font-bold text-[#0D1118]">Tutor Registration</div>
-                  <div className="text-xs text-[#6B7280]">Free to join</div>
-                </div>
-              </div>
-
-              {[
-                { label: 'Full Name', placeholder: 'Your name' },
-                { label: 'Subjects', placeholder: 'e.g. Mathematics, Physics' },
-                { label: 'Classes', placeholder: 'e.g. Class 9–12' },
-                { label: 'Location', placeholder: 'Your preferred area' },
-              ]?.map((field) => (
-                <div key={field?.label} className="mb-4">
-                  <div className="text-xs font-semibold text-[#6B7280] mb-1.5">{field?.label}</div>
-                  <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl px-4 py-3 text-sm text-[#9CA3AF]">
-                    {field?.placeholder}
-                  </div>
-                </div>
-              ))}
-
-              <div className="mt-6 bg-[#0A6FF7] rounded-xl px-4 py-3 text-center text-white text-sm font-bold">
-                Submit Registration
-              </div>
-              <p className="text-xs text-[#9CA3AF] text-center mt-3">Our team will review and contact you within 24–48 hours</p>
-            </div>
-          </div>
-        </div>
-      </section>
-      {/* ── Tutor Verification ── */}
-      <section className="py-20 bg-[#0D1118] relative overflow-hidden">
-        <div
-          className="absolute top-0 right-0 w-[600px] h-[400px] pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse at top right, rgba(10,111,247,0.12) 0%, transparent 65%)' }}
-        />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            {/* Verification visual */}
-            <div className="bg-white/5 border border-white/10 rounded-3xl p-8 md:p-10">
-              <div className="flex items-center gap-3 mb-8">
-                <div className="w-12 h-12 rounded-2xl bg-[#0A6FF7]/20 flex items-center justify-center text-[#4BC2FD]">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
-                </div>
-                <div>
-                  <div className="text-sm font-bold text-white">Verified Tutor Badge</div>
-                  <div className="text-xs text-white/45">Awarded after review</div>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {verificationPoints?.map((point, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className="w-5 h-5 rounded-full bg-[#0A6FF7]/20 border border-[#0A6FF7]/40 flex items-center justify-center flex-shrink-0">
-                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#4BC2FD" strokeWidth="3">
-                        <path d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <span className="text-sm text-white/75 font-medium">{point}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-8 pt-6 border-t border-white/10">
-                <div className="inline-flex items-center gap-2 bg-[#0A6FF7]/15 border border-[#0A6FF7]/25 text-[#4BC2FD] text-xs font-semibold px-4 py-2 rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#4BC2FD]" />
-                  Verified tutors receive priority matching
-                </div>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div>
-              <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#4BC2FD] mb-4">Verification</span>
-              <h2
-                className="font-bold text-white mb-4 leading-tight"
-                style={{ fontSize: 'clamp(1.75rem, 3.5vw, 2.5rem)', letterSpacing: '-0.025em' }}
-              >
-                Why we verify every tutor.
-              </h2>
-              <p className="text-white/60 leading-relaxed mb-6">
-                Parents trust TutorWave because we take verification seriously. Every tutor profile is reviewed by our team before going live.
-              </p>
-              <p className="text-white/60 leading-relaxed">
-                Verification is not just a formality — it ensures that the opportunities you receive are from genuine, committed parents, and that parents can trust the tutors we connect them with.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-      {/* ── Teaching Opportunities ── */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
-          <div className="max-w-2xl mb-14">
-            <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#0A6FF7] mb-4">Teaching Opportunities</span>
-            <h2
-              className="font-bold text-[#0D1118] mb-4 leading-tight"
-              style={{ fontSize: 'clamp(1.75rem, 3.5vw, 2.5rem)', letterSpacing: '-0.025em' }}
-            >
-              Opportunities matched to you.
-            </h2>
-            <p className="text-[#6B7280] leading-relaxed">
-              We do not send you a generic list of leads. Every opportunity we share is matched to your subjects, location and availability.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {[
-              {
-                title: 'Subject-matched leads',
-                description: 'Only receive enquiries for subjects you teach. No irrelevant leads.',
-                icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>,
-                bg: '#EBF4FF',
-                color: '#0A6FF7',
-              },
-              {
-                title: 'Location-based matching',
-                description: 'Students near your home or in your preferred teaching areas.',
-                icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>,
-                bg: '#E6F7F5',
-                color: '#0C8F81',
-              },
-              {
-                title: 'Schedule-compatible',
-                description: 'Opportunities that align with the availability you have set.',
-                icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>,
-                bg: '#FFF8E6',
-                color: '#B45309',
-              },
-            ]?.map((item) => (
-              <div
-                key={item?.title}
-                className="bg-white border border-[#E5E7EB] rounded-3xl p-7 hover:shadow-md transition-shadow duration-300"
-              >
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-5 flex-shrink-0" style={{ backgroundColor: item?.bg, color: item?.color }}>
-                  {item?.icon}
-                </div>
-                <h3 className="font-semibold text-base text-[#0D1118] mb-2">{item?.title}</h3>
-                <p className="text-sm text-[#6B7280] leading-relaxed">{item?.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-      {/* ── Home & Online Teaching ── */}
-      <section className="py-20 bg-[#F8FAFC]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
-          <div className="max-w-2xl mb-14">
-            <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#0A6FF7] mb-4">Teaching Modes</span>
-            <h2
-              className="font-bold text-[#0D1118] mb-4 leading-tight"
-              style={{ fontSize: 'clamp(1.75rem, 3.5vw, 2.5rem)', letterSpacing: '-0.025em' }}
-            >
-              Home teaching. Online teaching.
-              <span className="italic text-[#0A6FF7]"> Your choice.</span>
-            </h2>
-            <p className="text-[#6B7280] leading-relaxed">
-              TutorWave supports both home and online teaching. You decide which mode works best for you — or do both.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {teachingModes?.map((mode) => (
-              <div
-                key={mode?.title}
-                className="bg-white border border-[#E5E7EB] rounded-3xl p-8 md:p-10 hover:shadow-md transition-shadow duration-300"
-              >
-                <div className={`w-14 h-14 rounded-2xl ${mode?.bg} ${mode?.color} flex items-center justify-center mb-6`}>
-                  {mode?.icon}
-                </div>
-                <h3 className="text-xl font-bold text-[#0D1118] mb-3" style={{ letterSpacing: '-0.015em' }}>{mode?.title}</h3>
-                <p className="text-[#6B7280] leading-relaxed">{mode?.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-      {/* ── Flexible Opportunities ── */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div>
-              <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#0A6FF7] mb-4">Flexibility</span>
-              <h2
-                className="font-bold text-[#0D1118] mb-4 leading-tight"
-                style={{ fontSize: 'clamp(1.75rem, 3.5vw, 2.5rem)', letterSpacing: '-0.025em' }}
-              >
-                Teaching that fits around your life.
-              </h2>
-              <p className="text-[#6B7280] leading-relaxed mb-8">
-                TutorWave is built for tutors who want control over their work. You set the terms — we handle the matching.
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {flexibleItems?.map((item, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className="w-5 h-5 rounded-full bg-[#EBF4FF] border border-[#0A6FF7]/20 flex items-center justify-center flex-shrink-0">
-                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#0A6FF7" strokeWidth="3">
-                        <path d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <span className="text-sm text-[#0D1118] font-medium">{item}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Visual */}
-            <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-3xl p-8 md:p-10">
-              <div className="text-xs font-bold uppercase tracking-widest text-[#6B7280] mb-6">Your teaching profile</div>
-              {[
-                { label: 'Teaching mode', value: 'Home + Online', color: '#0A6FF7' },
-                { label: 'Subjects', value: 'Mathematics, Physics', color: '#0C8F81' },
-                { label: 'Classes', value: 'Class 9–12', color: '#B45309' },
-                { label: 'Availability', value: 'Evenings & Weekends', color: '#0A6FF7' },
-                { label: 'Preferred areas', value: 'Noida, Greater Noida', color: '#0C8F81' },
-              ]?.map((row) => (
-                <div key={row?.label} className="flex items-center justify-between py-3 border-b border-[#E5E7EB] last:border-0">
-                  <span className="text-sm text-[#6B7280]">{row?.label}</span>
-                  <span className="text-sm font-semibold" style={{ color: row?.color }}>{row?.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-      {/* ── Final CTA ── */}
-      <section id="register" className="py-24 bg-[#0D1118] relative overflow-hidden">
-        <div
-          className="absolute top-0 left-0 w-[700px] h-[400px] pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse at top left, rgba(10,111,247,0.12) 0%, transparent 65%)' }}
-        />
-        <div
-          className="absolute bottom-0 right-0 w-[500px] h-[300px] pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse at bottom right, rgba(75,194,253,0.07) 0%, transparent 65%)' }}
-        />
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-12 text-center relative z-10">
-          <span className="inline-flex items-center gap-2 bg-white/8 border border-white/12 text-white/70 text-xs font-semibold px-4 py-2 rounded-full mb-8">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#F8AD03] animate-pulse" />
-            Free to register
-          </span>
-          <h2
-            className="font-bold text-white mb-5 leading-tight"
-            style={{ fontSize: 'clamp(2rem, 4.5vw, 3.25rem)', letterSpacing: '-0.03em' }}
-          >
-            Ready to teach what you love?
-          </h2>
-          <p className="text-white/60 text-lg leading-relaxed mb-10 max-w-xl mx-auto">
-            Join TutorWave today. Register your profile and start receiving genuine teaching opportunities near you.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/become-a-tutor#register"
-              className="inline-flex items-center gap-2 bg-[#0A6FF7] text-white font-bold px-8 py-4 rounded-xl hover:bg-[#0858c8] transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5"
-            >
-              Join TutorWave
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M5 12h14M12 5l7 7-7 7" />
+                <path d="M20 6L9 17l-5-5" />
               </svg>
-            </Link>
-            <Link
-              href="/tutors"
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-semibold text-white border border-white/25 hover:border-white/50 hover:bg-white/8 transition-all duration-300"
+            </div>
+
+            <h1 className="text-3xl font-bold text-[#0D1118] mb-4">
+              Registration submitted
+            </h1>
+
+            <p className="text-[#6B7280] leading-relaxed mb-8">
+              Thank you for registering with TutorWave. Our team will review
+              your profile and contact you regarding suitable tuition
+              opportunities.
+            </p>
+
+            <a
+              href="https://wa.me/918588879239"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-[#0A6FF7] text-white font-semibold hover:opacity-90 transition"
             >
-              Browse Tutors
-            </Link>
+              Contact TutorWave on WhatsApp
+            </a>
+          </div>
+        </section>
+
+        <Footer />
+        <WhatsAppButton />
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-white">
+      <Header />
+
+      <section className="bg-[#F8FAFC] pt-16 pb-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
+
+          {/* Header */}
+          <div className="max-w-3xl mb-12">
+            <p className="text-xs font-bold uppercase tracking-widest text-[#0A6FF7] mb-3">
+              TUTOR REGISTRATION
+            </p>
+
+            <h1
+              className="text-4xl sm:text-5xl font-bold text-[#0D1118] mb-5"
+              style={{ letterSpacing: "-0.025em" }}
+            >
+              Join TutorWave as a tutor.
+            </h1>
+
+            <p className="text-lg text-[#6B7280] leading-relaxed">
+              Tell us about yourself, the classes and subjects you teach, and
+              the areas where you are available.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-10 items-start">
+
+            {/* LEFT INFORMATION */}
+            <div className="space-y-8">
+
+              <div className="flex gap-5">
+                <div className="w-12 h-12 rounded-full bg-[#0A6FF7] text-white flex items-center justify-center font-bold flex-shrink-0">
+                  01
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-[#0D1118] mb-2">
+                    Create your profile
+                  </h3>
+
+                  <p className="text-[#6B7280] leading-relaxed">
+                    Share your basic information and teaching preferences.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-5">
+                <div className="w-12 h-12 rounded-full bg-[#0A6FF7] text-white flex items-center justify-center font-bold flex-shrink-0">
+                  02
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-[#0D1118] mb-2">
+                    Tell us what you teach
+                  </h3>
+
+                  <p className="text-[#6B7280] leading-relaxed">
+                    Add different class and subject combinations. For example,
+                    Classes 1–8 → All Subjects and Classes 9–10 → Mathematics
+                    & Science.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-5">
+                <div className="w-12 h-12 rounded-full bg-[#0A6FF7] text-white flex items-center justify-center font-bold flex-shrink-0">
+                  03
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-[#0D1118] mb-2">
+                    Get matched with opportunities
+                  </h3>
+
+                  <p className="text-[#6B7280] leading-relaxed">
+                    Our team reviews your profile and contacts you when
+                    suitable tuition opportunities are available.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-6 rounded-2xl bg-white border border-[#E5E7EB]">
+                <h3 className="font-bold text-[#0D1118] mb-4">
+                  What we collect
+                </h3>
+
+                <ul className="space-y-3 text-sm text-[#6B7280]">
+                  <li>✓ Your academic and teaching background</li>
+                  <li>✓ Classes and subjects you can teach</li>
+                  <li>✓ Preferred teaching areas</li>
+                  <li>✓ Board and language preferences</li>
+                  <li>✓ Home and online teaching availability</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* FORM */}
+            <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 sm:p-8 shadow-sm">
+
+              {/* Progress */}
+              <div className="flex items-center mb-10">
+                {[1, 2, 3].map((number) => (
+                  <React.Fragment key={number}>
+                    <div
+                      className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold ${
+                        step >= number
+                          ? "bg-[#0A6FF7] text-white"
+                          : "bg-[#E5E7EB] text-[#6B7280]"
+                      }`}
+                    >
+                      {number}
+                    </div>
+
+                    {number < 3 && (
+                      <div
+                        className={`flex-1 h-[2px] ${
+                          step > number
+                            ? "bg-[#0A6FF7]"
+                            : "bg-[#E5E7EB]"
+                        }`}
+                      />
+                    )}
+                  </React.Fragment>
+                )}
+              </div>
+
+              <form onSubmit={handleSubmit}>
+
+                {/* STEP 1 */}
+                {step === 1 && (
+                  <div>
+                    <h2 className="text-2xl font-bold text-[#0D1118] mb-2">
+                      Basic details
+                    </h2>
+
+                    <p className="text-sm text-[#6B7280] mb-7">
+                      Let&apos;s start with a few basic details.
+                    </p>
+
+                    <div className="space-y-5">
+
+                      <Field
+                        label="Full Name"
+                        required
+                        value={formData.fullName}
+                        placeholder="Enter your full name"
+                        onChange={(value) =>
+                          updateField("fullName", value)
+                        }
+                      />
+
+                      <Field
+                        label="Phone Number"
+                        required
+                        type="tel"
+                        value={formData.phone}
+                        placeholder="10-digit mobile number"
+                        onChange={(value) =>
+                          updateField("phone", value)
+                        }
+                      />
+
+                      <Field
+                        label="Email"
+                        type="email"
+                        value={formData.email}
+                        placeholder="Your email address"
+                        onChange={(value) =>
+                          updateField("email", value)
+                        }
+                      />
+
+                      <Field
+                        label="Age"
+                        required
+                        type="number"
+                        value={formData.age}
+                        placeholder="Your age"
+                        onChange={(value) =>
+                          updateField("age", value)
+                        }
+                      />
+
+                      <Field
+                        label="Current Address"
+                        value={formData.address}
+                        placeholder="Area / locality"
+                        onChange={(value) =>
+                          updateField("address", value)
+                        }
+                      />
+
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={nextStep}
+                      className="w-full mt-7 py-4 rounded-xl bg-[#0A6FF7] text-white font-bold hover:opacity-90 transition"
+                    >
+                      Continue →
+                    </button>
+                  </div>
+                )}
+
+                {/* STEP 2 */}
+                {step === 2 && (
+                  <div>
+                    <h2 className="text-2xl font-bold text-[#0D1118] mb-2">
+                      Teaching profile
+                    </h2>
+
+                    <p className="text-sm text-[#6B7280] mb-7">
+                      Select exactly what you are comfortable teaching.
+                    </p>
+
+                    <div className="space-y-6">
+
+                      {teachingCombinations.map((combination, index) => (
+                        <div
+                          key={index}
+                          className="p-5 bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl"
+                        >
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-bold text-[#0D1118]">
+                              Teaching combination {index + 1}
+                            </h3>
+
+                            {teachingCombinations.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeCombination(index)}
+                                className="text-sm text-red-500 hover:underline"
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
+
+                          <label className="block text-sm font-semibold text-[#0D1118] mb-2">
+                            Classes
+                          </label>
+
+                          <select
+                            value={combination.classes}
+                            onChange={(e) =>
+                              updateCombination(
+                                index,
+                                "classes",
+                                e.target.value
+                              )
+                            }
+                            className="w-full h-12 rounded-xl border border-[#E5E7EB] px-4 bg-white text-[#0D1118] outline-none focus:border-[#0A6FF7]"
+                          >
+                            <option value="">
+                              Select class range
+                            </option>
+                            <option value="Nursery–UKG">
+                              Nursery–UKG
+                            </option>
+                            <option value="Class 1–5">
+                              Class 1–5
+                            </option>
+                            <option value="Class 1–8">
+                              Class 1–8
+                            </option>
+                            <option value="Class 6–8">
+                              Class 6–8
+                            </option>
+                            <option value="Class 9–10">
+                              Class 9–10
+                            </option>
+                            <option value="Class 11–12">
+                              Class 11–12
+                            </option>
+                            <option value="Class 1–10">
+                              Class 1–10
+                            </option>
+                            <option value="Class 1–12">
+                              Class 1–12
+                            </option>
+                          </select>
+
+                          <label className="block text-sm font-semibold text-[#0D1118] mt-5 mb-2">
+                            Subjects
+                          </label>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            {subjectOptions.map((subject) => (
+                              <button
+                                key={subject}
+                                type="button"
+                                onClick={() =>
+                                  toggleSubject(index, subject)
+                                }
+                                className={`text-left px-3 py-2.5 rounded-lg border text-sm transition ${
+                                  combination.subjects.includes(subject)
+                                    ? "border-[#0A6FF7] bg-[#EBF4FF] text-[#0A6FF7] font-semibold"
+                                    : "border-[#E5E7EB] bg-white text-[#6B7280]"
+                                }`}
+                              >
+                                {combination.subjects.includes(subject)
+                                  ? "✓ "
+                                  : ""}
+                                {subject}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+
+                      <button
+                        type="button"
+                        onClick={addCombination}
+                        className="w-full py-3 rounded-xl border border-dashed border-[#0A6FF7] text-[#0A6FF7] font-semibold hover:bg-[#EBF4FF] transition"
+                      >
+                        + Add another class & subject combination
+                      </button>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-[#0D1118] mb-3">
+                          Boards you can teach
+                        </label>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          {boardOptions.map((board) => (
+                            <button
+                              type="button"
+                              key={board}
+                              onClick={() => toggleBoard(board)}
+                              className={`px-3 py-2.5 rounded-lg border text-sm ${
+                                formData.boards.includes(board)
+                                  ? "border-[#0A6FF7] bg-[#EBF4FF] text-[#0A6FF7] font-semibold"
+                                  : "border-[#E5E7EB] text-[#6B7280]"
+                              }`}
+                            >
+                              {formData.boards.includes(board)
+                                ? "✓ "
+                                : ""}
+                              {board}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                    </div>
+
+                    <div className="flex gap-3 mt-7">
+                      <button
+                        type="button"
+                        onClick={previousStep}
+                        className="w-1/3 py-4 rounded-xl border border-[#E5E7EB] font-semibold text-[#0D1118]"
+                      >
+                        Back
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={nextStep}
+                        className="flex-1 py-4 rounded-xl bg-[#0A6FF7] text-white font-bold"
+                      >
+                        Continue →
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* STEP 3 */}
+                {step === 3 && (
+                  <div>
+                    <h2 className="text-2xl font-bold text-[#0D1118] mb-2">
+                      Experience & availability
+                    </h2>
+
+                    <p className="text-sm text-[#6B7280] mb-7">
+                      A few final details to help us match you with suitable
+                      opportunities.
+                    </p>
+
+                    <div className="space-y-5">
+
+                      <Field
+                        label="Qualification"
+                        value={formData.qualification}
+                        placeholder="e.g. B.Sc. Mathematics"
+                        onChange={(value) =>
+                          updateField("qualification", value)
+                        }
+                      />
+
+                      <Field
+                        label="Stream / Specialisation"
+                        value={formData.stream}
+                        placeholder="e.g. Mathematics, Physics"
+                        onChange={(value) =>
+                          updateField("stream", value)
+                        }
+                      />
+
+                      <Field
+                        label="Schooling From"
+                        value={formData.schoolingFrom}
+                        placeholder="School name"
+                        onChange={(value) =>
+                          updateField("schoolingFrom", value)
+                        }
+                      />
+
+                      <Field
+                        label="College / University"
+                        value={formData.college}
+                        placeholder="College / University name"
+                        onChange={(value) =>
+                          updateField("college", value)
+                        }
+                      />
+
+                      <div>
+                        <label className="block text-sm font-semibold text-[#0D1118] mb-2">
+                          Teaching Experience
+                        </label>
+
+                        <select
+                          value={formData.teachingExperience}
+                          onChange={(e) =>
+                            updateField(
+                              "teachingExperience",
+                              e.target.value
+                            )
+                          }
+                          className="w-full h-12 rounded-xl border border-[#E5E7EB] px-4 bg-white"
+                        >
+                          <option value="">
+                            Select experience
+                          </option>
+
+                          {experienceOptions.map((item) => (
+                            <option key={item} value={item}>
+                              {item}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <Field
+                        label="School Teaching Experience"
+                        value={formData.schoolExperience}
+                        placeholder="School / coaching experience, if any"
+                        onChange={(value) =>
+                          updateField("schoolExperience", value)
+                        }
+                      />
+
+                      <Field
+                        label="Students / Schools Taught From"
+                        value={formData.studentsTaughtFrom}
+                        placeholder="Optional"
+                        onChange={(value) =>
+                          updateField(
+                            "studentsTaughtFrom",
+                            value
+                          )
+                        }
+                      />
+
+                      <div>
+                        <label className="block text-sm font-semibold text-[#0D1118] mb-2">
+                          English Fluency
+                        </label>
+
+                        <select
+                          value={formData.englishFluency}
+                          onChange={(e) =>
+                            updateField(
+                              "englishFluency",
+                              e.target.value
+                            )
+                          }
+                          className="w-full h-12 rounded-xl border border-[#E5E7EB] px-4 bg-white"
+                        >
+                          <option value="">
+                            Select level
+                          </option>
+
+                          {fluencyOptions.map((item) => (
+                            <option key={item} value={item}>
+                              {item}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <Field
+                        label="Preferred Offline Teaching Areas"
+                        value={formData.offlineAreas}
+                        placeholder="e.g. Sector 44, Sector 50, Noida"
+                        onChange={(value) =>
+                          updateField("offlineAreas", value)
+                        }
+                      />
+
+                      <div>
+                        <label className="block text-sm font-semibold text-[#0D1118] mb-3">
+                          Teaching Mode
+                        </label>
+
+                        <div className="flex gap-3">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateField(
+                                "homeTuitionAvailable",
+                                !formData.homeTuitionAvailable
+                              )
+                            }
+                            className={`flex-1 py-3 rounded-xl border ${
+                              formData.homeTuitionAvailable
+                                ? "border-[#0A6FF7] bg-[#EBF4FF] text-[#0A6FF7] font-semibold"
+                                : "border-[#E5E7EB]"
+                            }`}
+                          >
+                            🏠 Home Tuition
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateField(
+                                "onlineAvailable",
+                                !formData.onlineAvailable
+                              )
+                            }
+                            className={`flex-1 py-3 rounded-xl border ${
+                              formData.onlineAvailable
+                                ? "border-[#0A6FF7] bg-[#EBF4FF] text-[#0A6FF7] font-semibold"
+                                : "border-[#E5E7EB]"
+                            }`}
+                          >
+                            💻 Online
+                          </button>
+                        </div>
+                      </div>
+
+                    </div>
+
+                    <div className="flex gap-3 mt-7">
+                      <button
+                        type="button"
+                        onClick={previousStep}
+                        className="w-1/3 py-4 rounded-xl border border-[#E5E7EB] font-semibold text-[#0D1118]"
+                      >
+                        Back
+                      </button>
+
+                      <button
+                        type="submit"
+                        disabled={submitting}
+                        className="flex-1 py-4 rounded-xl bg-[#0A6FF7] text-white font-bold disabled:opacity-60"
+                      >
+                        {submitting
+                          ? "Submitting..."
+                          : "Submit Registration →"}
+                      </button>
+                    </div>
+
+                    <p className="text-xs text-center text-[#9CA3AF] mt-4">
+                      Our team will review your profile and contact you
+                      regarding suitable opportunities.
+                    </p>
+                  </div>
+                )}
+
+              </form>
+            </div>
           </div>
         </div>
       </section>
+
       <Footer />
       <WhatsAppButton />
     </main>
+  );
+}
+
+
+/* Reusable input component */
+
+function Field({
+  label,
+  value,
+  placeholder,
+  onChange,
+  required = false,
+  type = "text",
+}: {
+  label: string;
+  value: string;
+  placeholder: string;
+  onChange: (value: string) => void;
+  required?: boolean;
+  type?: string;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-semibold text-[#0D1118] mb-2">
+        {label}
+        {required && <span className="text-red-500"> *</span>}
+      </label>
+
+      <input
+        type={type}
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full h-12 rounded-xl border border-[#E5E7EB] px-4 text-[#0D1118] placeholder:text-[#9CA3AF] outline-none focus:border-[#0A6FF7] focus:ring-1 focus:ring-[#0A6FF7]"
+      />
+    </div>
   );
 }
