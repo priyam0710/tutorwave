@@ -505,6 +505,7 @@ export default function TutorRegistrationForm() {
 
               <SelectField
                 label="Gender"
+                required
                 placeholder="Select gender"
                 value={formData.personal.gender}
                 options={[
@@ -549,6 +550,7 @@ export default function TutorRegistrationForm() {
 
             <TextAreaField
               label="Current Address"
+              required
               placeholder="Enter your current address"
               value={formData.personal.address}
               onChange={(value) =>
@@ -609,6 +611,7 @@ export default function TutorRegistrationForm() {
 
             <InputField
               label="Schooling From"
+              required
               placeholder="School name"
               value={
                 formData.education
@@ -624,6 +627,7 @@ export default function TutorRegistrationForm() {
 
             <InputField
               label="College / University"
+              required
               placeholder="College or university name"
               value={
                 formData.education.college
