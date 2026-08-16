@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import WhatsAppButton from '@/app/components/WhatsAppButton';
-import TutorRegistrationForm from './TutorRegistrationForm';
+import TutorRegistrationForm from '@/app/become-a-tutor/components/TutorRegistrationForm';
 
 export const metadata: Metadata = {
   title: 'Become a Tutor — TutorWave',
