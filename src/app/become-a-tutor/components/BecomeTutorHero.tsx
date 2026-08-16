@@ -52,7 +52,7 @@ export default function BecomeTutorHero() {
               </svg>
             </a>
             <a
-              href="https://wa.me/919999000000?text=Hi%20TutorWave%2C%20I%20am%20interested%20in%20joining%20as%20a%20tutor"
+              href="https://wa.me/918588879239?text=Hi%20TutorWave%2C%20I%20am%20interested%20in%20joining%20as%20a%20tutor"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-white border border-white/40 hover:border-white/70 hover:bg-white/10 transition-all duration-300 min-h-[52px]"
