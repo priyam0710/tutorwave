@@ -22,9 +22,11 @@ const classOptions = [
   'Class 12',
   'IIT-JEE',
   'NEET',
+  'Other',
 ];
 
 const subjectOptions = [
+  'All Subjects',
   'Mathematics',
   'Science',
   'Physics',
@@ -46,7 +48,6 @@ const subjectOptions = [
 const boardOptions = [
   'CBSE',
   'ICSE',
-  'ISC',
   'IB',
   'IGCSE',
   'State Board',
@@ -67,11 +68,11 @@ const genderOptions = [
 ];
 
 const classesPerWeekOptions = [
-  '1 class',
   '2 classes',
   '3 classes',
   '4 classes',
-  '5+ classes',
+  '5 classes',
+  '6 classes',
 ];
 
 const timeOptions = [
