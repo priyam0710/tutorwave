@@ -596,6 +596,7 @@ export default function TutorRegistrationForm() {
 
             <InputField
               label="Qualification / Stream"
+              required
               placeholder="e.g. B.Sc. Mathematics, B.Tech CSE"
               value={formData.education.stream}
               onChange={(value) =>
