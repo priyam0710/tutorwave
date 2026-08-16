@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 
-type TutorFormData = {
+type FormData = {
   personal: {
     fullName: string;
     age: string;
@@ -22,7 +22,6 @@ type TutorFormData = {
 
   teaching: {
     experience: string;
-    englishFluency: string;
     schoolExperience: string;
     studentsTaughtFrom: string;
     boards: string[];
@@ -36,6 +35,8 @@ type TutorFormData = {
 
     seniorSecondaryClasses: string[];
     seniorSecondarySubjects: string[];
+
+    englishFluency: string;
   };
 
   preferences: {
@@ -46,7 +47,7 @@ type TutorFormData = {
   };
 };
 
-const initialFormData: TutorFormData = {
+const initialFormData: FormData = {
   personal: {
     fullName: '',
     age: '',
@@ -66,7 +67,6 @@ const initialFormData: TutorFormData = {
 
   teaching: {
     experience: '',
-    englishFluency: '',
     schoolExperience: '',
     studentsTaughtFrom: '',
     boards: [],
@@ -80,6 +80,8 @@ const initialFormData: TutorFormData = {
 
     seniorSecondaryClasses: [],
     seniorSecondarySubjects: [],
+
+    englishFluency: '',
   },
 
   preferences: {
@@ -89,10 +91,6 @@ const initialFormData: TutorFormData = {
     studentTypes: [],
   },
 };
-
-/* =========================================================
-   OPTIONS
-========================================================= */
 
 const primaryClasses = [
   'Nursery',
@@ -171,25 +169,17 @@ const studentTypes = [
   'Competitive Exam Students',
 ];
 
-/* =========================================================
-   MAIN COMPONENT
-========================================================= */
-
 export default function TutorRegistrationForm() {
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
 
   const [formData, setFormData] =
-    useState<TutorFormData>(initialFormData);
+    useState<FormData>(initialFormData);
 
   const totalSteps = 5;
 
-  /* =======================================================
-     UPDATE FUNCTIONS
-  ======================================================= */
-
   const updatePersonal = (
-    field: keyof TutorFormData['personal'],
+    field: keyof FormData['personal'],
     value: string
   ) => {
     setFormData((prev) => ({
@@ -202,7 +192,7 @@ export default function TutorRegistrationForm() {
   };
 
   const updateEducation = (
-    field: keyof TutorFormData['education'],
+    field: keyof FormData['education'],
     value: string
   ) => {
     setFormData((prev) => ({
@@ -215,11 +205,11 @@ export default function TutorRegistrationForm() {
   };
 
   const updateTeaching = (
-    field: keyof TutorFormData['teaching'],
+    field: keyof FormData['teaching'],
     value:
       | string
-      | string[]
       | boolean
+      | string[]
   ) => {
     setFormData((prev) => ({
       ...prev,
@@ -231,7 +221,7 @@ export default function TutorRegistrationForm() {
   };
 
   const updatePreferences = (
-    field: keyof TutorFormData['preferences'],
+    field: keyof FormData['preferences'],
     value: string | string[]
   ) => {
     setFormData((prev) => ({
@@ -243,98 +233,38 @@ export default function TutorRegistrationForm() {
     }));
   };
 
-  /* =======================================================
-     ARRAY TOGGLE
-  ======================================================= */
-
-  const toggleTeachingArray = (
-    field:
-      | 'boards'
-      | 'primaryClasses'
-      | 'primarySubjects'
-      | 'secondaryClasses'
-      | 'secondarySubjects'
-      | 'seniorSecondaryClasses'
-      | 'seniorSecondarySubjects',
+  const toggleArrayValue = (
+    section: 'teaching' | 'preferences',
+    field: string,
     value: string
   ) => {
     setFormData((prev) => {
-      const current = prev.teaching[field];
+      const currentSection = prev[section] as Record<
+        string,
+        unknown
+      >;
 
-      const updated = current.includes(value)
-        ? current.filter((item) => item !== value)
-        : [...current, value];
+      const currentValues = Array.isArray(
+        currentSection[field]
+      )
+        ? (currentSection[field] as string[])
+        : [];
 
-      return {
-        ...prev,
-        teaching: {
-          ...prev.teaching,
-          [field]: updated,
-        },
-      };
-    });
-  };
-
-  const togglePreferenceArray = (
-    field:
-      | 'teachingMode'
-      | 'availability'
-      | 'studentTypes',
-    value: string
-  ) => {
-    setFormData((prev) => {
-      const current = prev.preferences[field];
-
-      /*
-       * Teaching mode:
-       * "Both" is exclusive.
-       */
-      if (field === 'teachingMode') {
-        if (value === 'Both') {
-          return {
-            ...prev,
-            preferences: {
-              ...prev.preferences,
-              teachingMode:
-                current.includes('Both') ? [] : ['Both'],
-            },
-          };
-        }
-
-        const withoutBoth = current.filter(
-          (item) => item !== 'Both'
-        );
-
-        const updated = withoutBoth.includes(value)
-          ? withoutBoth.filter((item) => item !== value)
-          : [...withoutBoth, value];
-
-        return {
-          ...prev,
-          preferences: {
-            ...prev.preferences,
-            teachingMode: updated,
-          },
-        };
-      }
-
-      const updated = current.includes(value)
-        ? current.filter((item) => item !== value)
-        : [...current, value];
+      const updatedValues = currentValues.includes(value)
+        ? currentValues.filter(
+            (item) => item !== value
+          )
+        : [...currentValues, value];
 
       return {
         ...prev,
-        preferences: {
-          ...prev.preferences,
-          [field]: updated,
+        [section]: {
+          ...currentSection,
+          [field]: updatedValues,
         },
-      };
+      } as FormData;
     });
   };
-
-  /* =======================================================
-     PRIMARY ALL SUBJECTS
-  ======================================================= */
 
   const togglePrimaryAllSubjects = () => {
     setFormData((prev) => ({
@@ -343,7 +273,6 @@ export default function TutorRegistrationForm() {
         ...prev.teaching,
         primaryAllSubjects:
           !prev.teaching.primaryAllSubjects,
-
         primarySubjects:
           !prev.teaching.primaryAllSubjects
             ? []
@@ -352,36 +281,24 @@ export default function TutorRegistrationForm() {
     }));
   };
 
-  /* =======================================================
-     VALIDATION
-  ======================================================= */
-
   const validateStep = () => {
     if (step === 1) {
       if (
         !formData.personal.fullName.trim() ||
-        !formData.personal.age.trim() ||
-        !formData.personal.phone.trim()
+        !formData.personal.phone.trim() ||
+        !formData.personal.age.trim()
       ) {
         alert(
           'Please fill in your name, age and phone number.'
         );
         return false;
       }
-
-      if (
-        formData.personal.phone.replace(/\D/g, '').length !==
-        10
-      ) {
-        alert(
-          'Please enter a valid 10-digit mobile number.'
-        );
-        return false;
-      }
     }
 
     if (step === 2) {
-      if (!formData.education.highestQualification) {
+      if (
+        !formData.education.highestQualification
+      ) {
         alert(
           'Please select your highest qualification.'
         );
@@ -390,40 +307,22 @@ export default function TutorRegistrationForm() {
     }
 
     if (step === 3) {
-      const hasPrimary =
-        formData.teaching.primaryClasses.length > 0;
+      const hasAnyClass =
+        formData.teaching.primaryClasses.length > 0 ||
+        formData.teaching.secondaryClasses.length > 0 ||
+        formData.teaching.seniorSecondaryClasses.length >
+          0;
 
-      const hasSecondary =
-        formData.teaching.secondaryClasses.length > 0;
-
-      const hasSenior =
-        formData.teaching.seniorSecondaryClasses.length > 0;
-
-      const hasPrimarySubject =
+      const hasAnySubject =
         formData.teaching.primaryAllSubjects ||
-        formData.teaching.primarySubjects.length > 0;
+        formData.teaching.primarySubjects.length > 0 ||
+        formData.teaching.secondarySubjects.length > 0 ||
+        formData.teaching.seniorSecondarySubjects
+          .length > 0;
 
-      const hasSecondarySubject =
-        formData.teaching.secondarySubjects.length > 0;
-
-      const hasSeniorSubject =
-        formData.teaching.seniorSecondarySubjects.length > 0;
-
-      const hasValidSection =
-        (hasPrimary && hasPrimarySubject) ||
-        (hasSecondary && hasSecondarySubject) ||
-        (hasSenior && hasSeniorSubject);
-
-      if (!hasValidSection) {
+      if (!hasAnyClass || !hasAnySubject) {
         alert(
-          'Please select at least one class and the subjects you can teach for that class.'
-        );
-        return false;
-      }
-
-      if (!formData.teaching.experience) {
-        alert(
-          'Please select your teaching experience.'
+          'Please select at least one class and one subject you can teach.'
         );
         return false;
       }
@@ -434,7 +333,7 @@ export default function TutorRegistrationForm() {
         formData.preferences.teachingMode.length === 0
       ) {
         alert(
-          'Please select your preferred teaching mode.'
+          'Please select at least one teaching mode.'
         );
         return false;
       }
@@ -443,15 +342,11 @@ export default function TutorRegistrationForm() {
     return true;
   };
 
-  /* =======================================================
-     NAVIGATION
-  ======================================================= */
-
   const nextStep = () => {
     if (!validateStep()) return;
 
     if (step < totalSteps) {
-      setStep((prev) => prev + 1);
+      setStep(step + 1);
 
       window.scrollTo({
         top: 0,
@@ -462,7 +357,7 @@ export default function TutorRegistrationForm() {
 
   const previousStep = () => {
     if (step > 1) {
-      setStep((prev) => prev - 1);
+      setStep(step - 1);
 
       window.scrollTo({
         top: 0,
@@ -471,92 +366,11 @@ export default function TutorRegistrationForm() {
     }
   };
 
-  /* =======================================================
-     CRM-READY SUBMISSION
-  ======================================================= */
-
   const handleSubmit = () => {
-    /*
-     * IMPORTANT:
-     *
-     * This object is intentionally structured for future CRM
-     * integration.
-     *
-     * Later, your backend can send this entire object to:
-     *
-     * POST /api/tutors
-     *
-     * or directly map these fields into your CRM.
-     */
-
-    const crmPayload = {
-      source: 'TutorWave Website',
-      leadType: 'Tutor Registration',
-
-      personal: formData.personal,
-
-      education: formData.education,
-
-      teaching: {
-        experience: formData.teaching.experience,
-        englishFluency:
-          formData.teaching.englishFluency,
-        schoolExperience:
-          formData.teaching.schoolExperience,
-        studentsTaughtFrom:
-          formData.teaching.studentsTaughtFrom,
-
-        boards: formData.teaching.boards,
-
-        nurseryToClass8: {
-          classes:
-            formData.teaching.primaryClasses,
-          subjects:
-            formData.teaching.primaryAllSubjects
-              ? ['All Subjects']
-              : formData.teaching.primarySubjects,
-        },
-
-        class9To10: {
-          classes:
-            formData.teaching.secondaryClasses,
-          subjects:
-            formData.teaching.secondarySubjects,
-        },
-
-        class11To12: {
-          classes:
-            formData.teaching
-              .seniorSecondaryClasses,
-          subjects:
-            formData.teaching
-              .seniorSecondarySubjects,
-        },
-      },
-
-      preferences: formData.preferences,
-
-      submittedAt: new Date().toISOString(),
-    };
-
     console.log(
-      'TutorWave CRM Payload:',
-      crmPayload
+      'Tutor Registration:',
+      formData
     );
-
-    /*
-     * FUTURE CRM CONNECTION:
-     *
-     * const response = await fetch('/api/tutors', {
-     *   method: 'POST',
-     *   headers: {
-     *     'Content-Type': 'application/json',
-     *   },
-     *   body: JSON.stringify(crmPayload),
-     * });
-     *
-     * DO NOT add this until the backend/API endpoint exists.
-     */
 
     setSubmitted(true);
 
@@ -566,16 +380,10 @@ export default function TutorRegistrationForm() {
     });
   };
 
-  /* =======================================================
-     SUCCESS SCREEN
-  ======================================================= */
-
   if (submitted) {
     return (
       <div className="bg-white border border-[#E5E7EB] rounded-3xl p-8 sm:p-10 shadow-sm text-center">
-
         <div className="w-16 h-16 rounded-full bg-[#E8F7F1] text-[#0C8F81] flex items-center justify-center mx-auto mb-6">
-
           <svg
             width="28"
             height="28"
@@ -588,7 +396,6 @@ export default function TutorRegistrationForm() {
           >
             <path d="M20 6L9 17l-5-5" />
           </svg>
-
         </div>
 
         <h2 className="text-2xl font-bold text-[#0D1118] mb-3">
@@ -612,87 +419,57 @@ export default function TutorRegistrationForm() {
         >
           Register Another Profile
         </button>
-
       </div>
     );
   }
-
-  /* =======================================================
-     FORM
-  ======================================================= */
 
   return (
     <div className="bg-white border border-[#E5E7EB] rounded-3xl shadow-sm overflow-hidden">
 
       {/* HEADER */}
-
       <div className="p-6 sm:p-8 border-b border-[#E5E7EB]">
-
         <div className="flex items-center justify-between mb-5">
-
           <div>
-
             <p className="text-xs font-bold uppercase tracking-widest text-[#0A6FF7] mb-1">
               TUTOR REGISTRATION
             </p>
 
             <h2 className="text-xl sm:text-2xl font-bold text-[#0D1118]">
-
               {step === 1 && 'Personal Details'}
-
               {step === 2 && 'Education'}
-
               {step === 3 && 'Teaching Profile'}
-
               {step === 4 && 'Teaching Preferences'}
-
               {step === 5 && 'Review & Submit'}
-
             </h2>
-
           </div>
 
           <div className="text-sm text-[#6B7280] font-medium">
             {step} / {totalSteps}
           </div>
-
         </div>
 
-        {/* PROGRESS */}
-
         <div className="flex gap-2">
-
           {Array.from({
             length: totalSteps,
           }).map((_, index) => (
-
             <div
               key={index}
-              className={`h-1.5 rounded-full flex-1 transition-all ${
+              className={`h-1.5 rounded-full flex-1 ${
                 index + 1 <= step
                   ? 'bg-[#0A6FF7]'
                   : 'bg-[#E5E7EB]'
               }`}
             />
-
           ))}
-
         </div>
-
       </div>
 
-      {/* CONTENT */}
-
+      {/* FORM CONTENT */}
       <div className="p-6 sm:p-8">
 
-        {/* =================================================
-            STEP 1 — PERSONAL
-        ================================================= */}
-
+        {/* STEP 1 */}
         {step === 1 && (
-
           <div className="space-y-6">
-
             <p className="text-[#6B7280]">
               Let&apos;s start with a few basic details
               about you.
@@ -712,7 +489,6 @@ export default function TutorRegistrationForm() {
             />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-
               <InputField
                 label="Age"
                 required
@@ -744,7 +520,6 @@ export default function TutorRegistrationForm() {
                   )
                 }
               />
-
             </div>
 
             <InputField
@@ -785,19 +560,12 @@ export default function TutorRegistrationForm() {
                 )
               }
             />
-
           </div>
-
         )}
 
-        {/* =================================================
-            STEP 2 — EDUCATION
-        ================================================= */}
-
+        {/* STEP 2 */}
         {step === 2 && (
-
           <div className="space-y-6">
-
             <p className="text-[#6B7280]">
               Tell us about your academic background.
             </p>
@@ -831,9 +599,7 @@ export default function TutorRegistrationForm() {
             <InputField
               label="Qualification / Stream"
               placeholder="e.g. B.Sc. Mathematics, B.Tech CSE"
-              value={
-                formData.education.stream
-              }
+              value={formData.education.stream}
               onChange={(value) =>
                 updateEducation(
                   'stream',
@@ -885,35 +651,25 @@ export default function TutorRegistrationForm() {
                 )
               }
             />
-
           </div>
-
         )}
 
-        {/* =================================================
-            STEP 3 — TEACHING PROFILE
-        ================================================= */}
-
+        {/* STEP 3 */}
         {step === 3 && (
-
-          <div className="space-y-7">
-
+          <div className="space-y-8">
             <p className="text-[#6B7280]">
               Tell us exactly what you are comfortable
               teaching.
             </p>
 
             {/* EXPERIENCE */}
-
             <div>
-
               <FieldLabel
                 label="Teaching Experience"
                 required
               />
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-
                 {[
                   'Fresher',
                   '1–2 Years',
@@ -921,7 +677,6 @@ export default function TutorRegistrationForm() {
                   '5–10 Years',
                   '10+ Years',
                 ].map((item) => (
-
                   <ChoiceButton
                     key={item}
                     label={item}
@@ -936,28 +691,21 @@ export default function TutorRegistrationForm() {
                       )
                     }
                   />
-
                 ))}
-
               </div>
-
             </div>
 
             {/* ENGLISH */}
-
             <div>
-
               <FieldLabel label="English Fluency" />
 
               <div className="grid grid-cols-2 gap-3">
-
                 {[
                   'Basic',
                   'Conversational',
                   'Fluent',
                   'Highly Fluent',
                 ].map((item) => (
-
                   <ChoiceButton
                     key={item}
                     label={item}
@@ -972,23 +720,16 @@ export default function TutorRegistrationForm() {
                       )
                     }
                   />
-
                 ))}
-
               </div>
-
             </div>
 
             {/* SCHOOL EXPERIENCE */}
-
             <div>
-
               <FieldLabel label="School / Coaching Experience" />
 
               <div className="grid grid-cols-2 gap-3">
-
                 {['Yes', 'No'].map((item) => (
-
                   <ChoiceButton
                     key={item}
                     label={item}
@@ -1003,11 +744,8 @@ export default function TutorRegistrationForm() {
                       )
                     }
                   />
-
                 ))}
-
               </div>
-
             </div>
 
             <TextAreaField
@@ -1026,105 +764,87 @@ export default function TutorRegistrationForm() {
             />
 
             {/* BOARDS */}
-
             <div>
-
               <FieldLabel label="Boards / Curricula You Can Teach" />
 
               <div className="flex flex-wrap gap-2">
-
                 {boards.map((board) => (
-
                   <Chip
                     key={board}
                     label={board}
-                    selected={
-                      formData.teaching
-                        .boards.includes(board)
-                    }
+                    selected={formData.teaching.boards.includes(
+                      board
+                    )}
                     onClick={() =>
-                      toggleTeachingArray(
+                      toggleArrayValue(
+                        'teaching',
                         'boards',
                         board
                       )
                     }
                   />
-
                 ))}
-
               </div>
-
             </div>
 
             {/* PRIMARY */}
-
             <TeachingLevelCard
               title="Nursery – Class 8"
               description="Select the classes and subjects you can teach."
-
               classes={primaryClasses}
               selectedClasses={
                 formData.teaching.primaryClasses
               }
-
               subjects={primarySubjects}
               selectedSubjects={
                 formData.teaching.primarySubjects
               }
-
               allSubjects={
                 formData.teaching
                   .primaryAllSubjects
               }
-
               onClassToggle={(item) =>
-                toggleTeachingArray(
+                toggleArrayValue(
+                  'teaching',
                   'primaryClasses',
                   item
                 )
               }
-
               onSubjectToggle={(item) =>
-                toggleTeachingArray(
+                toggleArrayValue(
+                  'teaching',
                   'primarySubjects',
                   item
                 )
               }
-
               onAllSubjectsToggle={
                 togglePrimaryAllSubjects
               }
-
               showAllSubjects
             />
 
             {/* SECONDARY */}
-
             <TeachingLevelCard
               title="Class 9 – Class 10"
-              description="Select the classes and subjects separately."
-
+              description="Select classes and subjects separately."
               classes={secondaryClasses}
               selectedClasses={
-                formData.teaching
-                  .secondaryClasses
+                formData.teaching.secondaryClasses
               }
-
               subjects={secondarySubjects}
               selectedSubjects={
-                formData.teaching
-                  .secondarySubjects
+                formData.teaching.secondarySubjects
               }
-
               onClassToggle={(item) =>
-                toggleTeachingArray(
+                toggleArrayValue(
+                  'teaching',
                   'secondaryClasses',
                   item
                 )
               }
-
               onSubjectToggle={(item) =>
-                toggleTeachingArray(
+                toggleArrayValue(
+                  'teaching',
                   'secondarySubjects',
                   item
                 )
@@ -1132,104 +852,76 @@ export default function TutorRegistrationForm() {
             />
 
             {/* SENIOR SECONDARY */}
-
             <TeachingLevelCard
               title="Class 11 – Class 12"
-              description="Select the classes and subjects separately."
-
-              classes={
-                seniorSecondaryClasses
-              }
-
+              description="Select classes and subjects separately."
+              classes={seniorSecondaryClasses}
               selectedClasses={
                 formData.teaching
                   .seniorSecondaryClasses
               }
-
-              subjects={
-                seniorSecondarySubjects
-              }
-
+              subjects={seniorSecondarySubjects}
               selectedSubjects={
                 formData.teaching
                   .seniorSecondarySubjects
               }
-
               onClassToggle={(item) =>
-                toggleTeachingArray(
+                toggleArrayValue(
+                  'teaching',
                   'seniorSecondaryClasses',
                   item
                 )
               }
-
               onSubjectToggle={(item) =>
-                toggleTeachingArray(
+                toggleArrayValue(
+                  'teaching',
                   'seniorSecondarySubjects',
                   item
                 )
               }
             />
-
           </div>
-
         )}
 
-        {/* =================================================
-            STEP 4 — PREFERENCES
-        ================================================= */}
-
+        {/* STEP 4 */}
         {step === 4 && (
-
-          <div className="space-y-7">
-
+          <div className="space-y-8">
             <p className="text-[#6B7280]">
               Tell us where, when and how you would
               prefer to teach.
             </p>
 
-            {/* MODE */}
-
             <div>
-
               <FieldLabel
                 label="Teaching Mode"
                 required
               />
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-
                 {[
                   'Home Tuition',
                   'Online',
                   'Both',
                 ].map((item) => (
-
                   <ChoiceButton
                     key={item}
                     label={item}
-                    selected={
-                      formData.preferences
-                        .teachingMode
-                        .includes(item)
-                    }
+                    selected={formData.preferences.teachingMode.includes(
+                      item
+                    )}
                     onClick={() =>
-                      togglePreferenceArray(
+                      toggleArrayValue(
+                        'preferences',
                         'teachingMode',
                         item
                       )
                     }
                   />
-
                 ))}
-
               </div>
-
             </div>
 
-            {/* LOCATION */}
-
             <div>
-
               <FieldLabel label="Offline Teaching Areas" />
 
               <textarea
@@ -1249,103 +941,68 @@ export default function TutorRegistrationForm() {
               />
 
               <p className="text-xs text-[#6B7280] mt-2">
-                Enter multiple areas separated by commas.
+                You can enter multiple areas separated
+                by commas.
               </p>
-
             </div>
 
-            {/* AVAILABILITY */}
-
             <div>
-
               <FieldLabel label="Preferred Availability" />
 
               <div className="grid grid-cols-2 gap-3">
-
-                {availabilityOptions.map(
-                  (item) => (
-
-                    <ChoiceButton
-                      key={item}
-                      label={item}
-                      selected={
-                        formData.preferences
-                          .availability
-                          .includes(item)
-                      }
-                      onClick={() =>
-                        togglePreferenceArray(
-                          'availability',
-                          item
-                        )
-                      }
-                    />
-
-                  )
-                )}
-
+                {availabilityOptions.map((item) => (
+                  <ChoiceButton
+                    key={item}
+                    label={item}
+                    selected={formData.preferences.availability.includes(
+                      item
+                    )}
+                    onClick={() =>
+                      toggleArrayValue(
+                        'preferences',
+                        'availability',
+                        item
+                      )
+                    }
+                  />
+                ))}
               </div>
-
             </div>
 
-            {/* STUDENT TYPE */}
-
             <div>
-
               <FieldLabel label="Preferred Student Type" />
 
               <div className="flex flex-wrap gap-2">
-
-                {studentTypes.map(
-                  (item) => (
-
-                    <Chip
-                      key={item}
-                      label={item}
-                      selected={
-                        formData.preferences
-                          .studentTypes
-                          .includes(item)
-                      }
-                      onClick={() =>
-                        togglePreferenceArray(
-                          'studentTypes',
-                          item
-                        )
-                      }
-                    />
-
-                  )
-                )}
-
+                {studentTypes.map((item) => (
+                  <Chip
+                    key={item}
+                    label={item}
+                    selected={formData.preferences.studentTypes.includes(
+                      item
+                    )}
+                    onClick={() =>
+                      toggleArrayValue(
+                        'preferences',
+                        'studentTypes',
+                        item
+                      )
+                    }
+                  />
+                ))}
               </div>
-
             </div>
-
           </div>
-
         )}
 
-        {/* =================================================
-            STEP 5 — REVIEW
-        ================================================= */}
-
+        {/* STEP 5 */}
         {step === 5 && (
-
-          <ReviewSection
-            formData={formData}
-          />
-
+          <ReviewSection formData={formData} />
         )}
-
       </div>
 
       {/* FOOTER */}
-
       <div className="px-6 sm:px-8 py-5 bg-[#FAFBFC] border-t border-[#E5E7EB] flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
-
         {step > 1 ? (
-
           <button
             type="button"
             onClick={previousStep}
@@ -1353,15 +1010,11 @@ export default function TutorRegistrationForm() {
           >
             ← Back
           </button>
-
         ) : (
-
           <div />
-
         )}
 
         {step < totalSteps ? (
-
           <button
             type="button"
             onClick={nextStep}
@@ -1370,9 +1023,7 @@ export default function TutorRegistrationForm() {
             Continue
             <span>→</span>
           </button>
-
         ) : (
-
           <button
             type="button"
             onClick={handleSubmit}
@@ -1381,11 +1032,8 @@ export default function TutorRegistrationForm() {
             Submit Profile
             <span>→</span>
           </button>
-
         )}
-
       </div>
-
     </div>
   );
 }
@@ -1401,10 +1049,10 @@ function TeachingLevelCard({
   selectedClasses,
   subjects,
   selectedSubjects,
-  onClassToggle,
-  onSubjectToggle,
   allSubjects = false,
   showAllSubjects = false,
+  onClassToggle,
+  onSubjectToggle,
   onAllSubjectsToggle,
 }: {
   title: string;
@@ -1413,15 +1061,14 @@ function TeachingLevelCard({
   selectedClasses: string[];
   subjects: string[];
   selectedSubjects: string[];
-  onClassToggle: (item: string) => void;
-  onSubjectToggle: (item: string) => void;
   allSubjects?: boolean;
   showAllSubjects?: boolean;
+  onClassToggle: (item: string) => void;
+  onSubjectToggle: (item: string) => void;
   onAllSubjectsToggle?: () => void;
 }) {
   return (
     <div className="border border-[#E5E7EB] rounded-2xl p-5">
-
       <h3 className="font-bold text-[#0D1118] mb-1">
         {title}
       </h3>
@@ -1430,32 +1077,27 @@ function TeachingLevelCard({
         {description}
       </p>
 
-      <FieldLabel label="Classes You Can Teach" />
+      <FieldLabel label="Classes" />
 
       <div className="flex flex-wrap gap-2 mb-5">
-
         {classes.map((item) => (
-
           <Chip
             key={item}
             label={item}
-            selected={
-              selectedClasses.includes(item)
-            }
+            selected={selectedClasses.includes(
+              item
+            )}
             onClick={() =>
               onClassToggle(item)
             }
           />
-
         ))}
-
       </div>
 
-      <FieldLabel label="Subjects You Can Teach" />
+      <FieldLabel label="Subjects" />
 
       {showAllSubjects && (
-        <div className="mb-3">
-
+        <div className="mb-4">
           <Chip
             label="All Subjects"
             selected={allSubjects}
@@ -1463,33 +1105,25 @@ function TeachingLevelCard({
               onAllSubjectsToggle?.()
             }
           />
-
         </div>
       )}
 
       {!allSubjects && (
-
         <div className="flex flex-wrap gap-2">
-
           {subjects.map((item) => (
-
             <Chip
               key={item}
               label={item}
-              selected={
-                selectedSubjects.includes(item)
-              }
+              selected={selectedSubjects.includes(
+                item
+              )}
               onClick={() =>
                 onSubjectToggle(item)
               }
             />
-
           ))}
-
         </div>
-
       )}
-
     </div>
   );
 }
@@ -1515,7 +1149,6 @@ function InputField({
 }) {
   return (
     <div>
-
       <FieldLabel
         label={label}
         required={required}
@@ -1530,7 +1163,6 @@ function InputField({
         placeholder={placeholder}
         className="w-full rounded-xl border border-[#DDE2E8] bg-[#F8FAFC] px-4 py-3.5 text-[#0D1118] placeholder:text-[#9AA3AF] outline-none transition focus:border-[#0A6FF7] focus:ring-2 focus:ring-[#0A6FF7]/10"
       />
-
     </div>
   );
 }
@@ -1554,7 +1186,6 @@ function TextAreaField({
 }) {
   return (
     <div>
-
       <FieldLabel
         label={label}
         required={required}
@@ -1569,7 +1200,6 @@ function TextAreaField({
         rows={3}
         className="w-full rounded-xl border border-[#DDE2E8] bg-[#F8FAFC] px-4 py-3.5 text-[#0D1118] placeholder:text-[#9AA3AF] outline-none transition focus:border-[#0A6FF7] focus:ring-2 focus:ring-[#0A6FF7]/10 resize-none"
       />
-
     </div>
   );
 }
@@ -1595,14 +1225,12 @@ function SelectField({
 }) {
   return (
     <div>
-
       <FieldLabel
         label={label}
         required={required}
       />
 
       <div className="relative">
-
         <select
           value={value}
           onChange={(e) =>
@@ -1610,22 +1238,18 @@ function SelectField({
           }
           className="appearance-none w-full rounded-xl border border-[#DDE2E8] bg-[#F8FAFC] px-4 py-3.5 pr-10 text-[#0D1118] outline-none transition focus:border-[#0A6FF7] focus:ring-2 focus:ring-[#0A6FF7]/10"
         >
-
           <option value="">
             {placeholder}
           </option>
 
           {options.map((option) => (
-
             <option
               key={option}
               value={option}
             >
               {option}
             </option>
-
           ))}
-
         </select>
 
         <svg
@@ -1641,15 +1265,13 @@ function SelectField({
         >
           <path d="m6 9 6 6 6-6" />
         </svg>
-
       </div>
-
     </div>
   );
 }
 
 /* =========================================================
-   LABEL
+   FIELD LABEL
 ========================================================= */
 
 function FieldLabel({
@@ -1661,7 +1283,6 @@ function FieldLabel({
 }) {
   return (
     <label className="block text-sm font-bold text-[#0D1118] mb-2.5">
-
       {label}
 
       {required && (
@@ -1669,7 +1290,6 @@ function FieldLabel({
           *
         </span>
       )}
-
     </label>
   );
 }
@@ -1697,9 +1317,7 @@ function ChoiceButton({
           : 'border-[#DDE2E8] bg-white text-[#4B5563] hover:border-[#AFC9EF]'
       }`}
     >
-
       <span className="flex items-center gap-2">
-
         <span
           className={`w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 ${
             selected
@@ -1707,17 +1325,13 @@ function ChoiceButton({
               : 'border-[#CBD5E1]'
           }`}
         >
-
           {selected && (
             <span className="w-1.5 h-1.5 rounded-full bg-white" />
           )}
-
         </span>
 
         {label}
-
       </span>
-
     </button>
   );
 }
@@ -1745,7 +1359,6 @@ function Chip({
           : 'bg-white border-[#DDE2E8] text-[#4B5563] hover:border-[#AFC9EF]'
       }`}
     >
-
       {selected && (
         <span className="mr-1">
           ✓
@@ -1753,36 +1366,49 @@ function Chip({
       )}
 
       {label}
-
     </button>
   );
 }
 
 /* =========================================================
-   REVIEW SECTION
+   REVIEW
 ========================================================= */
 
 function ReviewSection({
   formData,
 }: {
-  formData: TutorFormData;
+  formData: FormData;
 }) {
+  const primaryClassText =
+    formData.teaching.primaryClasses.length > 0
+      ? formData.teaching.primaryClasses.join(
+          ', '
+        )
+      : 'Not selected';
+
+  const secondaryClassText =
+    formData.teaching.secondaryClasses.length > 0
+      ? formData.teaching.secondaryClasses.join(
+          ', '
+        )
+      : 'Not selected';
+
+  const seniorClassText =
+    formData.teaching.seniorSecondaryClasses
+      .length > 0
+      ? formData.teaching.seniorSecondaryClasses.join(
+          ', '
+        )
+      : 'Not selected';
+
   return (
     <div className="space-y-6">
-
-      <div>
-
-        <p className="text-[#6B7280]">
-          Please review your information before
-          submitting your TutorWave profile.
-        </p>
-
-      </div>
-
-      {/* PERSONAL */}
+      <p className="text-[#6B7280]">
+        Please review your information before
+        submitting.
+      </p>
 
       <ReviewCard title="Personal Details">
-
         <ReviewRow
           label="Name"
           value={formData.personal.fullName}
@@ -1812,13 +1438,9 @@ function ReviewSection({
           label="Address"
           value={formData.personal.address}
         />
-
       </ReviewCard>
 
-      {/* EDUCATION */}
-
       <ReviewCard title="Education">
-
         <ReviewRow
           label="Highest Qualification"
           value={
@@ -1848,21 +1470,9 @@ function ReviewSection({
             formData.education.college
           }
         />
-
-        <ReviewRow
-          label="Additional Qualifications"
-          value={
-            formData.education
-              .additionalQualification
-          }
-        />
-
       </ReviewCard>
 
-      {/* TEACHING */}
-
       <ReviewCard title="Teaching Profile">
-
         <ReviewRow
           label="Experience"
           value={
@@ -1879,14 +1489,6 @@ function ReviewSection({
         />
 
         <ReviewRow
-          label="School / Coaching Experience"
-          value={
-            formData.teaching
-              .schoolExperience
-          }
-        />
-
-        <ReviewRow
           label="Boards"
           value={
             formData.teaching.boards.join(
@@ -1896,17 +1498,13 @@ function ReviewSection({
         />
 
         <div className="border-t border-[#E5E7EB] pt-4 mt-4">
-
           <p className="text-xs font-bold uppercase tracking-wide text-[#6B7280] mb-3">
             Nursery – Class 8
           </p>
 
           <ReviewRow
             label="Classes"
-            value={
-              formData.teaching
-                .primaryClasses.join(', ')
-            }
+            value={primaryClassText}
           />
 
           <ReviewRow
@@ -1916,124 +1514,96 @@ function ReviewSection({
                 .primaryAllSubjects
                 ? 'All Subjects'
                 : formData.teaching
-                    .primarySubjects
-                    .join(', ')
+                    .primarySubjects.join(
+                      ', '
+                    )
             }
           />
-
         </div>
 
         <div className="border-t border-[#E5E7EB] pt-4 mt-4">
-
           <p className="text-xs font-bold uppercase tracking-wide text-[#6B7280] mb-3">
             Class 9 – Class 10
           </p>
 
           <ReviewRow
             label="Classes"
-            value={
-              formData.teaching
-                .secondaryClasses
-                .join(', ')
-            }
+            value={secondaryClassText}
           />
 
           <ReviewRow
             label="Subjects"
             value={
-              formData.teaching
-                .secondarySubjects
-                .join(', ')
+              formData.teaching.secondarySubjects.join(
+                ', '
+              )
             }
           />
-
         </div>
 
         <div className="border-t border-[#E5E7EB] pt-4 mt-4">
-
           <p className="text-xs font-bold uppercase tracking-wide text-[#6B7280] mb-3">
             Class 11 – Class 12
           </p>
 
           <ReviewRow
             label="Classes"
-            value={
-              formData.teaching
-                .seniorSecondaryClasses
-                .join(', ')
-            }
+            value={seniorClassText}
           />
 
           <ReviewRow
             label="Subjects"
             value={
               formData.teaching
-                .seniorSecondarySubjects
-                .join(', ')
+                .seniorSecondarySubjects.join(
+                  ', '
+                )
             }
           />
-
         </div>
-
-        <ReviewRow
-          label="Students / Schools / Institutes"
-          value={
-            formData.teaching
-              .studentsTaughtFrom
-          }
-        />
-
       </ReviewCard>
 
-      {/* PREFERENCES */}
-
       <ReviewCard title="Teaching Preferences">
-
         <ReviewRow
-          label="Teaching Mode"
+          label="Mode"
           value={
-            formData.preferences
-              .teachingMode
-              .join(', ')
+            formData.preferences.teachingMode.join(
+              ', '
+            )
           }
         />
 
         <ReviewRow
           label="Offline Areas"
           value={
-            formData.preferences
-              .offlineAreas
+            formData.preferences.offlineAreas
           }
         />
 
         <ReviewRow
           label="Availability"
           value={
-            formData.preferences
-              .availability
-              .join(', ')
+            formData.preferences.availability.join(
+              ', '
+            )
           }
         />
 
         <ReviewRow
           label="Student Type"
           value={
-            formData.preferences
-              .studentTypes
-              .join(', ')
+            formData.preferences.studentTypes.join(
+              ', '
+            )
           }
         />
-
       </ReviewCard>
 
       <div className="rounded-xl bg-[#F8FAFC] border border-[#E5E7EB] p-4 text-sm text-[#6B7280] leading-relaxed">
-
         By submitting this profile, you confirm
         that the information provided is accurate
         to the best of your knowledge.
-
       </div>
-
     </div>
   );
 }
@@ -2051,7 +1621,6 @@ function ReviewCard({
 }) {
   return (
     <div className="border border-[#E5E7EB] rounded-2xl p-5">
-
       <h3 className="font-bold text-[#0D1118] mb-4">
         {title}
       </h3>
@@ -2059,7 +1628,6 @@ function ReviewCard({
       <div className="space-y-3">
         {children}
       </div>
-
     </div>
   );
 }
@@ -2077,7 +1645,6 @@ function ReviewRow({
 }) {
   return (
     <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-4">
-
       <span className="text-sm text-[#6B7280]">
         {label}
       </span>
@@ -2085,7 +1652,6 @@ function ReviewRow({
       <span className="text-sm font-medium text-[#0D1118] sm:text-right">
         {value || 'Not provided'}
       </span>
-
     </div>
   );
 }
