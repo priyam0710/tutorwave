@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 
-type FormData = {
+type TutorFormData = {
   personal: {
     fullName: string;
     age: string;
@@ -22,6 +22,7 @@ type FormData = {
 
   teaching: {
     experience: string;
+    englishFluency: string;
     schoolExperience: string;
     studentsTaughtFrom: string;
     boards: string[];
@@ -35,8 +36,6 @@ type FormData = {
 
     seniorSecondaryClasses: string[];
     seniorSecondarySubjects: string[];
-
-    englishFluency: string;
   };
 
   preferences: {
@@ -47,7 +46,7 @@ type FormData = {
   };
 };
 
-const initialFormData: FormData = {
+const initialFormData: TutorFormData = {
   personal: {
     fullName: '',
     age: '',
@@ -67,6 +66,7 @@ const initialFormData: FormData = {
 
   teaching: {
     experience: '',
+    englishFluency: '',
     schoolExperience: '',
     studentsTaughtFrom: '',
     boards: [],
@@ -80,8 +80,6 @@ const initialFormData: FormData = {
 
     seniorSecondaryClasses: [],
     seniorSecondarySubjects: [],
-
-    englishFluency: '',
   },
 
   preferences: {
@@ -91,6 +89,10 @@ const initialFormData: FormData = {
     studentTypes: [],
   },
 };
+
+/* =========================================================
+   OPTIONS
+========================================================= */
 
 const primaryClasses = [
   'Nursery',
@@ -169,17 +171,25 @@ const studentTypes = [
   'Competitive Exam Students',
 ];
 
+/* =========================================================
+   MAIN COMPONENT
+========================================================= */
+
 export default function TutorRegistrationForm() {
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
 
   const [formData, setFormData] =
-    useState<FormData>(initialFormData);
+    useState<TutorFormData>(initialFormData);
 
   const totalSteps = 5;
 
+  /* =======================================================
+     UPDATE FUNCTIONS
+  ======================================================= */
+
   const updatePersonal = (
-    field: keyof FormData['personal'],
+    field: keyof TutorFormData['personal'],
     value: string
   ) => {
     setFormData((prev) => ({
@@ -192,7 +202,7 @@ export default function TutorRegistrationForm() {
   };
 
   const updateEducation = (
-    field: keyof FormData['education'],
+    field: keyof TutorFormData['education'],
     value: string
   ) => {
     setFormData((prev) => ({
@@ -204,32 +214,12 @@ export default function TutorRegistrationForm() {
     }));
   };
 
-  const toggleArrayValue = (
-    section: 'teaching' | 'preferences',
-    field: string,
-    value: string
-  ) => {
-    setFormData((prev) => {
-      const currentSection = prev[section] as any;
-      const currentValues = currentSection[field] || [];
-
-      const updatedValues = currentValues.includes(value)
-        ? currentValues.filter((item: string) => item !== value)
-        : [...currentValues, value];
-
-      return {
-        ...prev,
-        [section]: {
-          ...currentSection,
-          [field]: updatedValues,
-        },
-      };
-    });
-  };
-
   const updateTeaching = (
-    field: keyof FormData['teaching'],
-    value: any
+    field: keyof TutorFormData['teaching'],
+    value:
+      | string
+      | string[]
+      | boolean
   ) => {
     setFormData((prev) => ({
       ...prev,
@@ -241,8 +231,8 @@ export default function TutorRegistrationForm() {
   };
 
   const updatePreferences = (
-    field: keyof FormData['preferences'],
-    value: any
+    field: keyof TutorFormData['preferences'],
+    value: string | string[]
   ) => {
     setFormData((prev) => ({
       ...prev,
@@ -253,61 +243,199 @@ export default function TutorRegistrationForm() {
     }));
   };
 
+  /* =======================================================
+     ARRAY TOGGLE
+  ======================================================= */
+
+  const toggleTeachingArray = (
+    field:
+      | 'boards'
+      | 'primaryClasses'
+      | 'primarySubjects'
+      | 'secondaryClasses'
+      | 'secondarySubjects'
+      | 'seniorSecondaryClasses'
+      | 'seniorSecondarySubjects',
+    value: string
+  ) => {
+    setFormData((prev) => {
+      const current = prev.teaching[field];
+
+      const updated = current.includes(value)
+        ? current.filter((item) => item !== value)
+        : [...current, value];
+
+      return {
+        ...prev,
+        teaching: {
+          ...prev.teaching,
+          [field]: updated,
+        },
+      };
+    });
+  };
+
+  const togglePreferenceArray = (
+    field:
+      | 'teachingMode'
+      | 'availability'
+      | 'studentTypes',
+    value: string
+  ) => {
+    setFormData((prev) => {
+      const current = prev.preferences[field];
+
+      /*
+       * Teaching mode:
+       * "Both" is exclusive.
+       */
+      if (field === 'teachingMode') {
+        if (value === 'Both') {
+          return {
+            ...prev,
+            preferences: {
+              ...prev.preferences,
+              teachingMode:
+                current.includes('Both') ? [] : ['Both'],
+            },
+          };
+        }
+
+        const withoutBoth = current.filter(
+          (item) => item !== 'Both'
+        );
+
+        const updated = withoutBoth.includes(value)
+          ? withoutBoth.filter((item) => item !== value)
+          : [...withoutBoth, value];
+
+        return {
+          ...prev,
+          preferences: {
+            ...prev.preferences,
+            teachingMode: updated,
+          },
+        };
+      }
+
+      const updated = current.includes(value)
+        ? current.filter((item) => item !== value)
+        : [...current, value];
+
+      return {
+        ...prev,
+        preferences: {
+          ...prev.preferences,
+          [field]: updated,
+        },
+      };
+    });
+  };
+
+  /* =======================================================
+     PRIMARY ALL SUBJECTS
+  ======================================================= */
+
   const togglePrimaryAllSubjects = () => {
     setFormData((prev) => ({
       ...prev,
       teaching: {
         ...prev.teaching,
-        primaryAllSubjects: !prev.teaching.primaryAllSubjects,
-        primarySubjects: !prev.teaching.primaryAllSubjects
-          ? []
-          : prev.teaching.primarySubjects,
+        primaryAllSubjects:
+          !prev.teaching.primaryAllSubjects,
+
+        primarySubjects:
+          !prev.teaching.primaryAllSubjects
+            ? []
+            : prev.teaching.primarySubjects,
       },
     }));
   };
+
+  /* =======================================================
+     VALIDATION
+  ======================================================= */
 
   const validateStep = () => {
     if (step === 1) {
       if (
         !formData.personal.fullName.trim() ||
-        !formData.personal.phone.trim() ||
-        !formData.personal.age.trim()
+        !formData.personal.age.trim() ||
+        !formData.personal.phone.trim()
       ) {
-        alert('Please fill in your name, age and phone number.');
+        alert(
+          'Please fill in your name, age and phone number.'
+        );
+        return false;
+      }
+
+      if (
+        formData.personal.phone.replace(/\D/g, '').length !==
+        10
+      ) {
+        alert(
+          'Please enter a valid 10-digit mobile number.'
+        );
         return false;
       }
     }
 
     if (step === 2) {
       if (!formData.education.highestQualification) {
-        alert('Please select your highest qualification.');
+        alert(
+          'Please select your highest qualification.'
+        );
         return false;
       }
     }
 
     if (step === 3) {
-      const hasAnyClass =
-        formData.teaching.primaryClasses.length > 0 ||
-        formData.teaching.secondaryClasses.length > 0 ||
+      const hasPrimary =
+        formData.teaching.primaryClasses.length > 0;
+
+      const hasSecondary =
+        formData.teaching.secondaryClasses.length > 0;
+
+      const hasSenior =
         formData.teaching.seniorSecondaryClasses.length > 0;
 
-      const hasAnySubject =
+      const hasPrimarySubject =
         formData.teaching.primaryAllSubjects ||
-        formData.teaching.primarySubjects.length > 0 ||
-        formData.teaching.secondarySubjects.length > 0 ||
+        formData.teaching.primarySubjects.length > 0;
+
+      const hasSecondarySubject =
+        formData.teaching.secondarySubjects.length > 0;
+
+      const hasSeniorSubject =
         formData.teaching.seniorSecondarySubjects.length > 0;
 
-      if (!hasAnyClass || !hasAnySubject) {
+      const hasValidSection =
+        (hasPrimary && hasPrimarySubject) ||
+        (hasSecondary && hasSecondarySubject) ||
+        (hasSenior && hasSeniorSubject);
+
+      if (!hasValidSection) {
         alert(
-          'Please select at least one class and one subject you can teach.'
+          'Please select at least one class and the subjects you can teach for that class.'
+        );
+        return false;
+      }
+
+      if (!formData.teaching.experience) {
+        alert(
+          'Please select your teaching experience.'
         );
         return false;
       }
     }
 
     if (step === 4) {
-      if (formData.preferences.teachingMode.length === 0) {
-        alert('Please select at least one teaching mode.');
+      if (
+        formData.preferences.teachingMode.length === 0
+      ) {
+        alert(
+          'Please select your preferred teaching mode.'
+        );
         return false;
       }
     }
@@ -315,40 +443,120 @@ export default function TutorRegistrationForm() {
     return true;
   };
 
+  /* =======================================================
+     NAVIGATION
+  ======================================================= */
+
   const nextStep = () => {
     if (!validateStep()) return;
 
     if (step < totalSteps) {
-      setStep(step + 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setStep((prev) => prev + 1);
+
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      });
     }
   };
 
   const previousStep = () => {
     if (step > 1) {
-      setStep(step - 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setStep((prev) => prev - 1);
+
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      });
     }
   };
 
+  /* =======================================================
+     CRM-READY SUBMISSION
+  ======================================================= */
+
   const handleSubmit = () => {
     /*
-      IMPORTANT:
+     * IMPORTANT:
+     *
+     * This object is intentionally structured for future CRM
+     * integration.
+     *
+     * Later, your backend can send this entire object to:
+     *
+     * POST /api/tutors
+     *
+     * or directly map these fields into your CRM.
+     */
 
-      This object is already structured for future CRM integration.
+    const crmPayload = {
+      source: 'TutorWave Website',
+      leadType: 'Tutor Registration',
 
-      Example:
-      formData.personal.fullName
-      formData.teaching.secondarySubjects
-      formData.preferences.offlineAreas
+      personal: formData.personal,
 
-      Later this can simply be sent to:
-      POST /api/tutors
+      education: formData.education,
 
-      Do NOT change the structure unnecessarily when connecting CRM.
-    */
+      teaching: {
+        experience: formData.teaching.experience,
+        englishFluency:
+          formData.teaching.englishFluency,
+        schoolExperience:
+          formData.teaching.schoolExperience,
+        studentsTaughtFrom:
+          formData.teaching.studentsTaughtFrom,
 
-    console.log('Tutor Registration:', formData);
+        boards: formData.teaching.boards,
+
+        nurseryToClass8: {
+          classes:
+            formData.teaching.primaryClasses,
+          subjects:
+            formData.teaching.primaryAllSubjects
+              ? ['All Subjects']
+              : formData.teaching.primarySubjects,
+        },
+
+        class9To10: {
+          classes:
+            formData.teaching.secondaryClasses,
+          subjects:
+            formData.teaching.secondarySubjects,
+        },
+
+        class11To12: {
+          classes:
+            formData.teaching
+              .seniorSecondaryClasses,
+          subjects:
+            formData.teaching
+              .seniorSecondarySubjects,
+        },
+      },
+
+      preferences: formData.preferences,
+
+      submittedAt: new Date().toISOString(),
+    };
+
+    console.log(
+      'TutorWave CRM Payload:',
+      crmPayload
+    );
+
+    /*
+     * FUTURE CRM CONNECTION:
+     *
+     * const response = await fetch('/api/tutors', {
+     *   method: 'POST',
+     *   headers: {
+     *     'Content-Type': 'application/json',
+     *   },
+     *   body: JSON.stringify(crmPayload),
+     * });
+     *
+     * DO NOT add this until the backend/API endpoint exists.
+     */
 
     setSubmitted(true);
 
@@ -358,11 +566,16 @@ export default function TutorRegistrationForm() {
     });
   };
 
+  /* =======================================================
+     SUCCESS SCREEN
+  ======================================================= */
+
   if (submitted) {
     return (
       <div className="bg-white border border-[#E5E7EB] rounded-3xl p-8 sm:p-10 shadow-sm text-center">
 
         <div className="w-16 h-16 rounded-full bg-[#E8F7F1] text-[#0C8F81] flex items-center justify-center mx-auto mb-6">
+
           <svg
             width="28"
             height="28"
@@ -375,6 +588,7 @@ export default function TutorRegistrationForm() {
           >
             <path d="M20 6L9 17l-5-5" />
           </svg>
+
         </div>
 
         <h2 className="text-2xl font-bold text-[#0D1118] mb-3">
@@ -382,11 +596,13 @@ export default function TutorRegistrationForm() {
         </h2>
 
         <p className="text-[#6B7280] leading-relaxed max-w-md mx-auto mb-8">
-          Thank you for registering with TutorWave. Our team will review your
-          profile and contact you regarding suitable tuition opportunities.
+          Thank you for registering with TutorWave.
+          Our team will review your profile and contact
+          you regarding suitable tuition opportunities.
         </p>
 
         <button
+          type="button"
           onClick={() => {
             setFormData(initialFormData);
             setStep(1);
@@ -401,35 +617,55 @@ export default function TutorRegistrationForm() {
     );
   }
 
+  /* =======================================================
+     FORM
+  ======================================================= */
+
   return (
     <div className="bg-white border border-[#E5E7EB] rounded-3xl shadow-sm overflow-hidden">
 
       {/* HEADER */}
+
       <div className="p-6 sm:p-8 border-b border-[#E5E7EB]">
 
         <div className="flex items-center justify-between mb-5">
+
           <div>
+
             <p className="text-xs font-bold uppercase tracking-widest text-[#0A6FF7] mb-1">
               TUTOR REGISTRATION
             </p>
 
             <h2 className="text-xl sm:text-2xl font-bold text-[#0D1118]">
+
               {step === 1 && 'Personal Details'}
+
               {step === 2 && 'Education'}
+
               {step === 3 && 'Teaching Profile'}
+
               {step === 4 && 'Teaching Preferences'}
+
               {step === 5 && 'Review & Submit'}
+
             </h2>
+
           </div>
 
           <div className="text-sm text-[#6B7280] font-medium">
             {step} / {totalSteps}
           </div>
+
         </div>
 
-        {/* PROGRESS BAR */}
+        {/* PROGRESS */}
+
         <div className="flex gap-2">
-          {Array.from({ length: totalSteps }).map((_, index) => (
+
+          {Array.from({
+            length: totalSteps,
+          }).map((_, index) => (
+
             <div
               key={index}
               className={`h-1.5 rounded-full flex-1 transition-all ${
@@ -438,23 +674,29 @@ export default function TutorRegistrationForm() {
                   : 'bg-[#E5E7EB]'
               }`}
             />
+
           ))}
+
         </div>
 
       </div>
 
-      {/* FORM CONTENT */}
+      {/* CONTENT */}
+
       <div className="p-6 sm:p-8">
 
-        {/* STEP 1 */}
+        {/* =================================================
+            STEP 1 — PERSONAL
+        ================================================= */}
+
         {step === 1 && (
+
           <div className="space-y-6">
 
-            <div>
-              <p className="text-[#6B7280]">
-                Let&apos;s start with a few basic details about you.
-              </p>
-            </div>
+            <p className="text-[#6B7280]">
+              Let&apos;s start with a few basic details
+              about you.
+            </p>
 
             <InputField
               label="Full Name"
@@ -462,7 +704,10 @@ export default function TutorRegistrationForm() {
               placeholder="Enter your full name"
               value={formData.personal.fullName}
               onChange={(value) =>
-                updatePersonal('fullName', value)
+                updatePersonal(
+                  'fullName',
+                  value
+                )
               }
             />
 
@@ -475,7 +720,10 @@ export default function TutorRegistrationForm() {
                 placeholder="Your age"
                 value={formData.personal.age}
                 onChange={(value) =>
-                  updatePersonal('age', value)
+                  updatePersonal(
+                    'age',
+                    value
+                  )
                 }
               />
 
@@ -490,7 +738,10 @@ export default function TutorRegistrationForm() {
                   'Prefer not to say',
                 ]}
                 onChange={(value) =>
-                  updatePersonal('gender', value)
+                  updatePersonal(
+                    'gender',
+                    value
+                  )
                 }
               />
 
@@ -503,7 +754,10 @@ export default function TutorRegistrationForm() {
               placeholder="10-digit mobile number"
               value={formData.personal.phone}
               onChange={(value) =>
-                updatePersonal('phone', value)
+                updatePersonal(
+                  'phone',
+                  value
+                )
               }
             />
 
@@ -513,7 +767,10 @@ export default function TutorRegistrationForm() {
               placeholder="yourname@example.com"
               value={formData.personal.email}
               onChange={(value) =>
-                updatePersonal('email', value)
+                updatePersonal(
+                  'email',
+                  value
+                )
               }
             />
 
@@ -522,15 +779,23 @@ export default function TutorRegistrationForm() {
               placeholder="Enter your current address"
               value={formData.personal.address}
               onChange={(value) =>
-                updatePersonal('address', value)
+                updatePersonal(
+                  'address',
+                  value
+                )
               }
             />
 
           </div>
+
         )}
 
-        {/* STEP 2 */}
+        {/* =================================================
+            STEP 2 — EDUCATION
+        ================================================= */}
+
         {step === 2 && (
+
           <div className="space-y-6">
 
             <p className="text-[#6B7280]">
@@ -541,7 +806,10 @@ export default function TutorRegistrationForm() {
               label="Highest Qualification"
               required
               placeholder="Select qualification"
-              value={formData.education.highestQualification}
+              value={
+                formData.education
+                  .highestQualification
+              }
               options={[
                 '12th / Senior Secondary',
                 'Diploma',
@@ -563,16 +831,24 @@ export default function TutorRegistrationForm() {
             <InputField
               label="Qualification / Stream"
               placeholder="e.g. B.Sc. Mathematics, B.Tech CSE"
-              value={formData.education.stream}
+              value={
+                formData.education.stream
+              }
               onChange={(value) =>
-                updateEducation('stream', value)
+                updateEducation(
+                  'stream',
+                  value
+                )
               }
             />
 
             <InputField
               label="Schooling From"
               placeholder="School name"
-              value={formData.education.schoolingFrom}
+              value={
+                formData.education
+                  .schoolingFrom
+              }
               onChange={(value) =>
                 updateEducation(
                   'schoolingFrom',
@@ -584,9 +860,14 @@ export default function TutorRegistrationForm() {
             <InputField
               label="College / University"
               placeholder="College or university name"
-              value={formData.education.college}
+              value={
+                formData.education.college
+              }
               onChange={(value) =>
-                updateEducation('college', value)
+                updateEducation(
+                  'college',
+                  value
+                )
               }
             />
 
@@ -594,7 +875,8 @@ export default function TutorRegistrationForm() {
               label="Additional Qualifications"
               placeholder="Certifications, professional courses, competitive exams, etc."
               value={
-                formData.education.additionalQualification
+                formData.education
+                  .additionalQualification
               }
               onChange={(value) =>
                 updateEducation(
@@ -605,26 +887,33 @@ export default function TutorRegistrationForm() {
             />
 
           </div>
+
         )}
 
-        {/* STEP 3 */}
-        {step === 3 && (
-          <div className="space-y-8">
+        {/* =================================================
+            STEP 3 — TEACHING PROFILE
+        ================================================= */}
 
-            <div>
-              <p className="text-[#6B7280]">
-                Tell us exactly what you are comfortable teaching.
-              </p>
-            </div>
+        {step === 3 && (
+
+          <div className="space-y-7">
+
+            <p className="text-[#6B7280]">
+              Tell us exactly what you are comfortable
+              teaching.
+            </p>
 
             {/* EXPERIENCE */}
+
             <div>
+
               <FieldLabel
                 label="Teaching Experience"
                 required
               />
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+
                 {[
                   'Fresher',
                   '1–2 Years',
@@ -632,37 +921,49 @@ export default function TutorRegistrationForm() {
                   '5–10 Years',
                   '10+ Years',
                 ].map((item) => (
+
                   <ChoiceButton
                     key={item}
                     label={item}
                     selected={
-                      formData.teaching.experience === item
+                      formData.teaching
+                        .experience === item
                     }
                     onClick={() =>
-                      updateTeaching('experience', item)
+                      updateTeaching(
+                        'experience',
+                        item
+                      )
                     }
                   />
+
                 ))}
+
               </div>
+
             </div>
 
             {/* ENGLISH */}
+
             <div>
+
               <FieldLabel label="English Fluency" />
 
               <div className="grid grid-cols-2 gap-3">
+
                 {[
                   'Basic',
                   'Conversational',
                   'Fluent',
                   'Highly Fluent',
                 ].map((item) => (
+
                   <ChoiceButton
                     key={item}
                     label={item}
                     selected={
-                      formData.teaching.englishFluency ===
-                      item
+                      formData.teaching
+                        .englishFluency === item
                     }
                     onClick={() =>
                       updateTeaching(
@@ -671,22 +972,29 @@ export default function TutorRegistrationForm() {
                       )
                     }
                   />
+
                 ))}
+
               </div>
+
             </div>
 
             {/* SCHOOL EXPERIENCE */}
+
             <div>
+
               <FieldLabel label="School / Coaching Experience" />
 
               <div className="grid grid-cols-2 gap-3">
+
                 {['Yes', 'No'].map((item) => (
+
                   <ChoiceButton
                     key={item}
                     label={item}
                     selected={
-                      formData.teaching.schoolExperience ===
-                      item
+                      formData.teaching
+                        .schoolExperience === item
                     }
                     onClick={() =>
                       updateTeaching(
@@ -695,15 +1003,19 @@ export default function TutorRegistrationForm() {
                       )
                     }
                   />
+
                 ))}
+
               </div>
+
             </div>
 
             <TextAreaField
               label="Students / Schools / Institutes Taught From"
               placeholder="e.g. DPS, Ryan International, Allen, private students..."
               value={
-                formData.teaching.studentsTaughtFrom
+                formData.teaching
+                  .studentsTaughtFrom
               }
               onChange={(value) =>
                 updateTeaching(
@@ -714,255 +1026,216 @@ export default function TutorRegistrationForm() {
             />
 
             {/* BOARDS */}
+
             <div>
+
               <FieldLabel label="Boards / Curricula You Can Teach" />
 
               <div className="flex flex-wrap gap-2">
+
                 {boards.map((board) => (
+
                   <Chip
                     key={board}
                     label={board}
-                    selected={formData.teaching.boards.includes(
-                      board
-                    )}
+                    selected={
+                      formData.teaching
+                        .boards.includes(board)
+                    }
                     onClick={() =>
-                      toggleArrayValue(
-                        'teaching',
+                      toggleTeachingArray(
                         'boards',
                         board
                       )
                     }
                   />
+
                 ))}
+
               </div>
+
             </div>
 
             {/* PRIMARY */}
-            <div className="border border-[#E5E7EB] rounded-2xl p-5">
 
-              <h3 className="font-bold text-[#0D1118] mb-1">
-                Nursery – Class 8
-              </h3>
+            <TeachingLevelCard
+              title="Nursery – Class 8"
+              description="Select the classes and subjects you can teach."
 
-              <p className="text-sm text-[#6B7280] mb-5">
-                Select the classes and subjects you can teach.
-              </p>
+              classes={primaryClasses}
+              selectedClasses={
+                formData.teaching.primaryClasses
+              }
 
-              <FieldLabel label="Classes" />
+              subjects={primarySubjects}
+              selectedSubjects={
+                formData.teaching.primarySubjects
+              }
 
-              <div className="flex flex-wrap gap-2 mb-5">
-                {primaryClasses.map((item) => (
-                  <Chip
-                    key={item}
-                    label={item}
-                    selected={formData.teaching.primaryClasses.includes(
-                      item
-                    )}
-                    onClick={() =>
-                      toggleArrayValue(
-                        'teaching',
-                        'primaryClasses',
-                        item
-                      )
-                    }
-                  />
-                ))}
-              </div>
+              allSubjects={
+                formData.teaching
+                  .primaryAllSubjects
+              }
 
-              <FieldLabel label="Subjects" />
+              onClassToggle={(item) =>
+                toggleTeachingArray(
+                  'primaryClasses',
+                  item
+                )
+              }
 
-              <div className="mb-4">
-                <Chip
-                  label="All Subjects"
-                  selected={
-                    formData.teaching.primaryAllSubjects
-                  }
-                  onClick={togglePrimaryAllSubjects}
-                />
-              </div>
+              onSubjectToggle={(item) =>
+                toggleTeachingArray(
+                  'primarySubjects',
+                  item
+                )
+              }
 
-              {!formData.teaching.primaryAllSubjects && (
-                <div className="flex flex-wrap gap-2">
-                  {primarySubjects.map((item) => (
-                    <Chip
-                      key={item}
-                      label={item}
-                      selected={formData.teaching.primarySubjects.includes(
-                        item
-                      )}
-                      onClick={() =>
-                        toggleArrayValue(
-                          'teaching',
-                          'primarySubjects',
-                          item
-                        )
-                      }
-                    />
-                  ))}
-                </div>
-              )}
+              onAllSubjectsToggle={
+                togglePrimaryAllSubjects
+              }
 
-            </div>
+              showAllSubjects
+            />
 
             {/* SECONDARY */}
-            <div className="border border-[#E5E7EB] rounded-2xl p-5">
 
-              <h3 className="font-bold text-[#0D1118] mb-1">
-                Class 9 – Class 10
-              </h3>
+            <TeachingLevelCard
+              title="Class 9 – Class 10"
+              description="Select the classes and subjects separately."
 
-              <p className="text-sm text-[#6B7280] mb-5">
-                Select classes and subjects separately.
-              </p>
+              classes={secondaryClasses}
+              selectedClasses={
+                formData.teaching
+                  .secondaryClasses
+              }
 
-              <FieldLabel label="Classes" />
+              subjects={secondarySubjects}
+              selectedSubjects={
+                formData.teaching
+                  .secondarySubjects
+              }
 
-              <div className="flex flex-wrap gap-2 mb-5">
-                {secondaryClasses.map((item) => (
-                  <Chip
-                    key={item}
-                    label={item}
-                    selected={formData.teaching.secondaryClasses.includes(
-                      item
-                    )}
-                    onClick={() =>
-                      toggleArrayValue(
-                        'teaching',
-                        'secondaryClasses',
-                        item
-                      )
-                    }
-                  />
-                ))}
-              </div>
+              onClassToggle={(item) =>
+                toggleTeachingArray(
+                  'secondaryClasses',
+                  item
+                )
+              }
 
-              <FieldLabel label="Subjects" />
-
-              <div className="flex flex-wrap gap-2">
-                {secondarySubjects.map((item) => (
-                  <Chip
-                    key={item}
-                    label={item}
-                    selected={formData.teaching.secondarySubjects.includes(
-                      item
-                    )}
-                    onClick={() =>
-                      toggleArrayValue(
-                        'teaching',
-                        'secondarySubjects',
-                        item
-                      )
-                    }
-                  />
-                ))}
-              </div>
-
-            </div>
+              onSubjectToggle={(item) =>
+                toggleTeachingArray(
+                  'secondarySubjects',
+                  item
+                )
+              }
+            />
 
             {/* SENIOR SECONDARY */}
-            <div className="border border-[#E5E7EB] rounded-2xl p-5">
 
-              <h3 className="font-bold text-[#0D1118] mb-1">
-                Class 11 – Class 12
-              </h3>
+            <TeachingLevelCard
+              title="Class 11 – Class 12"
+              description="Select the classes and subjects separately."
 
-              <p className="text-sm text-[#6B7280] mb-5">
-                Select classes and subjects separately.
-              </p>
+              classes={
+                seniorSecondaryClasses
+              }
 
-              <FieldLabel label="Classes" />
+              selectedClasses={
+                formData.teaching
+                  .seniorSecondaryClasses
+              }
 
-              <div className="flex flex-wrap gap-2 mb-5">
-                {seniorSecondaryClasses.map((item) => (
-                  <Chip
-                    key={item}
-                    label={item}
-                    selected={formData.teaching.seniorSecondaryClasses.includes(
-                      item
-                    )}
-                    onClick={() =>
-                      toggleArrayValue(
-                        'teaching',
-                        'seniorSecondaryClasses',
-                        item
-                      )
-                    }
-                  />
-                ))}
-              </div>
+              subjects={
+                seniorSecondarySubjects
+              }
 
-              <FieldLabel label="Subjects" />
+              selectedSubjects={
+                formData.teaching
+                  .seniorSecondarySubjects
+              }
 
-              <div className="flex flex-wrap gap-2">
-                {seniorSecondarySubjects.map((item) => (
-                  <Chip
-                    key={item}
-                    label={item}
-                    selected={formData.teaching.seniorSecondarySubjects.includes(
-                      item
-                    )}
-                    onClick={() =>
-                      toggleArrayValue(
-                        'teaching',
-                        'seniorSecondarySubjects',
-                        item
-                      )
-                    }
-                  />
-                ))}
-              </div>
+              onClassToggle={(item) =>
+                toggleTeachingArray(
+                  'seniorSecondaryClasses',
+                  item
+                )
+              }
 
-            </div>
+              onSubjectToggle={(item) =>
+                toggleTeachingArray(
+                  'seniorSecondarySubjects',
+                  item
+                )
+              }
+            />
 
           </div>
+
         )}
 
-        {/* STEP 4 */}
+        {/* =================================================
+            STEP 4 — PREFERENCES
+        ================================================= */}
+
         {step === 4 && (
-          <div className="space-y-8">
+
+          <div className="space-y-7">
 
             <p className="text-[#6B7280]">
-              Tell us where, when and how you would prefer to teach.
+              Tell us where, when and how you would
+              prefer to teach.
             </p>
 
             {/* MODE */}
+
             <div>
+
               <FieldLabel
                 label="Teaching Mode"
                 required
               />
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+
                 {[
                   'Home Tuition',
                   'Online',
                   'Both',
                 ].map((item) => (
+
                   <ChoiceButton
                     key={item}
                     label={item}
-                    selected={formData.preferences.teachingMode.includes(
-                      item
-                    )}
+                    selected={
+                      formData.preferences
+                        .teachingMode
+                        .includes(item)
+                    }
                     onClick={() =>
-                      toggleArrayValue(
-                        'preferences',
+                      togglePreferenceArray(
                         'teachingMode',
                         item
                       )
                     }
                   />
+
                 ))}
+
               </div>
+
             </div>
 
             {/* LOCATION */}
+
             <div>
+
               <FieldLabel label="Offline Teaching Areas" />
 
               <textarea
                 value={
-                  formData.preferences.offlineAreas
+                  formData.preferences
+                    .offlineAreas
                 }
                 onChange={(e) =>
                   updatePreferences(
@@ -976,72 +1249,103 @@ export default function TutorRegistrationForm() {
               />
 
               <p className="text-xs text-[#6B7280] mt-2">
-                You can enter multiple areas separated by commas.
+                Enter multiple areas separated by commas.
               </p>
+
             </div>
 
             {/* AVAILABILITY */}
+
             <div>
+
               <FieldLabel label="Preferred Availability" />
 
               <div className="grid grid-cols-2 gap-3">
-                {availabilityOptions.map((item) => (
-                  <ChoiceButton
-                    key={item}
-                    label={item}
-                    selected={formData.preferences.availability.includes(
-                      item
-                    )}
-                    onClick={() =>
-                      toggleArrayValue(
-                        'preferences',
-                        'availability',
-                        item
-                      )
-                    }
-                  />
-                ))}
+
+                {availabilityOptions.map(
+                  (item) => (
+
+                    <ChoiceButton
+                      key={item}
+                      label={item}
+                      selected={
+                        formData.preferences
+                          .availability
+                          .includes(item)
+                      }
+                      onClick={() =>
+                        togglePreferenceArray(
+                          'availability',
+                          item
+                        )
+                      }
+                    />
+
+                  )
+                )}
+
               </div>
+
             </div>
 
             {/* STUDENT TYPE */}
+
             <div>
+
               <FieldLabel label="Preferred Student Type" />
 
               <div className="flex flex-wrap gap-2">
-                {studentTypes.map((item) => (
-                  <Chip
-                    key={item}
-                    label={item}
-                    selected={formData.preferences.studentTypes.includes(
-                      item
-                    )}
-                    onClick={() =>
-                      toggleArrayValue(
-                        'preferences',
-                        'studentTypes',
-                        item
-                      )
-                    }
-                  />
-                ))}
+
+                {studentTypes.map(
+                  (item) => (
+
+                    <Chip
+                      key={item}
+                      label={item}
+                      selected={
+                        formData.preferences
+                          .studentTypes
+                          .includes(item)
+                      }
+                      onClick={() =>
+                        togglePreferenceArray(
+                          'studentTypes',
+                          item
+                        )
+                      }
+                    />
+
+                  )
+                )}
+
               </div>
+
             </div>
 
           </div>
+
         )}
 
-        {/* STEP 5 */}
+        {/* =================================================
+            STEP 5 — REVIEW
+        ================================================= */}
+
         {step === 5 && (
-          <ReviewSection formData={formData} />
+
+          <ReviewSection
+            formData={formData}
+          />
+
         )}
 
       </div>
 
-      {/* FOOTER BUTTONS */}
+      {/* FOOTER */}
+
       <div className="px-6 sm:px-8 py-5 bg-[#FAFBFC] border-t border-[#E5E7EB] flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
 
         {step > 1 ? (
+
           <button
             type="button"
             onClick={previousStep}
@@ -1049,11 +1353,15 @@ export default function TutorRegistrationForm() {
           >
             ← Back
           </button>
+
         ) : (
+
           <div />
+
         )}
 
         {step < totalSteps ? (
+
           <button
             type="button"
             onClick={nextStep}
@@ -1062,7 +1370,9 @@ export default function TutorRegistrationForm() {
             Continue
             <span>→</span>
           </button>
+
         ) : (
+
           <button
             type="button"
             onClick={handleSubmit}
@@ -1071,6 +1381,7 @@ export default function TutorRegistrationForm() {
             Submit Profile
             <span>→</span>
           </button>
+
         )}
 
       </div>
@@ -1079,9 +1390,112 @@ export default function TutorRegistrationForm() {
   );
 }
 
+/* =========================================================
+   TEACHING LEVEL CARD
+========================================================= */
+
+function TeachingLevelCard({
+  title,
+  description,
+  classes,
+  selectedClasses,
+  subjects,
+  selectedSubjects,
+  onClassToggle,
+  onSubjectToggle,
+  allSubjects = false,
+  showAllSubjects = false,
+  onAllSubjectsToggle,
+}: {
+  title: string;
+  description: string;
+  classes: string[];
+  selectedClasses: string[];
+  subjects: string[];
+  selectedSubjects: string[];
+  onClassToggle: (item: string) => void;
+  onSubjectToggle: (item: string) => void;
+  allSubjects?: boolean;
+  showAllSubjects?: boolean;
+  onAllSubjectsToggle?: () => void;
+}) {
+  return (
+    <div className="border border-[#E5E7EB] rounded-2xl p-5">
+
+      <h3 className="font-bold text-[#0D1118] mb-1">
+        {title}
+      </h3>
+
+      <p className="text-sm text-[#6B7280] mb-5">
+        {description}
+      </p>
+
+      <FieldLabel label="Classes You Can Teach" />
+
+      <div className="flex flex-wrap gap-2 mb-5">
+
+        {classes.map((item) => (
+
+          <Chip
+            key={item}
+            label={item}
+            selected={
+              selectedClasses.includes(item)
+            }
+            onClick={() =>
+              onClassToggle(item)
+            }
+          />
+
+        ))}
+
+      </div>
+
+      <FieldLabel label="Subjects You Can Teach" />
+
+      {showAllSubjects && (
+        <div className="mb-3">
+
+          <Chip
+            label="All Subjects"
+            selected={allSubjects}
+            onClick={() =>
+              onAllSubjectsToggle?.()
+            }
+          />
+
+        </div>
+      )}
+
+      {!allSubjects && (
+
+        <div className="flex flex-wrap gap-2">
+
+          {subjects.map((item) => (
+
+            <Chip
+              key={item}
+              label={item}
+              selected={
+                selectedSubjects.includes(item)
+              }
+              onClick={() =>
+                onSubjectToggle(item)
+              }
+            />
+
+          ))}
+
+        </div>
+
+      )}
+
+    </div>
+  );
+}
 
 /* =========================================================
-   REUSABLE COMPONENTS
+   INPUT
 ========================================================= */
 
 function InputField({
@@ -1101,19 +1515,29 @@ function InputField({
 }) {
   return (
     <div>
-      <FieldLabel label={label} required={required} />
+
+      <FieldLabel
+        label={label}
+        required={required}
+      />
 
       <input
         type={type}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) =>
+          onChange(e.target.value)
+        }
         placeholder={placeholder}
         className="w-full rounded-xl border border-[#DDE2E8] bg-[#F8FAFC] px-4 py-3.5 text-[#0D1118] placeholder:text-[#9AA3AF] outline-none transition focus:border-[#0A6FF7] focus:ring-2 focus:ring-[#0A6FF7]/10"
       />
+
     </div>
   );
 }
 
+/* =========================================================
+   TEXTAREA
+========================================================= */
 
 function TextAreaField({
   label,
@@ -1130,19 +1554,29 @@ function TextAreaField({
 }) {
   return (
     <div>
-      <FieldLabel label={label} required={required} />
+
+      <FieldLabel
+        label={label}
+        required={required}
+      />
 
       <textarea
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) =>
+          onChange(e.target.value)
+        }
         placeholder={placeholder}
         rows={3}
         className="w-full rounded-xl border border-[#DDE2E8] bg-[#F8FAFC] px-4 py-3.5 text-[#0D1118] placeholder:text-[#9AA3AF] outline-none transition focus:border-[#0A6FF7] focus:ring-2 focus:ring-[#0A6FF7]/10 resize-none"
       />
+
     </div>
   );
 }
 
+/* =========================================================
+   SELECT
+========================================================= */
 
 function SelectField({
   label,
@@ -1161,21 +1595,37 @@ function SelectField({
 }) {
   return (
     <div>
-      <FieldLabel label={label} required={required} />
+
+      <FieldLabel
+        label={label}
+        required={required}
+      />
 
       <div className="relative">
+
         <select
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) =>
+            onChange(e.target.value)
+          }
           className="appearance-none w-full rounded-xl border border-[#DDE2E8] bg-[#F8FAFC] px-4 py-3.5 pr-10 text-[#0D1118] outline-none transition focus:border-[#0A6FF7] focus:ring-2 focus:ring-[#0A6FF7]/10"
         >
-          <option value="">{placeholder}</option>
+
+          <option value="">
+            {placeholder}
+          </option>
 
           {options.map((option) => (
-            <option key={option} value={option}>
+
+            <option
+              key={option}
+              value={option}
+            >
               {option}
             </option>
+
           ))}
+
         </select>
 
         <svg
@@ -1191,11 +1641,16 @@ function SelectField({
         >
           <path d="m6 9 6 6 6-6" />
         </svg>
+
       </div>
+
     </div>
   );
 }
 
+/* =========================================================
+   LABEL
+========================================================= */
 
 function FieldLabel({
   label,
@@ -1206,15 +1661,22 @@ function FieldLabel({
 }) {
   return (
     <label className="block text-sm font-bold text-[#0D1118] mb-2.5">
+
       {label}
 
       {required && (
-        <span className="text-[#0A6FF7] ml-1">*</span>
+        <span className="text-[#0A6FF7] ml-1">
+          *
+        </span>
       )}
+
     </label>
   );
 }
 
+/* =========================================================
+   CHOICE BUTTON
+========================================================= */
 
 function ChoiceButton({
   label,
@@ -1235,6 +1697,7 @@ function ChoiceButton({
           : 'border-[#DDE2E8] bg-white text-[#4B5563] hover:border-[#AFC9EF]'
       }`}
     >
+
       <span className="flex items-center gap-2">
 
         <span
@@ -1244,18 +1707,24 @@ function ChoiceButton({
               : 'border-[#CBD5E1]'
           }`}
         >
+
           {selected && (
             <span className="w-1.5 h-1.5 rounded-full bg-white" />
           )}
+
         </span>
 
         {label}
 
       </span>
+
     </button>
   );
 }
 
+/* =========================================================
+   CHIP
+========================================================= */
 
 function Chip({
   label,
@@ -1276,50 +1745,44 @@ function Chip({
           : 'bg-white border-[#DDE2E8] text-[#4B5563] hover:border-[#AFC9EF]'
       }`}
     >
+
       {selected && (
-        <span className="mr-1">✓</span>
+        <span className="mr-1">
+          ✓
+        </span>
       )}
 
       {label}
+
     </button>
   );
 }
 
-
 /* =========================================================
-   REVIEW
+   REVIEW SECTION
 ========================================================= */
 
 function ReviewSection({
   formData,
 }: {
-  formData: FormData;
+  formData: TutorFormData;
 }) {
-  const primaryClassText =
-    formData.teaching.primaryClasses.length > 0
-      ? formData.teaching.primaryClasses.join(', ')
-      : 'Not selected';
-
-  const secondaryClassText =
-    formData.teaching.secondaryClasses.length > 0
-      ? formData.teaching.secondaryClasses.join(', ')
-      : 'Not selected';
-
-  const seniorClassText =
-    formData.teaching.seniorSecondaryClasses.length > 0
-      ? formData.teaching.seniorSecondaryClasses.join(', ')
-      : 'Not selected';
-
   return (
     <div className="space-y-6">
 
       <div>
+
         <p className="text-[#6B7280]">
-          Please review your information before submitting.
+          Please review your information before
+          submitting your TutorWave profile.
         </p>
+
       </div>
 
+      {/* PERSONAL */}
+
       <ReviewCard title="Personal Details">
+
         <ReviewRow
           label="Name"
           value={formData.personal.fullName}
@@ -1349,47 +1812,87 @@ function ReviewSection({
           label="Address"
           value={formData.personal.address}
         />
+
       </ReviewCard>
 
+      {/* EDUCATION */}
+
       <ReviewCard title="Education">
+
         <ReviewRow
           label="Highest Qualification"
           value={
-            formData.education.highestQualification
+            formData.education
+              .highestQualification
           }
         />
 
         <ReviewRow
           label="Stream / Specialisation"
-          value={formData.education.stream}
+          value={
+            formData.education.stream
+          }
         />
 
         <ReviewRow
           label="Schooling"
-          value={formData.education.schoolingFrom}
+          value={
+            formData.education
+              .schoolingFrom
+          }
         />
 
         <ReviewRow
           label="College / University"
-          value={formData.education.college}
+          value={
+            formData.education.college
+          }
         />
+
+        <ReviewRow
+          label="Additional Qualifications"
+          value={
+            formData.education
+              .additionalQualification
+          }
+        />
+
       </ReviewCard>
+
+      {/* TEACHING */}
 
       <ReviewCard title="Teaching Profile">
 
         <ReviewRow
           label="Experience"
-          value={formData.teaching.experience}
+          value={
+            formData.teaching.experience
+          }
         />
 
         <ReviewRow
           label="English Fluency"
-          value={formData.teaching.englishFluency}
+          value={
+            formData.teaching
+              .englishFluency
+          }
+        />
+
+        <ReviewRow
+          label="School / Coaching Experience"
+          value={
+            formData.teaching
+              .schoolExperience
+          }
         />
 
         <ReviewRow
           label="Boards"
-          value={formData.teaching.boards.join(', ')}
+          value={
+            formData.teaching.boards.join(
+              ', '
+            )
+          }
         />
 
         <div className="border-t border-[#E5E7EB] pt-4 mt-4">
@@ -1400,17 +1903,21 @@ function ReviewSection({
 
           <ReviewRow
             label="Classes"
-            value={primaryClassText}
+            value={
+              formData.teaching
+                .primaryClasses.join(', ')
+            }
           />
 
           <ReviewRow
             label="Subjects"
             value={
-              formData.teaching.primaryAllSubjects
+              formData.teaching
+                .primaryAllSubjects
                 ? 'All Subjects'
-                : formData.teaching.primarySubjects.join(
-                    ', '
-                  )
+                : formData.teaching
+                    .primarySubjects
+                    .join(', ')
             }
           />
 
@@ -1424,14 +1931,20 @@ function ReviewSection({
 
           <ReviewRow
             label="Classes"
-            value={secondaryClassText}
+            value={
+              formData.teaching
+                .secondaryClasses
+                .join(', ')
+            }
           />
 
           <ReviewRow
             label="Subjects"
-            value={formData.teaching.secondarySubjects.join(
-              ', '
-            )}
+            value={
+              formData.teaching
+                .secondarySubjects
+                .join(', ')
+            }
           />
 
         </div>
@@ -1444,59 +1957,90 @@ function ReviewSection({
 
           <ReviewRow
             label="Classes"
-            value={seniorClassText}
+            value={
+              formData.teaching
+                .seniorSecondaryClasses
+                .join(', ')
+            }
           />
 
           <ReviewRow
             label="Subjects"
-            value={formData.teaching.seniorSecondarySubjects.join(
-              ', '
-            )}
+            value={
+              formData.teaching
+                .seniorSecondarySubjects
+                .join(', ')
+            }
           />
 
         </div>
 
+        <ReviewRow
+          label="Students / Schools / Institutes"
+          value={
+            formData.teaching
+              .studentsTaughtFrom
+          }
+        />
+
       </ReviewCard>
+
+      {/* PREFERENCES */}
 
       <ReviewCard title="Teaching Preferences">
 
         <ReviewRow
-          label="Mode"
-          value={formData.preferences.teachingMode.join(
-            ', '
-          )}
+          label="Teaching Mode"
+          value={
+            formData.preferences
+              .teachingMode
+              .join(', ')
+          }
         />
 
         <ReviewRow
           label="Offline Areas"
-          value={formData.preferences.offlineAreas}
+          value={
+            formData.preferences
+              .offlineAreas
+          }
         />
 
         <ReviewRow
           label="Availability"
-          value={formData.preferences.availability.join(
-            ', '
-          )}
+          value={
+            formData.preferences
+              .availability
+              .join(', ')
+          }
         />
 
         <ReviewRow
           label="Student Type"
-          value={formData.preferences.studentTypes.join(
-            ', '
-          )}
+          value={
+            formData.preferences
+              .studentTypes
+              .join(', ')
+          }
         />
 
       </ReviewCard>
 
       <div className="rounded-xl bg-[#F8FAFC] border border-[#E5E7EB] p-4 text-sm text-[#6B7280] leading-relaxed">
-        By submitting this profile, you confirm that the information
-        provided is accurate to the best of your knowledge.
+
+        By submitting this profile, you confirm
+        that the information provided is accurate
+        to the best of your knowledge.
+
       </div>
 
     </div>
   );
 }
 
+/* =========================================================
+   REVIEW CARD
+========================================================= */
 
 function ReviewCard({
   title,
@@ -1520,6 +2064,9 @@ function ReviewCard({
   );
 }
 
+/* =========================================================
+   REVIEW ROW
+========================================================= */
 
 function ReviewRow({
   label,
