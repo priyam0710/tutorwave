@@ -6,7 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import WhatsAppButton from '@/app/components/WhatsAppButton';
 import { tutors, Tutor } from '@/lib/data/tutors';
-
+const featuredTutors = tutors.slice(0, 6);
 // ─── Filter Options ────────────────────────────────────────────────────────────
 const SUBJECT_OPTIONS = ['All Subjects', 'Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Hindi', 'Computer Science', 'Science', 'Social Science'];
 const CLASS_OPTIONS = ['All Classes', 'Nursery–UKG', 'Class 1–5', 'Class 6–8', 'Class 9–10', 'Class 11–12'];
