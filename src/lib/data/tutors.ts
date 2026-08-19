@@ -419,7 +419,6 @@ export const tutors: Tutor[] = [
   availability: 'Weekdays 6pm–10pm, Weekends 10am–6pm',
   gender: 'Male',
   languages: ['English', 'Hindi']
-},
 }];
 
 
