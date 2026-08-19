@@ -15,7 +15,7 @@ const featuredTutors = [
     mode: 'Online',
     verified: true,
   },
-];
+  }];
 
 export default function HomeFeaturedTutors() {
   return (
