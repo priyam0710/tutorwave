@@ -435,3 +435,4 @@ export function getTutorsByLocation(location: string): Tutor[] {
   t.locations.some((l) => l.toLowerCase().includes(location.toLowerCase()))
   );
 }
+export const featuredTutors = tutors.slice(0, 6);
