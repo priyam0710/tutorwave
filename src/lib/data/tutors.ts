@@ -24,23 +24,17 @@ export const tutors: Tutor[] = [];
 
 export const featuredTutors: Tutor[] = [];
 
-export function getTutorBySlug(
-  slug: string
-): Tutor | undefined {
+export function getTutorBySlug(slug: string): Tutor | undefined {
   return tutors.find((tutor) => tutor.slug === slug);
 }
 
-export function getTutorsBySubject(
-  subject: string
-): Tutor[] {
+export function getTutorsBySubject(subject: string): Tutor[] {
   return tutors.filter((tutor) =>
     tutor.subjects.includes(subject)
   );
 }
 
-export function getTutorsByLocation(
-  location: string
-): Tutor[] {
+export function getTutorsByLocation(location: string): Tutor[] {
   return tutors.filter((tutor) =>
     tutor.locations.some((loc) =>
       loc.toLowerCase().includes(location.toLowerCase())
