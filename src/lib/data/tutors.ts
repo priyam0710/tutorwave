@@ -10,13 +10,13 @@ export interface Tutor {
   experience: number;
   qualifications: string[];
   locations: string[];
-  teachingMode: ('home' | 'online' | 'both')[];
+  teachingMode: ("home" | "online" | "both")[];
   verified: boolean;
   rating: number;
   reviewCount: number;
   bio: string;
   availability: string;
-  gender: 'male' | 'female';
+  gender: "male" | "female";
   languages: string[];
 }
 
@@ -29,9 +29,7 @@ export function getTutorBySlug(slug: string): Tutor | undefined {
 }
 
 export function getTutorsBySubject(subject: string): Tutor[] {
-  return tutors.filter((tutor) =>
-    tutor.subjects.includes(subject)
-  );
+  return tutors.filter((tutor) => tutor.subjects.includes(subject));
 }
 
 export function getTutorsByLocation(location: string): Tutor[] {
