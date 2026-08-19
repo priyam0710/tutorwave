@@ -54,7 +54,7 @@ export const tutors: Tutor[] = [
   experience: 5,
   qualifications: ['Graduation from IIT Patna', 'Certified from Harvard University'],
   locations: ['ONLINE'],
-  teachingMode: ['Online',],
+ teachingMode: ['online',],
   verified: true,
   rating: 5,
   reviewCount: 52,
