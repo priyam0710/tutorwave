@@ -48,7 +48,7 @@ export const tutors: Tutor[] = [
   slug: 'Priyanshu - Singh',
   photo: "https://img.rocket.new/generatedImages/rocket_gen_img_13907f863-1772137966294.png",
   photoAlt: 'Priyanshu-Singh',
-  subjects: ['Physics', 'Chemistry', 'Mathematics', 'Science',],
+  subjects: ['Physics', 'Chemistry', 'Mathematics', 'Science'],
   classes: ['Class 9', 'Class 10','Class 11', 'Class 12', 'IIT-JEE'],
   boards: ['CBSE', 'ICSE','NIOS'],
   experience: 5,
