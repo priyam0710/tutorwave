@@ -74,7 +74,7 @@ export const tutors: Tutor[] = [
   boards: ['CBSE', 'ICSE'],
   experience: 5,
   qualifications: ['B.Sc in Psychology(Hons.)'],
-  locations: ['Tughlakabad', 'Sangam Vihar', 'Saket','Mehrauli', 'Malviya Nagar','CR Park', 'India Gate','Sainik Farm'],
+  locations: ['Malviya Nagar','Tughlakabad', 'Sangam Vihar', 'Saket','Mehrauli','CR Park', 'India Gate','Sainik Farm'],
   teachingMode: ['home', 'online'],
   verified: true,
   rating: 5,
@@ -86,7 +86,7 @@ export const tutors: Tutor[] = [
 },
 {
   id: 'tutor-004',
-  name: 'Amit Khanna',
+  name: '',
   slug: 'amit-khanna',
   photo: "https://img.rocket.new/generatedImages/rocket_gen_img_1a3f615c6-1786689318155.png",
   photoAlt: 'Amit Khanna, Biology and Chemistry tutor for NEET preparation in Delhi NCR',
