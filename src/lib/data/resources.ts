@@ -29,7 +29,7 @@ Ensure the tutor has strong knowledge of the specific subject and class level yo
 Every child learns differently. Some students benefit from a structured approach while others need a more flexible, conversational style. Discuss the tutor's teaching methodology before committing.
 
 3. Experience with the Relevant Board
-CBSE, ICSE and state boards have different syllabi and exam patterns. Make sure the tutor is familiar with your child's specific board.
+CBSE, ICSE and state boards have different syllabus and exam patterns. Make sure the tutor is familiar with your child's specific board.
 
 4. Communication
 A good tutor communicates regularly with parents about the student's progress, areas of improvement and any concerns.
@@ -42,7 +42,7 @@ Consider requesting a trial session before making a long-term commitment. This h
     author: 'TutorWave Team',
     publishedAt: '2026-08-01',
     readTime: '5 min read',
-    tags: ['Parents', 'Home Tuition', 'Tutor Selection'],
+    tags : ['Parents', 'Home Tuition', 'Tutor Selection'],
     seoTitle: 'How to Choose the Right Home Tutor — TutorWave Guide',
     seoDescription: 'A practical guide for parents on selecting the right home tutor for their child. Learn what to look for in qualifications, teaching style and experience.',
   },
