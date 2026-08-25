@@ -32,14 +32,7 @@ export const tutors: Tutor[] = [
     boards: ['CBSE', 'State Board'],
     experience: 15,
     qualifications: ['M.Sc. Mathematics (CCS University)', 'B.Ed.'],
-    locations: [
-      'Noida Sector 44',
-      'Noida Sector 45',
-      'Noida Sector 49',
-      'Noida Sector 50',
-      'Noida Sector 99',
-      'Noida Sector 62'
-    ],
+    locations:['Noida Sector 44', 'Noida Sector 45','Noida Sector 49','Noida Sector 50', 'Noida Sector 99', 'Noida Sector 62', ],
     teachingMode: ['home'],
     verified: true,
     rating: 5,
