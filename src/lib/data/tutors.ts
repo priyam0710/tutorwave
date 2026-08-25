@@ -129,4 +129,19 @@ export function getTutorsByLocation(location: string): Tutor[] {
   );
 }
 
-export const featuredTutors = tutors.slice(0, 6);
+// ============================================================
+// FEATURED TUTORS
+// Edit this list anytime to control which tutors appear
+// on the homepage Featured Tutors section.
+// ============================================================
+
+export const featuredTutorIds = [
+  'tutor-002', // Priyanshu Singh
+  'tutor-001', // Dheeraj Sharma
+  'tutor-003', // Ilma Khan
+];
+
+// Automatically get the full tutor data from the main tutors list
+export const featuredTutors = featuredTutorIds
+  .map((id) => tutors.find((tutor) => tutor.id === id))
+  .filter((tutor): tutor is Tutor => tutor !== undefined);
