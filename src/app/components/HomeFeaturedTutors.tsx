@@ -3,6 +3,11 @@ import Link from 'next/link';
 import AppImage from '@/components/ui/AppImage';
 import { featuredTutors } from '@/lib/data/tutors';
 
+export const featuredTutorIds = [
+  'tutor-002',
+  'tutor-001',
+  'tutor-003',
+];
 
 export default function HomeFeaturedTutors() {
   return (
