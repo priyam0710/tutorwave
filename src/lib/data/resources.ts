@@ -42,7 +42,7 @@ Consider requesting a trial session before making a long-term commitment. This h
     author: 'TutorWave Team',
     publishedAt: '2026-08-01',
     readTime: '5 min read',
-    tags : ['Parents', 'Home Tuition', 'Tutor Selection'],
+    tags: ['Parents', 'Home Tuition', 'Tutor Selection'],
     seoTitle: 'How to Choose the Right Home Tutor — TutorWave Guide',
     seoDescription: 'A practical guide for parents on selecting the right home tutor for their child. Learn what to look for in qualifications, teaching style and experience.',
   },
