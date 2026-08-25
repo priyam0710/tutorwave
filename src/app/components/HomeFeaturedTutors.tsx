@@ -1,26 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import AppImage from '@/components/ui/AppImage';
-import { tutors } from '@/lib/data/tutors';
-
-const featuredTutors = [...tutors]
-  .sort((a, b) => b.experience - a.experience)
-  .slice(0, 4);
-
-const tutors = [
-  {
-    name: 'Priyanshu Singh',
-    slug: 'priyanshu-singh',
-    photo: 'https://img.rocket.new/generatedImages/rocket_gen_img_15d2cf196-1786689836288.png',
-    photoAlt: 'Priyanshu singh, Maths and Science tutor in Noida',
-    subjects: ['Mathematics', 'Science', 'Physics', 'Chemistry'], 
-    classes: ['Classes 9–12', 'IIT JEE'],
-    experience: '5+ Years',
-    location: 'Noida',
-    mode: 'Online',
-    verified: true,
-  },
-];
+import { featuredTutors } from '@/lib/data/tutors';
 
 
 export default function HomeFeaturedTutors() {
