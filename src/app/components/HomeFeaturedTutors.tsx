@@ -1,6 +1,11 @@
 import React from 'react';
 import Link from 'next/link';
 import AppImage from '@/components/ui/AppImage';
+import { tutors } from '@/lib/data/tutors';
+
+const featuredTutors = [...tutors]
+  .sort((a, b) => b.experience - a.experience)
+  .slice(0, 4);
 
 const tutors = [
   {
