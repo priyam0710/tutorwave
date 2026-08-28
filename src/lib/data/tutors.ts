@@ -140,6 +140,37 @@ export const tutors: Tutor[] = [
     gender: 'female',
     languages: ['English', 'Hindi']
   },
+  {
+    id: 'tutor-005',
+    name: 'Rupesh Jha',
+    slug: 'Rupesh Jha',
+    photo: "https://img.rocket.new/generatedImages/rocket_gen_img_1e7575f93-1765298093270.png",
+    photoAlt: 'Rupesh-Jha',
+    subjects: ['Maths','Science','Social Science','English',
+    ],
+    classes: ['Class 8', 'Class 9', 'Class 10','Class 11','Class 12','BBA','BCA',],
+    boards: ['CBSE', 'ICSE',],
+    experience: 17,
+    qualifications: ['B.Tech in Electrical & Electronics'],
+    locations: [
+      'Nangloi',
+      'Mundka',
+      'Punjabi Bagh',
+      'Rajouri Garden',
+      'Ramesh Nagar',
+      'Modi Nagar',
+      'Kirti Nagar',
+    ],
+    teachingMode: ['home', 'online'],
+    verified: true,
+    rating: 5,
+    reviewCount: 2,
+    bio: '',
+    availability: 'Weekdays 3pm–9pm, Weekends flexible',
+    gender: 'Male',
+    languages: ['English', 'Hindi']
+  },
+  
 ];
 
 export function getTutorBySlug(slug: string): Tutor | undefined {
