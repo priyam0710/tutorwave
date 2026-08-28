@@ -198,6 +198,37 @@ export const tutors: Tutor[] = [
     gender: 'Male',
     languages: ['English', 'Hindi']
   },
+
+   {
+    id: 'tutor-007',
+    name: 'Basundhara Das',
+    slug: 'Basundhara Das',
+    photo: "https://img.rocket.new/generatedImages/rocket_gen_img_1e7575f93-1765298093270.png",
+    photoAlt: 'Basundhara Das',
+    subjects: ['All Subjects','Maths','Science','Social Science','English','Biology','Computer'],
+    classes: ['Class 4','Class 5','Class 6','Class 7','Class 8', 'Class 9', 'Class 10','Class 11','Class 12',],
+    boards: ['CBSE', 'ICSE',],
+    experience: 10,
+    qualifications: ['P.hd in cancer biology','M.Sc in Applied Microbiology','Bachelors in',],
+    locations: [
+     'Noida Sector 29',
+      'Noida Sector 128',
+      'Noida Sector 50',
+      'Noida Sector 104',
+      'Noida Sector 25',
+      'Noida Sector 94',
+      'Noida Sector 53',
+      'Noida Sector 46',
+    ],
+    teachingMode: ['home', 'online'],
+    verified: true,
+    rating: 5,
+    reviewCount: 8,
+    bio: '',
+    availability: 'Weekdays 3pm–9pm, Weekends flexible',
+    gender: 'Female',
+    languages: ['English', 'Hindi']
+  },
 ];
 
 export function getTutorBySlug(slug: string): Tutor | undefined {
