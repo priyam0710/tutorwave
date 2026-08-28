@@ -229,6 +229,31 @@ export const tutors: Tutor[] = [
     gender: 'Female',
     languages: ['English', 'Hindi']
   },
+
+   {
+    id: 'tutor-008',
+    name: 'Naveen Bhatnagar',
+    slug: 'Naveen Bhatnagar',
+    photo: "https://img.rocket.new/generatedImages/rocket_gen_img_1e7575f93-1765298093270.png",
+    photoAlt: 'Naveen Bhatnagar',
+    subjects: ['Maths','Science','Social Science','English','Accounts','Legal Studies','Economics','Business Studies',],
+    classes: ['Class 6','Class 7','Class 8', 'Class 9', 'Class 10','Class 11','Class 12',],
+    boards: ['CBSE', 'ICSE',],
+    experience: 15,
+    qualifications: ['M.Com','MBA','LLB',],
+    locations: [
+      'Maya Puri',
+      'Dwarka Sector 2',
+    ],
+    teachingMode: ['home', 'online'],
+    verified: false,
+    rating: 5,
+    reviewCount: 2,
+    bio: '',
+    availability: 'Weekdays 3pm–9pm, Weekends flexible',
+    gender: 'Male',
+    languages: ['English', 'Hindi']
+  },
 ];
 
 export function getTutorBySlug(slug: string): Tutor | undefined {
