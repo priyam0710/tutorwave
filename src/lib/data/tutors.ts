@@ -12,6 +12,7 @@ export interface Tutor {
   locations: string[];
   teachingMode: ('home' | 'online' | 'both')[];
   verified: boolean;
+  unverified: boolean;
   rating: number;
   reviewCount: number;
   bio: string;
