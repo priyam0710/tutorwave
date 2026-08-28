@@ -103,7 +103,43 @@ export const tutors: Tutor[] = [
     availability: 'Weekdays 2pm–9pm, Weekends flexible',
     gender: 'female',
     languages: ['English', 'Hindi']
-  }
+  },
+
+  {
+    id: 'tutor-004',
+    name: 'Jyoti Puri',
+    slug: 'Jyoti Puri',
+    photo: "https://img.rocket.new/generatedImages/rocket_gen_img_1e7575f93-1765298093270.png",
+    photoAlt: 'Jyoti-Puri',
+    subjects: [
+      'All Subjects',
+      'English',
+      'Hindi',
+      'Maths',
+      'Science',
+      'Social Science',
+    ],
+    classes: ['Class NUR - 8th', 'Class 9', 'Class 10'],
+    boards: ['CBSE', 'ICSE','State Board',],
+    experience: 5,
+    qualifications: ['B.Tech in Electronics & Communication'],
+    locations: [
+      'Noida Sector 20',
+      'Noida Sector 15',
+      'Noida Sector 16',
+      'Noida Sector 2',
+      'Noida Sector 45',
+      'Noida Sector 44',
+    ],
+    teachingMode: ['home', 'online'],
+    verified: true,
+    rating: 5,
+    reviewCount: 7,
+    bio: 'I specialize in teaching All Subjects for primary, middle and secondary school students. Commited to mentoring students not just for academic excellence, but to become lifelong learners and problem solvers',
+    availability: 'Weekdays 3pm–9pm, Weekends flexible',
+    gender: 'female',
+    languages: ['English', 'Hindi']
+  },
 ];
 
 export function getTutorBySlug(slug: string): Tutor | undefined {
