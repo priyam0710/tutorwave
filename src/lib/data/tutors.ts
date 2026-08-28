@@ -111,7 +111,7 @@ export const tutors: Tutor[] = [
     classes: ['Class 1st - 8th', 'Class 9', 'Class 10'],
     boards: ['CBSE', 'ICSE','State Board',],
     experience: 5,
-    qualifications: ['B.Tech in Electronics & Communication'],
+    qualifications: ['B.Tech in Electronics & Communication Engineering'],
     locations: [
       'Noida Sector 20',
       'Noida Sector 15',
@@ -166,6 +166,36 @@ export const tutors: Tutor[] = [
     bio: 'I specialize in teaching All Subjects for primary and middle school students. My teaching style is interactive and encourages reading, writing and communication skills. I have a particular focus on making language learning enjoyable.',
     availability: 'Weekdays 2pm–9pm, Weekends flexible',
     gender: 'female',
+    languages: ['English', 'Hindi']
+  },
+
+   {
+    id: 'tutor-006',
+    name: 'Rajeev Kumar',
+    slug: 'Rajeev Kumar',
+    photo: "https://img.rocket.new/generatedImages/rocket_gen_img_1e7575f93-1765298093270.png",
+    photoAlt: 'Rajeev-kumar',
+    subjects: ['All Subjects','Maths','Science','Social Science','English',],
+    classes: ['Class 4','Class 5','Class 6','Class 7','Class 8', 'Class 9', 'Class 10','Class 11','Class 12',],
+    boards: ['CBSE', 'ICSE',],
+    experience: 10,
+    qualifications: ['B.Tech in Electronics & Communication Engineering'],
+    locations: [
+     'Noida Sector 104',
+      'Noida Sector 99',
+      'Noida Sector 46',
+      'Noida Sector 18',
+      'Noida Sector 45',
+      'Noida Sector 44',
+      'Bhangel',
+    ],
+    teachingMode: ['home', 'online'],
+    verified: true,
+    rating: 5,
+    reviewCount: 4,
+    bio: '',
+    availability: 'Weekdays 3pm–9pm, Weekends flexible',
+    gender: 'Male',
     languages: ['English', 'Hindi']
   },
 ];
