@@ -12,7 +12,6 @@ export interface Tutor {
   locations: string[];
   teachingMode: ('home' | 'online' | 'both')[];
   verified: boolean;
-  unverified: boolean;
   rating: number;
   reviewCount: number;
   bio: string;
@@ -248,7 +247,6 @@ export const tutors: Tutor[] = [
     ],
     teachingMode: ['home', 'online'],
     verified: false,
-    unverified: true,
     rating: 5,
     reviewCount: 2,
     bio: '',
