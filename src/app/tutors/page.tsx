@@ -7,12 +7,12 @@ import Footer from '@/components/Footer';
 import WhatsAppButton from '@/app/components/WhatsAppButton';
 import { tutors, Tutor } from '@/lib/data/tutors';
 // ─── Filter Options ────────────────────────────────────────────────────────────
-const SUBJECT_OPTIONS = ['All Subjects', 'Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Hindi', 'Computer Science', 'Science', 'Social Science'];
-const CLASS_OPTIONS = ['All Classes', 'Nursery–UKG', 'Class 1–5', 'Class 6–8', 'Class 9–10', 'Class 11–12'];
-const BOARD_OPTIONS = ['All Boards', 'CBSE', 'ICSE', 'IIT-JEE', 'NEET'];
+const SUBJECT_OPTIONS = ['All Subjects', 'Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Hindi', 'Computer Science', 'Science', 'Social Science','Accounts','Economics'];
+const CLASS_OPTIONS = ['All Classes', 'Nursery–UKG', 'Class 1–5', 'Class 6–8', 'Class 9–10', 'Class 11–12','IIT-JEE', 'NEET'];
+const BOARD_OPTIONS = ['All Boards', 'CBSE', 'ICSE'];
 const LOCATION_OPTIONS = ['All Locations', 'Delhi', 'Noida', 'Greater Noida', 'Gurgaon', 'Ghaziabad', 'Faridabad'];
 const MODE_OPTIONS = ['All Modes', 'Home', 'Online'];
-const EXPERIENCE_OPTIONS = ['Any Experience', '1+ Years', '3+ Years', '5+ Years', '8+ Years'];
+const EXPERIENCE_OPTIONS = ['Any Experience', '1+ Years', '3+ Years', '5+ Years', '8+ Years','10+ Years','15+ Years' ];
 
 // ─── Verified Badge ────────────────────────────────────────────────────────────
 function VerifiedBadge() {
