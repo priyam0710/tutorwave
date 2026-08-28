@@ -25,7 +25,7 @@ export const tutors: Tutor[] = [
     id: 'tutor-001',
     name: 'Dheeraj Sharma',
     slug: 'Dheeraj-sharma',
-    photo: "/assets/images/dheeraj.png",
+    photo: "/assets/images/dheerajsharma.png",
     photoAlt: 'Dheeraj Sharma',
     subjects: ['Mathematics', 'Science', 'Physics', 'Chemistry', 'Biology'],
     classes: ['Class 9', 'Class 10'],
