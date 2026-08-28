@@ -283,6 +283,38 @@ export const tutors: Tutor[] = [
     gender: 'Female',
     languages: ['English', 'Hindi']
   },
+  {
+    id: 'tutor-010',
+    name: 'Priyanshu Tiwari',
+    slug: 'Priyanshu Tiwari',
+    photo: "https://img.rocket.new/generatedImages/rocket_gen_img_1e7575f93-1765298093270.png",
+    photoAlt: 'Priyanshu Tiwari',
+    subjects: ['Maths','Science','Social Science','English','Physics','Chemistry','Biology',],
+    classes: ['Class 4','Class 5','Class 6','Class 7','Class 8', 'Class 9', 'Class 10','Class 11','Class 12',],
+    boards: ['CBSE', 'ICSE',],
+    experience: 4,
+    qualifications: ['B.Tech in Computer Science Engineering'],
+    locations: [
+     'Noida Sector 49',
+      'Noida Sector 50',
+      'Noida Sector 46',
+      'Noida Sector 168',
+      'Noida Sector 78',
+      'Noida Sector 30',
+      'Noida Sector 31',
+      'Gaur City',
+      'Surajpur',
+      'Bhangel',
+    ],
+    teachingMode: ['home'.],
+    verified: true,
+    rating: 5,
+    reviewCount: 8,
+    bio: '',
+    availability: 'Weekdays 3pm–9pm, Weekends flexible',
+    gender: 'Male',
+    languages: ['English', 'Hindi']
+  },
 ];
 
 export function getTutorBySlug(slug: string): Tutor | undefined {
