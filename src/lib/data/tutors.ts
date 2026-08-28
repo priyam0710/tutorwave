@@ -254,6 +254,35 @@ export const tutors: Tutor[] = [
     gender: 'Male',
     languages: ['English', 'Hindi']
   },
+  {
+    id: 'tutor-009',
+    name: 'Shikha Singh',
+    slug: 'Shikha Singh',
+    photo: "https://img.rocket.new/generatedImages/rocket_gen_img_1e7575f93-1765298093270.png",
+    photoAlt: 'Shikha Singh',
+    subjects: ['All Subjects','Maths','Science','Social Science','English','Biology','Computer'],
+    classes: ['Class KG To 5th','Class 6','Class 7','Class 8',],
+    boards: ['CBSE', 'ICSE',],
+    experience: 10,
+    qualifications: ['B.Ed','M.Sc (Botany)','B.Sc(Chemistry,Zoology,Botany)',],
+    locations: [
+     'Noida Sector 48',
+      'Noida Sector 50',
+      'Noida Sector 47',
+      'Noida Sector 45',
+      'Noida Sector 49',
+      'Noida Sector 44',
+      'Noida Sector 46',
+    ],
+    teachingMode: ['home', 'online'],
+    verified: true,
+    rating: 4.9,
+    reviewCount: 3,
+    bio: '',
+    availability: 'Weekdays 3pm–9pm, Weekends flexible',
+    gender: 'Female',
+    languages: ['English', 'Hindi']
+  },
 ];
 
 export function getTutorBySlug(slug: string): Tutor | undefined {
