@@ -246,7 +246,7 @@ export const tutors: Tutor[] = [
       'Dwarka Sector 2',
     ],
     teachingMode: ['home', 'online'],
-    verified: false,
+    unverified: true,
     rating: 5,
     reviewCount: 2,
     bio: '',
