@@ -108,7 +108,7 @@ export const tutors: Tutor[] = [
       'Science',
       'Social Science',
     ],
-    classes: ['Class 1ST - 8th', 'Class 9', 'Class 10'],
+    classes: ['Class 1st - 8th', 'Class 9', 'Class 10'],
     boards: ['CBSE', 'ICSE','State Board',],
     experience: 5,
     qualifications: ['B.Tech in Electronics & Communication'],
