@@ -96,7 +96,7 @@ export default function ResourcesPage() {
         <section className="py-12 md:py-16 bg-[#F8FAFC]">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-12 text-center">
             <h2 className="text-2xl font-bold text-[#0D1118] mb-3" style={{ letterSpacing: '-0.02em' }}>
-              Ready to find a tutor?
+              Looking for a right tutor for your child?
             </h2>
             <p className="text-[#6B7280] mb-8">
               Share your child&apos;s learning requirement and we&apos;ll help identify suitable tutor options.
