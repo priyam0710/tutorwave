@@ -263,7 +263,7 @@ export const tutors: Tutor[] = [
     subjects: ['All Subjects','Maths','Science','Social Science','English','Biology','Computer'],
     classes: ['Class KG To 5th','Class 6','Class 7','Class 8',],
     boards: ['CBSE', 'ICSE',],
-    experience: 03,
+    experience: 3,
     qualifications: ['B.Ed','M.Sc (Botany)','B.Sc(Chemistry,Zoology,Botany)',],
     locations: [
      'Noida Sector 48',
