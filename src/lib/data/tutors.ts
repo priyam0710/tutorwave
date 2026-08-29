@@ -315,6 +315,34 @@ export const tutors: Tutor[] = [
     gender: 'Male',
     languages: ['English', 'Hindi']
   },
+
+  {
+    id: 'tutor-011',
+    name: 'Adarsh Chaudhary',
+    slug: 'Adarsh Chaudhary',
+    photo: "https://img.rocket.new/generatedImages/rocket_gen_img_1e7575f93-1765298093270.png",
+    photoAlt: 'Adarsh-Chaudhary',
+    subjects: ['All Subjects','Maths','Science','Social Science','English','Physics','Chemistry','Biology',],
+    classes: ['Class 1','Class 2','Class 3','Class 4','Class 5','Class 6','Class 7','Class 8', 'Class 9', 'Class 10',],
+    boards: ['CBSE', 'ICSE',],
+    experience: 4,
+    qualifications: ['B.A. in History, Political Science & English',],
+    locations: [
+     'Ranjeet Nagar',
+      'Karol Bagh',
+      'Patel Nagar',
+      'Rajendra Place',
+      'Shadipur',
+    ],
+    teachingMode: ['home',],
+    verified: true,
+    rating: 5,
+    reviewCount: 2,
+    bio: '',
+    availability: 'Weekdays 4pm–9pm, Weekends flexible',
+    gender: 'Male',
+    languages: ['English', 'Hindi']
+  },
 ];
 
 export function getTutorBySlug(slug: string): Tutor | undefined {
