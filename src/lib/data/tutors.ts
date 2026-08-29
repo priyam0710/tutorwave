@@ -193,7 +193,7 @@ export const tutors: Tutor[] = [
     verified: true,
     rating: 5,
     reviewCount: 4,
-    bio: '',
+    bio: 'I specialize in',
     availability: 'Weekdays 3pm–9pm, Weekends flexible',
     gender: 'Male',
     languages: ['English', 'Hindi']
@@ -224,7 +224,7 @@ export const tutors: Tutor[] = [
     verified: true,
     rating: 5,
     reviewCount: 8,
-    bio: '',
+    bio: 'I prefer',
     availability: 'Weekdays 3pm–9pm, Weekends flexible',
     gender: 'Female',
     languages: ['English', 'Hindi']
@@ -249,7 +249,7 @@ export const tutors: Tutor[] = [
     verified: false,
     rating: 5,
     reviewCount: 2,
-    bio: '',
+    bio: 'I am very experienced',
     availability: 'Weekdays 3pm–9pm, Weekends flexible',
     gender: 'Male',
     languages: ['English', 'Hindi']
