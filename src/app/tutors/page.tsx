@@ -241,7 +241,14 @@ export default function TutorsPage() {
     }));
   }, [searchParams]);
 
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+    const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
+  const handleFilterChange = (key: keyof FilterState, value: string) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const filteredTutors = useMemo(() => {
+    return tutors.filter((tutor) => {
       // Search
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
@@ -281,15 +288,15 @@ export default function TutorsPage() {
 
       // Class filter
       if (filters.classRange !== 'All Classes') {
-      const classMap: Record<string, string[]> = {
-  'Nursery–UKG': ['Nursery', 'LKG', 'UKG'],
-  'Class 1–5': ['Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5'],
-  'Class 6–8': ['Class 6', 'Class 7', 'Class 8'],
-  'Class 9–10': ['Class 9', 'Class 10'],
-  'Class 11–12': ['Class 11', 'Class 12'],
-  'IIT-JEE': ['IIT-JEE'],
-  'NEET': ['NEET'],
-};
+        const classMap: Record<string, string[]> = {
+          'Nursery–UKG': ['Nursery', 'LKG', 'UKG'],
+          'Class 1–5': ['Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5'],
+          'Class 6–8': ['Class 6', 'Class 7', 'Class 8'],
+          'Class 9–10': ['Class 9', 'Class 10'],
+          'Class 11–12': ['Class 11', 'Class 12'],
+          'IIT-JEE': ['IIT-JEE'],
+          'NEET': ['NEET'],
+        };
         const targetClasses = classMap[filters.classRange] || [];
         if (!tutor.classes.some((c) => targetClasses.includes(c))) return false;
       }
@@ -297,21 +304,6 @@ export default function TutorsPage() {
       return true;
     });
   }, [searchQuery, filters]);
-
-  const hasActiveFilters = Object.values(filters).some((v) =>
-    !['All Subjects', 'All Classes', 'All Boards', 'All Locations', 'All Modes', 'Any Experience'].includes(v)
-  ) || searchQuery.trim() !== '';
-
-  const clearFilters = () => {
-    setFilters({ subject: 'All Subjects', classRange: 'All Classes', board: 'All Boards', location: 'All Locations', mode: 'All Modes', experience: 'Any Experience' });
-    setSearchQuery('');
-  };
-
-  return (
-    <>
-      <Header />
-      <main className="pt-16 md:pt-[68px]">
-
         {/* ── Page Header ─────────────────────────────────────────────────── */}
         <section className="bg-white border-b border-[#E5E7EB]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-10 md:py-14">
