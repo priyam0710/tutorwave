@@ -213,6 +213,24 @@ export const subjects: Subject[] = [
       { question: 'Is Economics tutoring available for students who find it difficult?', answer: 'Yes. Tutors can start from foundational concepts and build understanding at a pace that suits the student.' },
     ],
   },
+   {
+    id: 'sub-012',
+    name: 'E.Vs',
+    slug: 'E.Vs',
+    icon: '🌍',
+    description: 'Social Science tutoring covering History, Geography, Civics and Economics for Class 6–10.',
+    classes: ['Class 1–5'],
+    boards: ['CBSE', 'ICSE'],
+    category: 'core',
+    relatedSubjects: ['english', 'social science'],
+    seoTitle: 'EVS Home Tutor in Delhi NCR — TutorWave',
+    seoDescription: 'Find experienced EVS tutors for Class 1–5 in Delhi NCR. CBSE and ICSE. Home tuition and online classes available.',
+    faqs: [
+      { question: 'Does Social Science tutoring cover all four components?', answer: 'Yes. Tutors cover History, Geography, Political Science and Economics as part of the Social Science curriculum.' },
+      { question: 'Can tutors help with map work and diagram-based questions?', answer: 'Yes. Tutors can work on map skills, diagram labelling and the practical aspects of Geography and History.' },
+      { question: 'Is Social Science tutoring available for Class 10 board preparation?', answer: 'Yes. Tutors are familiar with the Class 10 board pattern and can focus on important chapters and question types.' },
+    ],
+  },
 ];
 
 export function getSubjectBySlug(slug: string): Subject | undefined {
