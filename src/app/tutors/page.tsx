@@ -281,13 +281,15 @@ export default function TutorsPage() {
 
       // Class filter
       if (filters.classRange !== 'All Classes') {
-        const classMap: Record<string, string[]> = {
-          'Nursery–UKG': ['Nursery', 'LKG', 'UKG'],
-          'Class 1–5': ['Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5'],
-          'Class 6–8': ['Class 6', 'Class 7', 'Class 8'],
-          'Class 9–10': ['Class 9', 'Class 10'],
-          'Class 11–12': ['Class 11', 'Class 12'],
-        };
+      const classMap: Record<string, string[]> = {
+  'Nursery–UKG': ['Nursery', 'LKG', 'UKG'],
+  'Class 1–5': ['Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5'],
+  'Class 6–8': ['Class 6', 'Class 7', 'Class 8'],
+  'Class 9–10': ['Class 9', 'Class 10'],
+  'Class 11–12': ['Class 11', 'Class 12'],
+  'IIT-JEE': ['IIT-JEE'],
+  'NEET': ['NEET'],
+};
         const targetClasses = classMap[filters.classRange] || [];
         if (!tutor.classes.some((c) => targetClasses.includes(c))) return false;
       }
