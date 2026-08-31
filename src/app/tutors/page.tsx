@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import WhatsAppButton from '@/app/components/WhatsAppButton';
@@ -211,6 +212,8 @@ function FilterSidebar({ filters, onChange }: { filters: FilterState; onChange: 
 
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function TutorsPage() {
+  const searchParams = useSearchParams();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<FilterState>({
     subject: 'All Subjects',
@@ -220,14 +223,25 @@ export default function TutorsPage() {
     mode: 'All Modes',
     experience: 'Any Experience',
   });
+
+  useEffect(() => {
+    const subject = searchParams.get('subject');
+    const classRange = searchParams.get('class');
+    const board = searchParams.get('board');
+    const location = searchParams.get('location');
+    const mode = searchParams.get('mode');
+
+    setFilters((prev) => ({
+      ...prev,
+      subject: subject || 'All Subjects',
+      classRange: classRange || 'All Classes',
+      board: board || 'All Boards',
+      location: location || 'All Locations',
+      mode: mode || 'All Modes',
+    }));
+  }, [searchParams]);
+
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-
-  const handleFilterChange = (key: keyof FilterState, value: string) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const filteredTutors = useMemo(() => {
-    return tutors.filter((tutor) => {
       // Search
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
