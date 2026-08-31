@@ -241,7 +241,7 @@ export default function TutorsPage() {
     }));
   }, [searchParams]);
 
-    const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const handleFilterChange = (key: keyof FilterState, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -304,6 +304,21 @@ export default function TutorsPage() {
       return true;
     });
   }, [searchQuery, filters]);
+
+  const hasActiveFilters = Object.values(filters).some((v) =>
+    !['All Subjects', 'All Classes', 'All Boards', 'All Locations', 'All Modes', 'Any Experience'].includes(v)
+  ) || searchQuery.trim() !== '';
+
+  const clearFilters = () => {
+    setFilters({ subject: 'All Subjects', classRange: 'All Classes', board: 'All Boards', location: 'All Locations', mode: 'All Modes', experience: 'Any Experience' });
+    setSearchQuery('');
+  };
+
+  return (
+    <>
+      <Header />
+      <main className="pt-16 md:pt-[68px]">
+
         {/* ── Page Header ─────────────────────────────────────────────────── */}
         <section className="bg-white border-b border-[#E5E7EB]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-10 md:py-14">
