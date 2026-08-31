@@ -19,7 +19,6 @@ export const subjects: Subject[] = [
     name: 'Mathematics',
     slug: 'mathematics',
     icon: '📐',
-    description: 'From foundational arithmetic to advanced calculus, our tutors help students build strong mathematical reasoning and problem-solving skills.',
     classes: ['Class 1–5', 'Class 6–10', 'Class 11–12','IIT-JEE',],
     boards: ['CBSE', 'ICSE','NIOS','IB','State Board',],
     category: 'core',
