@@ -134,7 +134,7 @@ export const subjects: Subject[] = [
     category: 'language',
     relatedSubjects: ['english'],
     seoTitle: 'Hindi Home Tutor in Delhi NCR — TutorWave',
-    seoDescription: 'Find experienced Hindi tutors for Class 1–12 in Delhi NCR. CBSE and ICSE. Home and online classes available.',
+    seoDescription: 'Find experienced Hindi tutors for Class 1–12 in Delhi NCR. Home tuitions and online classes available.',
     faqs: [
       { question: 'Can tutors help with Hindi grammar and essay writing?', answer: 'Yes. Tutors cover grammar, essay writing, letter writing and comprehension as per the board curriculum.' },
       { question: 'Is Hindi tutoring available for Class 11–12 literature?', answer: 'Yes. We have tutors who can cover Hindi literature (Aroh, Vitan) for Class 11–12 CBSE students.' },
