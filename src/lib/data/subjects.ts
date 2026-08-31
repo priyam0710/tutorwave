@@ -59,7 +59,7 @@ export const subjects: Subject[] = [
     description: 'Expert Physics tutoring for Class 11–12 and competitive exam preparation including IIT-JEE and NEET.',
     classes: ['Class 9–12', 'IIT-JEE', 'NEET','Olympiads',],
      boards: ['CBSE', 'ICSE','NIOS','IB','State Board',],
-    category: 'Secondary & senior-secondary',
+    category: 'senior-secondary',
     relatedSubjects: ['mathematics', 'chemistry'],
     seoTitle: 'Physics Home Tutor in Delhi NCR — TutorWave',
     seoDescription: 'Find experienced Physics tutors for Class 11–12 and IIT-JEE/NEET preparation in Delhi NCR. Home and online classes available.',
