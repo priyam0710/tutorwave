@@ -494,212 +494,181 @@ export default function TutorsPage() {
   // ──────────────────────────────────────────────────────────────────────────
 
   const filteredTutors = useMemo(() => {
-    return tutors.filter((tutor) => {
+  return tutors.filter((tutor) => {
 
-      // ── Search ─────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────
+    // SEARCH
+    // ─────────────────────────────────────────────
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
 
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase().trim();
+      const matchesName =
+        tutor.name.toLowerCase().includes(q);
 
-        const matchesName = tutor.name
-          .toLowerCase()
-          .includes(query);
-
-        const matchesSubject = tutor.subjects.some((subject) =>
-          subject.toLowerCase().includes(query)
+      const matchesSubject =
+        tutor.subjects.some((subject) =>
+          subject.toLowerCase().includes(q)
         );
 
-        const matchesLocation = tutor.locations.some((location) =>
-          location.toLowerCase().includes(query)
+      const matchesLocation =
+        tutor.locations.some((location) =>
+          location.toLowerCase().includes(q)
         );
 
-        const matchesClass = tutor.classes.some((className) =>
-          className.toLowerCase().includes(query)
-        );
-
-        if (
-          !matchesName &&
-          !matchesSubject &&
-          !matchesLocation &&
-          !matchesClass
-        ) {
-          return false;
-        }
+      if (!matchesName && !matchesSubject && !matchesLocation) {
+        return false;
       }
+    }
 
-      // ── Subject ────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────
+    // SUBJECT
+    // ─────────────────────────────────────────────
+    if (filters.subject !== 'All Subjects') {
+      const selectedSubject = filters.subject.toLowerCase();
 
-      if (filters.subject !== 'All Subjects') {
-        const subjectMatch = tutor.subjects.some(
-          (subject) =>
-            subject.toLowerCase() === filters.subject.toLowerCase()
-        );
+      const subjectMatch = tutor.subjects.some(
+        (subject) =>
+          subject.toLowerCase() === selectedSubject ||
+          subject.toLowerCase().includes(selectedSubject) ||
+          selectedSubject.includes(subject.toLowerCase())
+      );
 
-        if (!subjectMatch) {
-          return false;
-        }
+      if (!subjectMatch) {
+        return false;
       }
+    }
 
-      // ── Board ──────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────
+    // BOARD
+    // ─────────────────────────────────────────────
+    if (filters.board !== 'All Boards') {
+      const selectedBoard = filters.board.toLowerCase();
 
-      if (filters.board !== 'All Boards') {
-        const boardMatch = tutor.boards.some(
-          (board) =>
-            board.toLowerCase() === filters.board.toLowerCase()
-        );
+      const boardMatch = tutor.boards.some(
+        (board) =>
+          board.toLowerCase() === selectedBoard ||
+          board.toLowerCase().includes(selectedBoard) ||
+          selectedBoard.includes(board.toLowerCase())
+      );
 
-        if (!boardMatch) {
-          return false;
-        }
+      if (!boardMatch) {
+        return false;
       }
+    }
 
-      // ── Location ───────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────
+    // LOCATION
+    // ─────────────────────────────────────────────
+    if (filters.location !== 'All Locations') {
+      const selectedLocation = filters.location.toLowerCase();
 
-      if (filters.location !== 'All Locations') {
-        const requestedLocation =
-          filters.location.toLowerCase().trim();
+      const locationMatch = tutor.locations.some(
+        (location) =>
+          location.toLowerCase().includes(selectedLocation) ||
+          selectedLocation.includes(location.toLowerCase())
+      );
 
-        const locationMatch = tutor.locations.some((location) =>
-          location.toLowerCase().includes(requestedLocation)
-        );
-
-        if (!locationMatch) {
-          return false;
-        }
+      if (!locationMatch) {
+        return false;
       }
+    }
 
-      // ── Teaching Mode ──────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────
+    // TEACHING MODE
+    // ─────────────────────────────────────────────
+    if (filters.mode !== 'All Modes') {
+      const selectedMode = filters.mode.toLowerCase();
 
-      if (filters.mode !== 'All Modes') {
-        const requestedMode = filters.mode.toLowerCase();
+      const modeMatch =
+        tutor.teachingMode.includes(
+          selectedMode as 'home' | 'online' | 'both'
+        ) ||
+        tutor.teachingMode.includes('both');
 
-        const modeMatch =
-          tutor.teachingMode.includes(
-            requestedMode as 'home' | 'online'
-          ) ||
-          tutor.teachingMode.includes('both');
-
-        if (!modeMatch) {
-          return false;
-        }
+      if (!modeMatch) {
+        return false;
       }
+    }
 
-      // ── Experience ─────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────
+    // EXPERIENCE
+    // ─────────────────────────────────────────────
+    if (filters.experience !== 'Any Experience') {
+      const minYears = parseInt(filters.experience, 10);
 
-      if (filters.experience !== 'Any Experience') {
-        const minimumExperience = parseInt(
-          filters.experience,
-          10
-        );
-
-        if (tutor.experience < minimumExperience) {
-          return false;
-        }
+      if (tutor.experience < minYears) {
+        return false;
       }
+    }
 
-      // ── Class ──────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────
+    // CLASS
+    // ─────────────────────────────────────────────
+    if (filters.classRange !== 'All Classes') {
 
-      if (filters.classRange !== 'All Classes') {
-        const classMap: Record<string, string[]> = {
-          'Nursery–UKG': [
-            'Nursery',
-            'LKG',
-            'UKG',
-          ],
+      const classMap: Record<string, string[]> = {
+        'Nursery–UKG': [
+          'Nursery',
+          'LKG',
+          'UKG',
+          'Class Nursery',
+          'Class LKG',
+          'Class UKG',
+        ],
 
-          'Class 1–5': [
-            'Class 1',
-            'Class 2',
-            'Class 3',
-            'Class 4',
-            'Class 5',
-          ],
+        'Class 1–5': [
+          'Class 1',
+          'Class 2',
+          'Class 3',
+          'Class 4',
+          'Class 5',
+        ],
 
-          'Class 6–8': [
-            'Class 6',
-            'Class 7',
-            'Class 8',
-          ],
+        'Class 6–8': [
+          'Class 6',
+          'Class 7',
+          'Class 8',
+        ],
 
-          'Class 9–10': [
-            'Class 9',
-            'Class 10',
-          ],
+        'Class 9–10': [
+          'Class 9',
+          'Class 10',
+        ],
 
-          'Class 11–12': [
-            'Class 11',
-            'Class 12',
-          ],
-        };
+        'Class 11–12': [
+          'Class 11',
+          'Class 12',
+        ],
+      };
 
-        const targetClasses =
-          classMap[filters.classRange] || [];
+      const targetClasses = classMap[filters.classRange] || [];
 
-        const classMatch = tutor.classes.some(
-          (tutorClass) => {
+      const classMatch = tutor.classes.some((tutorClass) => {
 
-            // Direct match
-            if (targetClasses.includes(tutorClass)) {
-              return true;
-            }
+        const normalizedTutorClass =
+          tutorClass.toLowerCase().replace(/\s+/g, ' ').trim();
 
-            // Handle entries such as "Classes 9–12"
-            const normalized = tutorClass
-              .toLowerCase()
-              .replace(/–/g, '-');
+        return targetClasses.some((targetClass) => {
 
-            if (
-              filters.classRange === 'Class 9–10' &&
-              (
-                normalized.includes('9-10') ||
-                normalized.includes('9–10')
-              )
-            ) {
-              return true;
-            }
+          const normalizedTargetClass =
+            targetClass.toLowerCase().replace(/\s+/g, ' ').trim();
 
-            if (
-              filters.classRange === 'Class 11–12' &&
-              (
-                normalized.includes('11-12') ||
-                normalized.includes('11–12')
-              )
-            ) {
-              return true;
-            }
+          return (
+            normalizedTutorClass === normalizedTargetClass ||
+            normalizedTutorClass.includes(normalizedTargetClass) ||
+            normalizedTargetClass.includes(normalizedTutorClass)
+          );
+        });
+      });
 
-            if (
-              filters.classRange === 'Class 1–5' &&
-              (
-                normalized.includes('1-5') ||
-                normalized.includes('1–5')
-              )
-            ) {
-              return true;
-            }
-
-            if (
-              filters.classRange === 'Class 6–8' &&
-              (
-                normalized.includes('6-8') ||
-                normalized.includes('6–8')
-              )
-            ) {
-              return true;
-            }
-
-            return false;
-          }
-        );
-
-        if (!classMatch) {
-          return false;
-        }
+      if (!classMatch) {
+        return false;
       }
+    }
 
-      return true;
-    });
-  }, [searchQuery, filters]);
+    return true;
+  });
+}, [searchQuery, filters]);
 
   // ──────────────────────────────────────────────────────────────────────────
   // Active Filters
