@@ -14,11 +14,12 @@ export interface Subject {
 }
 
 export const subjects: Subject[] = [
-  {
+   {
     id: 'sub-001',
     name: 'Mathematics',
     slug: 'mathematics',
     icon: '📐',
+    description: 'Comprehensive Mathematics tutoring for Class 1–12 and IIT-JEE preparation, covering Algebra, Geometry, Calculus and more with a focus on conceptual clarity.',
     classes: ['Class 1–5', 'Class 6–10', 'Class 11–12','IIT-JEE'],
     boards: ['CBSE', 'ICSE','NIOS','IB','State Board'],
     category: 'core',
