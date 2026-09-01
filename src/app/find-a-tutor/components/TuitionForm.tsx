@@ -302,26 +302,7 @@ export default function FindATutorPage() {
       <Header />
 
       {/* HERO */}
-      <section className="pt-24 pb-12 bg-[#F8FAFC]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
-
-          <div className="max-w-3xl">
-            <p className="text-xs font-bold uppercase tracking-widest text-[#0A6FF7] mb-3">
-              FIND A TUTOR
-            </p>
-
-            <h1 className="text-4xl sm:text-5xl font-bold text-[#0D1118] mb-4">
-              Tell us what you need
-            </h1>
-
-            <p className="text-lg text-[#6B7280] leading-relaxed">
-              Share a few details and we&apos;ll help you find a suitable tutor.
-            </p>
-          </div>
-
-        </div>
-      </section>
-
+    
       {/* FORM */}
       <section className="py-14">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
