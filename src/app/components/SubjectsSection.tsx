@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 const subjects = [
   { id: 'maths', title: 'Mathematics', classes: 'Class 1 – 12', symbol: '∑' },
-  { id: 'science', title: 'Science', classes: 'Class 6 – 10', symbol: '⚗' },
+  { id: 'science', title: 'Science', classes: 'Class 1 – 10', symbol: '⚗' },
   { id: 'english', title: 'English', classes: 'All Classes', symbol: 'A' },
   { id: 'hindi', title: 'Hindi', classes: 'Class 1 – 12', symbol: 'क' },
   { id: 'physics', title: 'Physics', classes: 'Class 11 – 12', symbol: '⚛' },
