@@ -217,7 +217,7 @@ export const subjects: Subject[] = [
     id: 'sub-012',
     name: 'EVS',
     slug: 'EVS',
-    icon: '🌍',
+    icon: '',
     description: 'Social Science tutoring covering History, Geography, Civics and Economics for Class 6–10.',
     classes: ['Class 1–5'],
     boards: ['CBSE', 'ICSE'],
