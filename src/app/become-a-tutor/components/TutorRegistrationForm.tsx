@@ -838,7 +838,7 @@ export default function TutorRegistrationForm() {
 
             {/* BOARDS */}
             <div>
-              <FieldLabel label="Boards / Curricula You Can Teach" required />
+              <FieldLabel label="Boards / Curriculam You Can Teach" required />
 
               <div className="flex flex-wrap gap-2">
                 {boards.map((board) => (
