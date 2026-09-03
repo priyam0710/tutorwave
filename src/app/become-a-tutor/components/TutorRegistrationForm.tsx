@@ -182,11 +182,23 @@ export default function TutorRegistrationForm() {
     field: keyof FormData['personal'],
     value: string
   ) => {
+    let sanitizedValue = value;
+
+    // Age: digits only, no negative sign, no decimals
+    if (field === 'age') {
+      sanitizedValue = value.replace(/[^0-9]/g, '').slice(0, 2);
+    }
+
+    // Phone: digits only, capped at 10 digits
+    if (field === 'phone') {
+      sanitizedValue = value.replace(/[^0-9]/g, '').slice(0, 10);
+    }
+
     setFormData((prev) => ({
       ...prev,
       personal: {
         ...prev.personal,
-        [field]: value,
+        [field]: sanitizedValue,
       },
     }));
   };
@@ -283,42 +295,92 @@ export default function TutorRegistrationForm() {
 
   const validateStep = () => {
     if (step === 1) {
+      const { fullName, age, gender, phone, address } =
+        formData.personal;
+
       if (
-        !formData.personal.fullName.trim() ||
-        !formData.personal.phone.trim() ||
-        !formData.personal.age.trim()
+        !fullName.trim() ||
+        !age.trim() ||
+        !gender ||
+        !phone.trim() ||
+        !address.trim()
       ) {
         alert(
-          'Please fill in your name, age and phone number.'
+          'Please fill in all required personal details (Full Name, Age, Gender, Phone Number and Address).'
+        );
+        return false;
+      }
+
+      const ageNumber = Number(age);
+
+      if (
+        !Number.isFinite(ageNumber) ||
+        ageNumber <= 0 ||
+        ageNumber < 18
+      ) {
+        alert(
+          'Please enter a valid age. Age must be 18 or above and cannot be negative or zero.'
+        );
+        return false;
+      }
+
+      if (!/^[6-9]\d{9}$/.test(phone.trim())) {
+        alert(
+          'Please enter a valid 10-digit mobile number (must start with 6, 7, 8 or 9).'
         );
         return false;
       }
     }
 
     if (step === 2) {
+      const {
+        highestQualification,
+        stream,
+        schoolingFrom,
+        college,
+      } = formData.education;
+
       if (
-        !formData.education.highestQualification
+        !highestQualification ||
+        !stream.trim() ||
+        !schoolingFrom.trim() ||
+        !college.trim()
       ) {
         alert(
-          'Please select your highest qualification.'
+          'Please fill in all required education details (Highest Qualification, Stream, Schooling From and College/University).'
         );
         return false;
       }
     }
 
     if (step === 3) {
+      const t = formData.teaching;
+
       const hasAnyClass =
-        formData.teaching.primaryClasses.length > 0 ||
-        formData.teaching.secondaryClasses.length > 0 ||
-        formData.teaching.seniorSecondaryClasses.length >
+        t.primaryClasses.length > 0 ||
+        t.secondaryClasses.length > 0 ||
+        t.seniorSecondaryClasses.length >
           0;
 
       const hasAnySubject =
-        formData.teaching.primaryAllSubjects ||
-        formData.teaching.primarySubjects.length > 0 ||
-        formData.teaching.secondarySubjects.length > 0 ||
-        formData.teaching.seniorSecondarySubjects
+        t.primaryAllSubjects ||
+        t.primarySubjects.length > 0 ||
+        t.secondarySubjects.length > 0 ||
+        t.seniorSecondarySubjects
           .length > 0;
+
+      if (
+        !t.experience ||
+        !t.englishFluency ||
+        !t.schoolExperience ||
+        !t.studentsTaughtFrom.trim() ||
+        t.boards.length === 0
+      ) {
+        alert(
+          'Please fill in all required teaching profile details (Experience, English Fluency, School/Coaching Experience, Students Taught From and Boards).'
+        );
+        return false;
+      }
 
       if (!hasAnyClass || !hasAnySubject) {
         alert(
@@ -329,11 +391,16 @@ export default function TutorRegistrationForm() {
     }
 
     if (step === 4) {
+      const p = formData.preferences;
+
       if (
-        formData.preferences.teachingMode.length === 0
+        p.teachingMode.length === 0 ||
+        !p.offlineAreas.trim() ||
+        p.availability.length === 0 ||
+        p.studentTypes.length === 0
       ) {
         alert(
-          'Please select at least one teaching mode.'
+          'Please fill in all required teaching preference details (Teaching Mode, Offline Teaching Areas, Availability and Student Type).'
         );
         return false;
       }
@@ -492,7 +559,8 @@ export default function TutorRegistrationForm() {
               <InputField
                 label="Age"
                 required
-                type="number" min="18"
+                type="number"
+                min="18"
                 placeholder="Your age"
                 value={formData.personal.age}
                 onChange={(value) =>
@@ -525,6 +593,7 @@ export default function TutorRegistrationForm() {
               label="Phone Number"
               required
               type="tel"
+              maxLength={10}
               placeholder="10-digit mobile number"
               value={formData.personal.phone}
               onChange={(value) =>
@@ -700,7 +769,7 @@ export default function TutorRegistrationForm() {
 
             {/* ENGLISH */}
             <div>
-              <FieldLabel label="English Fluency" />
+              <FieldLabel label="English Fluency" required />
 
               <div className="grid grid-cols-2 gap-3">
                 {[
@@ -729,7 +798,7 @@ export default function TutorRegistrationForm() {
 
             {/* SCHOOL EXPERIENCE */}
             <div>
-              <FieldLabel label="School / Coaching Experience" />
+              <FieldLabel label="School / Coaching Experience" required />
 
               <div className="grid grid-cols-2 gap-3">
                 {['Yes', 'No'].map((item) => (
@@ -753,6 +822,7 @@ export default function TutorRegistrationForm() {
 
             <TextAreaField
               label="Students / Schools / Institutes Taught From"
+              required
               placeholder="e.g. DPS, Ryan International, Allen, private students..."
               value={
                 formData.teaching
@@ -768,7 +838,7 @@ export default function TutorRegistrationForm() {
 
             {/* BOARDS */}
             <div>
-              <FieldLabel label="Boards / Curricula You Can Teach" />
+              <FieldLabel label="Boards / Curricula You Can Teach" required />
 
               <div className="flex flex-wrap gap-2">
                 {boards.map((board) => (
@@ -925,7 +995,7 @@ export default function TutorRegistrationForm() {
             </div>
 
             <div>
-              <FieldLabel label="Offline Teaching Areas" />
+              <FieldLabel label="Offline Teaching Areas" required />
 
               <textarea
                 value={
@@ -950,7 +1020,7 @@ export default function TutorRegistrationForm() {
             </div>
 
             <div>
-              <FieldLabel label="Preferred Availability" />
+              <FieldLabel label="Preferred Availability" required />
 
               <div className="grid grid-cols-2 gap-3">
                 {availabilityOptions.map((item) => (
@@ -973,7 +1043,7 @@ export default function TutorRegistrationForm() {
             </div>
 
             <div>
-              <FieldLabel label="Preferred Student Type" />
+              <FieldLabel label="Preferred Student Type" required />
 
               <div className="flex flex-wrap gap-2">
                 {studentTypes.map((item) => (
@@ -1142,6 +1212,8 @@ function InputField({
   placeholder,
   value,
   onChange,
+  min,
+  maxLength,
 }: {
   label: string;
   required?: boolean;
@@ -1149,6 +1221,8 @@ function InputField({
   placeholder: string;
   value: string;
   onChange: (value: string) => void;
+  min?: string;
+  maxLength?: number;
 }) {
   return (
     <div>
@@ -1164,6 +1238,13 @@ function InputField({
           onChange(e.target.value)
         }
         placeholder={placeholder}
+        min={min}
+        maxLength={maxLength}
+        inputMode={
+          type === 'tel' || type === 'number'
+            ? 'numeric'
+            : undefined
+        }
         className="w-full rounded-xl border border-[#DDE2E8] bg-[#F8FAFC] px-4 py-3.5 text-[#0D1118] placeholder:text-[#9AA3AF] outline-none transition focus:border-[#0A6FF7] focus:ring-2 focus:ring-[#0A6FF7]/10"
       />
     </div>
