@@ -63,6 +63,94 @@ const EXPERIENCE_OPTIONS = [
   '8+ Years',
 ];
 
+// ─── Normalization Helpers ──────────────────────────────────────────────────────
+//
+// Different search widgets across the site (HomeTutorSearch, SearchFilterBar,
+// this page's own sidebar) send slightly different value formats through the
+// URL — e.g. "Class 9" vs "Class 9–10", or "Online Classes" vs "Online".
+// If those raw values are stored directly into filter state, the matching
+// logic below (which expects the exact bucketed labels used by this page)
+// silently fails and wrongly reports "no tutor found" even when a match
+// exists. These helpers canonicalize any incoming value to the exact
+// vocabulary this page's filters and matching logic understand.
+
+const CLASS_BUCKET_MAP: Record<string, string[]> = {
+  'Nursery–UKG': ['Nursery', 'LKG', 'UKG', 'KG', 'Class Nursery', 'Class LKG', 'Class UKG', 'Class KG'],
+  'Class 1–5': ['Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5'],
+  'Class 6–8': ['Class 6', 'Class 7', 'Class 8'],
+  'Class 9–10': ['Class 9', 'Class 10'],
+  'Class 11–12': ['Class 11', 'Class 12'],
+};
+
+function resolveClassBucket(rawClass: string): string {
+  const trimmed = rawClass.trim();
+
+  // Already one of this page's bucket labels (e.g. selected via the sidebar).
+  if (CLASS_BUCKET_MAP[trimmed]) {
+    return trimmed;
+  }
+
+  const lower = trimmed.toLowerCase();
+
+  for (const [bucket, values] of Object.entries(CLASS_BUCKET_MAP)) {
+    if (values.some((value) => value.toLowerCase() === lower)) {
+      return bucket;
+    }
+  }
+
+  // Unrecognised value (e.g. 'IIT-JEE', 'NEET', 'other', or anything unexpected)
+  // — fall back to no class filter rather than incorrectly zeroing out results.
+  return 'All Classes';
+}
+
+function resolveModeFilter(rawMode: string): string {
+  const lower = rawMode.trim().toLowerCase();
+
+  if (!lower || lower.includes('all')) return 'All Modes';
+  if (lower.includes('home')) return 'Home';
+  if (lower.includes('online')) return 'Online';
+
+  // "Both" (or anything unrecognised) means the parent is open to either
+  // mode, so don't filter by mode at all.
+  return 'All Modes';
+}
+
+const SUBJECT_ALIASES: Record<string, string> = {
+  maths: 'Mathematics',
+  math: 'Mathematics',
+  bio: 'Biology',
+  phy: 'Physics',
+  physic: 'Physics',
+  chem: 'Chemistry',
+  cs: 'Computer Science',
+  comp: 'Computer Science',
+  computers: 'Computer Science',
+  eng: 'English',
+  social: 'Social Science',
+  socialscience: 'Social Science',
+  socialstudies: 'Social Science',
+  eco: 'Economics',
+  econ: 'Economics',
+  economics: 'Economics',
+  accounts: 'Accountancy',
+  accountancy: 'Accountancy',
+};
+
+function resolveSubject(rawSubject: string): string {
+  const trimmed = rawSubject.trim();
+  const key = trimmed.toLowerCase().replace(/\s+/g, '');
+
+  if (SUBJECT_ALIASES[key]) {
+    return SUBJECT_ALIASES[key];
+  }
+
+  const matchedOption = SUBJECT_OPTIONS.find(
+    (option) => option.toLowerCase() === trimmed.toLowerCase()
+  );
+
+  return matchedOption || trimmed;
+}
+
 // ─── Verified Badge ────────────────────────────────────────────────────────────
 
 function VerifiedBadge() {
@@ -412,12 +500,22 @@ export default function TutorsPage() {
 
   // ──────────────────────────────────────────────────────────────────────────
   // Read URL filters when page loads
+  //
+  // IMPORTANT: values arriving here can come from several different search
+  // widgets across the site (home page search bar, hero search bar, or this
+  // page's own sidebar), and they don't all use the same vocabulary. Every
+  // incoming value is normalized via the resolve* helpers above before being
+  // stored, so the matching logic further down can always rely on a known,
+  // consistent set of values instead of silently failing to match anything.
   // ──────────────────────────────────────────────────────────────────────────
 
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
 
-    const subject = params.get('subject');
+    // Some widgets send a single "subject" param, others send a
+    // comma-separated "subjects" param (multi-select). Support both.
+    const subjectParam =
+      params.get('subject') || params.get('subjects');
     const classParam = params.get('class');
     const board = params.get('board');
     const location = params.get('location');
@@ -427,12 +525,12 @@ export default function TutorsPage() {
     setFilters((previous) => ({
       ...previous,
 
-      ...(subject
+      ...(subjectParam
         ? {
             subject:
-              subject === 'All Subjects'
+              subjectParam === 'All Subjects'
                 ? 'All Subjects'
-                : subject,
+                : resolveSubject(subjectParam.split(',')[0]),
           }
         : {}),
 
@@ -441,7 +539,7 @@ export default function TutorsPage() {
             classRange:
               classParam === 'All Classes'
                 ? 'All Classes'
-                : classParam,
+                : resolveClassBucket(classParam),
           }
         : {}),
 
@@ -465,10 +563,7 @@ export default function TutorsPage() {
 
       ...(mode
         ? {
-            mode:
-              mode === 'All Modes'
-                ? 'All Modes'
-                : mode,
+            mode: resolveModeFilter(mode),
           }
         : {}),
 
@@ -501,14 +596,20 @@ export default function TutorsPage() {
     // ─────────────────────────────────────────────
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
+      const aliasTarget = SUBJECT_ALIASES[q.replace(/\s+/g, '')]?.toLowerCase();
 
       const matchesName =
         tutor.name.toLowerCase().includes(q);
 
       const matchesSubject =
-        tutor.subjects.some((subject) =>
-          subject.toLowerCase().includes(q)
-        );
+        tutor.subjects.some((subject) => {
+          const s = subject.toLowerCase();
+          return (
+            s.includes(q) ||
+            q.includes(s) ||
+            (!!aliasTarget && s.includes(aliasTarget))
+          );
+        });
 
       const matchesLocation =
         tutor.locations.some((location) =>
@@ -606,42 +707,10 @@ export default function TutorsPage() {
     // ─────────────────────────────────────────────
     if (filters.classRange !== 'All Classes') {
 
-      const classMap: Record<string, string[]> = {
-        'Nursery–UKG': [
-          'Nursery',
-          'LKG',
-          'UKG',
-          'Class Nursery',
-          'Class LKG',
-          'Class UKG',
-        ],
-
-        'Class 1–5': [
-          'Class 1',
-          'Class 2',
-          'Class 3',
-          'Class 4',
-          'Class 5',
-        ],
-
-        'Class 6–8': [
-          'Class 6',
-          'Class 7',
-          'Class 8',
-        ],
-
-        'Class 9–10': [
-          'Class 9',
-          'Class 10',
-        ],
-
-        'Class 11–12': [
-          'Class 11',
-          'Class 12',
-        ],
-      };
-
-      const targetClasses = classMap[filters.classRange] || [];
+      // filters.classRange is guaranteed (via resolveClassBucket / the
+      // sidebar's own option values) to be one of CLASS_BUCKET_MAP's keys
+      // by this point, so this lookup will never silently come back empty.
+      const targetClasses = CLASS_BUCKET_MAP[filters.classRange] || [];
 
       const classMatch = tutor.classes.some((tutorClass) => {
 
