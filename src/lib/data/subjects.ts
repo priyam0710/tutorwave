@@ -250,24 +250,6 @@ export const subjects: Subject[] = [
     ],
   },
   {
-    id: 'sub-010',
-    name: 'Commerce',
-    slug: 'commerce',
-    icon: '📊',
-    description: 'Commerce tutoring for Class 11–12 covering Accountancy, Business Studies and Economics with focus on conceptual clarity and exam readiness.',
-    classes: ['Class 11–12'],
-    boards: ['CBSE'],
-    category: 'commerce',
-    relatedSubjects: ['economics', 'mathematics'],
-    seoTitle: 'Commerce Home Tutor in Delhi NCR — TutorWave',
-    seoDescription: 'Find experienced Commerce tutors for Class 11–12 in Delhi NCR. Accountancy, Business Studies and Economics. CBSE. Home and online classes available.',
-    faqs: [
-      { question: 'Does Commerce tutoring cover all three subjects?', answer: 'Yes. Tutors can cover Accountancy, Business Studies and Economics individually or as a combined Commerce package.' },
-      { question: 'Can tutors help with Accountancy practical problems?', answer: 'Yes. Tutors work through journal entries, ledger accounts, balance sheets and other practical Accountancy problems.' },
-      { question: 'Is Commerce tutoring available for Class 11 as well as Class 12?', answer: 'Yes. We have tutors for both Class 11 and Class 12 Commerce, including board exam preparation for Class 12.' },
-    ],
-  },
-  {
     id: 'sub-011',
     name: 'Economics',
     slug: 'economics',
@@ -322,7 +304,7 @@ export const subjects: Subject[] = [
     ],
   },
   {
-    id: 'sub-019',
+    id: 'sub-010',
     name: 'Accountancy',
     slug: 'accountancy',
     icon: '📒',
