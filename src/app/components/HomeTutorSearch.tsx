@@ -210,7 +210,7 @@ export default function HomeTutorSearch() {
                       className={
                         selectedSubjects.length > 0
                           ? 'truncate'
-                          : 'text-[#6B7280]'
+                          : 'text-[#0D1118]
                       }
                     >
                       {selectedSubjects.length === 0
