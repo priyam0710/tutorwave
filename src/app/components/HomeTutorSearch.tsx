@@ -146,9 +146,7 @@ export default function HomeTutorSearch() {
         <div className="bg-white border border-[#374151] rounded-2xl shadow-[0_4px_24px_rgba(15,23,42,0.10)] px-6 py-5">
           <div className="flex flex-col md:flex-row gap-3 md:gap-0 items-stretch md:items-center">
 
-            {/* ─────────────────────────────
-                CLASS
-            ───────────────────────────── */}
+            {/* CLASS */}
             <div className="flex-1 min-w-0 md:px-4">
               <div className="flex flex-col gap-0.5">
 
@@ -183,9 +181,7 @@ export default function HomeTutorSearch() {
 
             <div className="hidden md:block w-px h-10 bg-[#E5E7EB] flex-shrink-0" />
 
-            {/* ─────────────────────────────
-                SUBJECT — MULTI SELECT
-            ───────────────────────────── */}
+            {/* SUBJECT — MULTI SELECT */}
             <div
               className="flex-1 min-w-0 md:px-4"
               ref={subjectDropdownRef}
@@ -206,13 +202,10 @@ export default function HomeTutorSearch() {
                     }
                     className="w-full flex items-center justify-between text-left bg-transparent text-[#0D1118] text-sm font-medium outline-none cursor-pointer pr-1"
                   >
-                    <span
-                      className={
-                        selectedSubjects.length > 0
-                          ? 'truncate'
-                          : 'text-[#6B7280]'
-                      }
-                    >
+                    {/* ONLY CHANGE:
+                        Subject placeholder is now dark
+                        instead of #6B7280 */}
+                    <span className="truncate text-[#0D1118]">
                       {selectedSubjects.length === 0
                         ? 'Select Subject'
                         : selectedSubjects.length === 1
@@ -261,8 +254,7 @@ export default function HomeTutorSearch() {
                                       isSelected
                                         ? prev.filter(
                                             (subject) =>
-                                              subject !==
-                                              opt
+                                              subject !== opt
                                           )
                                         : [
                                             ...prev,
@@ -335,9 +327,7 @@ export default function HomeTutorSearch() {
 
             <div className="hidden md:block w-px h-10 bg-[#E5E7EB] flex-shrink-0" />
 
-            {/* ─────────────────────────────
-                LOCATION
-            ───────────────────────────── */}
+            {/* LOCATION */}
             <div className="flex-1 min-w-0 md:px-4">
               <div className="flex flex-col gap-0.5">
 
@@ -350,9 +340,7 @@ export default function HomeTutorSearch() {
                   <select
                     value={selectedLocation}
                     onChange={(e) =>
-                      setSelectedLocation(
-                        e.target.value
-                      )
+                      setSelectedLocation(e.target.value)
                     }
                     className={selectCls}
                   >
@@ -376,9 +364,7 @@ export default function HomeTutorSearch() {
 
             <div className="hidden md:block w-px h-10 bg-[#E5E7EB] flex-shrink-0" />
 
-            {/* ─────────────────────────────
-                MODE
-            ───────────────────────────── */}
+            {/* MODE */}
             <div className="flex-1 min-w-0 md:px-4">
               <div className="flex flex-col gap-0.5">
 
@@ -391,9 +377,7 @@ export default function HomeTutorSearch() {
                   <select
                     value={selectedMode}
                     onChange={(e) =>
-                      setSelectedMode(
-                        e.target.value
-                      )
+                      setSelectedMode(e.target.value)
                     }
                     className={selectCls}
                   >
@@ -417,9 +401,7 @@ export default function HomeTutorSearch() {
 
             <div className="hidden md:block w-px h-10 bg-[#E5E7EB] flex-shrink-0 md:ml-2" />
 
-            {/* ─────────────────────────────
-                FIND TUTORS
-            ───────────────────────────── */}
+            {/* FIND TUTORS */}
             <div className="md:pl-4 flex-shrink-0">
 
               <button
