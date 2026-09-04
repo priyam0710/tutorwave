@@ -34,7 +34,7 @@ const categoryOrder = [
   { key: 'core', label: 'Core School Subjects' },
   { key: 'language', label: 'Languages' },
   { key: 'senior-secondary', label: 'Senior Secondary (Class 11–12)' },
-  { key: 'commerce', label: 'Commerce & Economics' },
+  { key: 'commerce', label: 'Commerce' },
 ];
 
 export default function SubjectsPage() {
