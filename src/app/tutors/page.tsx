@@ -74,7 +74,7 @@ const EXPERIENCE_OPTIONS = [
 // exists. These helpers canonicalize any incoming value to the exact
 // vocabulary this page's filters and matching logic understand.
 
-const CLASS_BUCKET_MAP: Record<string, string[]> = {
+const CLASS_BUCKET_LABELS: Record<string, string[]> = {
   'Nursery–UKG': ['Nursery', 'LKG', 'UKG', 'KG', 'Class Nursery', 'Class LKG', 'Class UKG', 'Class KG'],
   'Class 1–5': ['Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5'],
   'Class 6–8': ['Class 6', 'Class 7', 'Class 8'],
@@ -82,17 +82,82 @@ const CLASS_BUCKET_MAP: Record<string, string[]> = {
   'Class 11–12': ['Class 11', 'Class 12'],
 };
 
+// Numeric range each bucket covers. Pre-primary levels (Nursery/LKG/UKG) are
+// given negative placeholder numbers purely so they sit below "Class 1" on
+// the same number line and range-overlap math below works for them too.
+const CLASS_BUCKET_RANGES: Record<string, [number, number]> = {
+  'Nursery–UKG': [-3, -1],
+  'Class 1–5': [1, 5],
+  'Class 6–8': [6, 8],
+  'Class 9–10': [9, 10],
+  'Class 11–12': [11, 12],
+};
+
+const CLASS_KEYWORD_TOKENS: Record<string, number> = {
+  nursery: -3,
+  nur: -3,
+  lkg: -2,
+  kg: -2,
+  ukg: -1,
+};
+
+// Tutor data doesn't always list each class individually — some tutors are
+// stored as a single range string like "Class 1st - 8th", "Class NUR - 8th",
+// or "Class KG To 5th". Comparing these as plain text substrings is what was
+// causing incorrect results (e.g. "Class 10".includes("Class 1") is true,
+// wrongly matching Class 1–5 searches; while "Class NUR - 8th" never
+// literally contains the text "Class 5", wrongly excluding a tutor who does
+// teach Class 5). Extracting the actual numbers/keywords from any class
+// string and comparing numeric ranges fixes both problems at once.
+function extractClassTokens(raw: string): number[] {
+  const lower = raw.toLowerCase();
+  const tokens = new Set<number>();
+
+  (lower.match(/\d+/g) || []).forEach((n) => tokens.add(parseInt(n, 10)));
+
+  Object.keys(CLASS_KEYWORD_TOKENS).forEach((keyword) => {
+    if (new RegExp(`\\b${keyword}\\b`).test(lower)) {
+      tokens.add(CLASS_KEYWORD_TOKENS[keyword]);
+    }
+  });
+
+  return Array.from(tokens);
+}
+
+function classMatchesBucket(
+  tutorClasses: string[],
+  bucketRange: [number, number]
+): boolean {
+  const [bucketMin, bucketMax] = bucketRange;
+
+  return tutorClasses.some((cls) => {
+    const tokens = extractClassTokens(cls);
+
+    if (tokens.length === 0) {
+      // Non-grade entries like "IIT-JEE", "NEET", "BBA", "BCA" — irrelevant
+      // to a school-class filter, never match a class bucket.
+      return false;
+    }
+
+    const clsMin = Math.min(...tokens);
+    const clsMax = Math.max(...tokens);
+
+    // True if the tutor's class span and the requested bucket overlap at all.
+    return clsMin <= bucketMax && clsMax >= bucketMin;
+  });
+}
+
 function resolveClassBucket(rawClass: string): string {
   const trimmed = rawClass.trim();
 
   // Already one of this page's bucket labels (e.g. selected via the sidebar).
-  if (CLASS_BUCKET_MAP[trimmed]) {
+  if (CLASS_BUCKET_LABELS[trimmed]) {
     return trimmed;
   }
 
   const lower = trimmed.toLowerCase();
 
-  for (const [bucket, values] of Object.entries(CLASS_BUCKET_MAP)) {
+  for (const [bucket, values] of Object.entries(CLASS_BUCKET_LABELS)) {
     if (values.some((value) => value.toLowerCase() === lower)) {
       return bucket;
     }
@@ -623,15 +688,19 @@ export default function TutorsPage() {
 
     // ─────────────────────────────────────────────
     // SUBJECT
+    //
+    // Comparing raw substrings here used to cause two problems: selecting
+    // "Science" would wrongly match tutors who only teach "Social Science"
+    // (since "social science".includes("science") is true), and tutors
+    // whose data says "Maths" instead of "Mathematics" would be missed
+    // entirely. Canonicalizing both sides through resolveSubject() before
+    // comparing fixes both issues.
     // ─────────────────────────────────────────────
     if (filters.subject !== 'All Subjects') {
       const selectedSubject = filters.subject.toLowerCase();
 
       const subjectMatch = tutor.subjects.some(
-        (subject) =>
-          subject.toLowerCase() === selectedSubject ||
-          subject.toLowerCase().includes(selectedSubject) ||
-          selectedSubject.includes(subject.toLowerCase())
+        (subject) => resolveSubject(subject).toLowerCase() === selectedSubject
       );
 
       if (!subjectMatch) {
@@ -704,33 +773,17 @@ export default function TutorsPage() {
 
     // ─────────────────────────────────────────────
     // CLASS
+    //
+    // Uses numeric range overlap (see classMatchesBucket above) instead of
+    // text substring comparison, so range-phrased class lists like
+    // "Class 1st - 8th" or "Class NUR - 8th" are correctly recognised as
+    // covering Class 5, and "Class 10/11/12" no longer wrongly matches a
+    // "Class 1–5" search.
     // ─────────────────────────────────────────────
     if (filters.classRange !== 'All Classes') {
+      const bucketRange = CLASS_BUCKET_RANGES[filters.classRange];
 
-      // filters.classRange is guaranteed (via resolveClassBucket / the
-      // sidebar's own option values) to be one of CLASS_BUCKET_MAP's keys
-      // by this point, so this lookup will never silently come back empty.
-      const targetClasses = CLASS_BUCKET_MAP[filters.classRange] || [];
-
-      const classMatch = tutor.classes.some((tutorClass) => {
-
-        const normalizedTutorClass =
-          tutorClass.toLowerCase().replace(/\s+/g, ' ').trim();
-
-        return targetClasses.some((targetClass) => {
-
-          const normalizedTargetClass =
-            targetClass.toLowerCase().replace(/\s+/g, ' ').trim();
-
-          return (
-            normalizedTutorClass === normalizedTargetClass ||
-            normalizedTutorClass.includes(normalizedTargetClass) ||
-            normalizedTargetClass.includes(normalizedTutorClass)
-          );
-        });
-      });
-
-      if (!classMatch) {
+      if (bucketRange && !classMatchesBucket(tutor.classes, bucketRange)) {
         return false;
       }
     }
