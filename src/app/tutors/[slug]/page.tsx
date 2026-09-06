@@ -6,8 +6,17 @@ import Footer from '@/components/Footer';
 import WhatsAppButton from '@/app/components/WhatsAppButton';
 import { tutors } from '@/lib/data/tutors';
 
+// Dynamic route segments arrive URL-decoded already, but comparing case
+// and whitespace defensively here means a stray casing mismatch or an
+// accidentally-encoded space in a link elsewhere can never again produce
+// a false "Tutor Not Found" the way it did when slugs contained raw spaces.
+function findTutorBySlug(rawSlug: string) {
+  const normalized = decodeURIComponent(rawSlug).trim().toLowerCase();
+  return tutors.find((t) => t.slug.trim().toLowerCase() === normalized);
+}
+
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const tutor = tutors.find((t) => t.slug === params.slug);
+  const tutor = findTutorBySlug(params.slug);
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
   if (!tutor) {
@@ -50,7 +59,7 @@ export async function generateStaticParams() {
 }
 
 export default function TutorDetailPage({ params }: { params: { slug: string } }) {
-  const tutor = tutors.find((t) => t.slug === params.slug);
+  const tutor = findTutorBySlug(params.slug);
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
   if (!tutor) {
