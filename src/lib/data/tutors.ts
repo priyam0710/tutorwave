@@ -24,7 +24,7 @@ export const tutors: Tutor[] = [
   {
     id: 'tutor-001',
     name: 'Dheeraj Sharma',
-    slug: 'Dheeraj-sharma',
+    slug: 'dheeraj-sharma',
     photo: "/assets/images/dheerajsharma.png",
     photoAlt: 'Dheeraj Sharma',
     subjects: ['Mathematics', 'Science', 'Physics', 'Chemistry', 'Biology'],
@@ -46,7 +46,7 @@ export const tutors: Tutor[] = [
   {
     id: 'tutor-002',
     name: 'Priyanshu Singh',
-    slug: 'Priyanshu-Singh',
+    slug: 'priyanshu-singh',
     photo: "https://img.rocket.new/generatedImages/rocket_gen_img_13907f863-1772137966294.png",
     photoAlt: 'Priyanshu-Singh',
     subjects: ['Physics', 'Chemistry', 'Mathematics', 'Science'],
@@ -67,7 +67,7 @@ export const tutors: Tutor[] = [
  {
     id: 'tutor-003',
     name: 'Rupesh Jha',
-    slug: 'Rupesh Jha',
+    slug: 'rupesh-jha',
     photo: "https://img.rocket.new/generatedImages/rocket_gen_img_1e7575f93-1765298093270.png",
     photoAlt: 'Rupesh-Jha',
     subjects: ['Maths','Science','Social Science','English',
@@ -97,7 +97,7 @@ export const tutors: Tutor[] = [
   {
     id: 'tutor-004',
     name: 'Jyoti Puri',
-    slug: 'Jyoti Puri',
+    slug: 'jyoti-puri',
     photo: "https://img.rocket.new/generatedImages/rocket_gen_img_1e7575f93-1765298093270.png",
     photoAlt: 'Jyoti-Puri',
     subjects: [
@@ -172,7 +172,7 @@ export const tutors: Tutor[] = [
    {
     id: 'tutor-006',
     name: 'Rajeev Kumar',
-    slug: 'Rajeev Kumar',
+    slug: 'rajeev-kumar',
     photo: "https://img.rocket.new/generatedImages/rocket_gen_img_1e7575f93-1765298093270.png",
     photoAlt: 'Rajeev-kumar',
     subjects: ['All Subjects','Maths','Science','Social Science','English',],
@@ -202,7 +202,7 @@ export const tutors: Tutor[] = [
    {
     id: 'tutor-007',
     name: 'Basundhara Das',
-    slug: 'Basundhara Das',
+    slug: 'basundhara-das',
     photo: "https://img.rocket.new/generatedImages/rocket_gen_img_1e7575f93-1765298093270.png",
     photoAlt: 'Basundhara Das',
     subjects: ['All Subjects','Maths','Science','Social Science','English','Biology','Computer'],
@@ -233,7 +233,7 @@ export const tutors: Tutor[] = [
    {
     id: 'tutor-008',
     name: 'Naveen Bhatnagar',
-    slug: 'Naveen Bhatnagar',
+    slug: 'naveen-bhatnagar',
     photo: "https://img.rocket.new/generatedImages/rocket_gen_img_1e7575f93-1765298093270.png",
     photoAlt: 'Naveen Bhatnagar',
     subjects: ['Maths','Science','Social Science','English','Accounts','Legal Studies','Economics','Business Studies',],
@@ -257,7 +257,7 @@ export const tutors: Tutor[] = [
   {
     id: 'tutor-009',
     name: 'Shikha Singh',
-    slug: 'Shikha Singh',
+    slug: 'shikha-singh',
     photo: "https://img.rocket.new/generatedImages/rocket_gen_img_1e7575f93-1765298093270.png",
     photoAlt: 'Shikha Singh',
     subjects: ['All Subjects','Maths','Science','Social Science','English','Biology','Computer'],
@@ -286,7 +286,7 @@ export const tutors: Tutor[] = [
   {
     id: 'tutor-010',
     name: 'Priyanshu Tiwari',
-    slug: 'Priyanshu Tiwari',
+    slug: 'priyanshu-tiwari',
     photo: "https://img.rocket.new/generatedImages/rocket_gen_img_1e7575f93-1765298093270.png",
     photoAlt: 'Priyanshu-Tiwari',
     subjects: ['Maths','Science','Social Science','English','Physics','Chemistry','Biology',],
@@ -319,7 +319,7 @@ export const tutors: Tutor[] = [
   {
     id: 'tutor-011',
     name: 'Adarsh Chaudhary',
-    slug: 'Adarsh Chaudhary',
+    slug: 'adarsh-chaudhary',
     photo: "https://img.rocket.new/generatedImages/rocket_gen_img_1e7575f93-1765298093270.png",
     photoAlt: 'Adarsh-Chaudhary',
     subjects: ['All Subjects','Maths','Science','Social Science','English','Physics','Chemistry','Biology',],
@@ -346,7 +346,8 @@ export const tutors: Tutor[] = [
 ];
 
 export function getTutorBySlug(slug: string): Tutor | undefined {
-  return tutors.find((t) => t.slug === slug);
+  const normalized = decodeURIComponent(slug).trim().toLowerCase();
+  return tutors.find((t) => t.slug.toLowerCase() === normalized);
 }
 
 export function getTutorsBySubject(subject: string): Tutor[] {
