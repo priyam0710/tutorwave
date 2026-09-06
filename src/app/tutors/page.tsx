@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import WhatsAppButton from '@/app/components/WhatsAppButton';
 import { tutors, Tutor } from '@/lib/data/tutors';
+import { locations as locationsData } from '@/lib/data/locations';
 
 // ─── Filter Options ────────────────────────────────────────────────────────────
 
@@ -44,7 +45,7 @@ const LOCATION_OPTIONS = [
   'Delhi',
   'Noida',
   'Greater Noida',
-  'Gurgaon',
+  'Gurugram',
   'Ghaziabad',
   'Faridabad',
 ];
@@ -84,7 +85,7 @@ const CLASS_BUCKET_LABELS: Record<string, string[]> = {
 
 // Numeric range each bucket covers. Pre-primary levels (Nursery/LKG/UKG) are
 // given negative placeholder numbers purely so they sit below "Class 1" on
-// the same number line and range-overlap math below works for them too.
+// the same number line and the range-overlap math below works for them too.
 const CLASS_BUCKET_RANGES: Record<string, [number, number]> = {
   'Nursery–UKG': [-3, -1],
   'Class 1–5': [1, 5],
@@ -103,12 +104,12 @@ const CLASS_KEYWORD_TOKENS: Record<string, number> = {
 
 // Tutor data doesn't always list each class individually — some tutors are
 // stored as a single range string like "Class 1st - 8th", "Class NUR - 8th",
-// or "Class KG To 5th". Comparing these as plain text substrings is what was
-// causing incorrect results (e.g. "Class 10".includes("Class 1") is true,
-// wrongly matching Class 1–5 searches; while "Class NUR - 8th" never
-// literally contains the text "Class 5", wrongly excluding a tutor who does
-// teach Class 5). Extracting the actual numbers/keywords from any class
-// string and comparing numeric ranges fixes both problems at once.
+// or "Class KG To 5th". Comparing these as plain text substrings caused two
+// problems: "Class 10".includes("Class 1") is true, so a "Class 1–5" search
+// wrongly matched tutors who only teach Class 10/11/12; and "Class NUR - 8th"
+// never literally contains the text "Class 5", so a tutor who does teach
+// Class 5 was wrongly excluded. Extracting the actual numbers/keywords from
+// any class string and comparing numeric ranges fixes both problems.
 function extractClassTokens(raw: string): number[] {
   const lower = raw.toLowerCase();
   const tokens = new Set<number>();
@@ -214,6 +215,62 @@ function resolveSubject(rawSubject: string): string {
   );
 
   return matchedOption || trimmed;
+}
+
+// A tutor's `locations` array stores actual serviced localities
+// (e.g. "Malviya Nagar", "Noida Sector 44"), not the parent city name
+// itself. Comparing those directly against a city filter like "Delhi"
+// via plain substring matching fails whenever the locality name doesn't
+// happen to contain the city's name — which is the normal case for
+// Delhi neighbourhoods (Malviya Nagar, Saket, India Gate, etc. never say
+// "Delhi"), silently excluding perfectly matching tutors. This resolver
+// uses the master locations.ts area lists to map any locality back to
+// its parent city, with a safety-net fallback for the rare locality not
+// yet present in that master list.
+function normalizeAreaText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[.,]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function cityForArea(area: string): string | null {
+  const normalizedArea = normalizeAreaText(area);
+
+  if (!normalizedArea || normalizedArea === 'online') {
+    return null;
+  }
+
+  // The raw string already names a known city directly, e.g. "Noida Sector 44".
+  for (const city of locationsData) {
+    if (normalizedArea.includes(normalizeAreaText(city.name))) {
+      return city.name;
+    }
+  }
+
+  // Otherwise check which city's known locality list this area belongs to.
+  for (const city of locationsData) {
+    const matched = city.areas.some((rawAreaName) => {
+      const normalizedCityArea = normalizeAreaText(rawAreaName);
+
+      if (!normalizedCityArea || normalizedCityArea === '& more...') {
+        return false;
+      }
+
+      return (
+        normalizedCityArea === normalizedArea ||
+        normalizedArea.includes(normalizedCityArea) ||
+        normalizedCityArea.includes(normalizedArea)
+      );
+    });
+
+    if (matched) {
+      return city.name;
+    }
+  }
+
+  return null;
 }
 
 // ─── Verified Badge ────────────────────────────────────────────────────────────
@@ -728,15 +785,41 @@ export default function TutorsPage() {
 
     // ─────────────────────────────────────────────
     // LOCATION
+    //
+    // Tutors store actual serviced localities (e.g. "Malviya Nagar"), not
+    // the parent city name. Resolve each locality to its city via the
+    // master locations.ts area lists before comparing, with a Delhi
+    // fallback for the rare locality that isn't yet listed there — so a
+    // real Delhi-based tutor is never silently dropped from a Delhi search
+    // just because their neighbourhood name doesn't literally say "Delhi".
     // ─────────────────────────────────────────────
     if (filters.location !== 'All Locations') {
       const selectedLocation = filters.location.toLowerCase();
 
-      const locationMatch = tutor.locations.some(
-        (location) =>
-          location.toLowerCase().includes(selectedLocation) ||
-          selectedLocation.includes(location.toLowerCase())
-      );
+      const locationMatch = tutor.locations.some((location) => {
+        const lower = location.toLowerCase();
+
+        // An online-only tutor can teach a student anywhere, so they should
+        // never be excluded from a specific-city search.
+        if (lower === 'online') {
+          return true;
+        }
+
+        if (lower.includes(selectedLocation) || selectedLocation.includes(lower)) {
+          return true;
+        }
+
+        const resolvedCity = cityForArea(location);
+
+        if (resolvedCity) {
+          return resolvedCity.toLowerCase() === selectedLocation;
+        }
+
+        // Unresolved bare locality name (not in the master area list) —
+        // assume Delhi proper rather than incorrectly excluding the tutor,
+        // since that's this platform's default/hub city.
+        return selectedLocation === 'delhi';
+      });
 
       if (!locationMatch) {
         return false;
