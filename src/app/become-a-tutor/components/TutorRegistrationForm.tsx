@@ -172,6 +172,7 @@ const studentTypes = [
 export default function TutorRegistrationForm() {
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
 
   const [formData, setFormData] =
     useState<FormData>(initialFormData);
@@ -294,6 +295,8 @@ export default function TutorRegistrationForm() {
   };
 
   const validateStep = () => {
+    setError('');
+
     if (step === 1) {
       const { fullName, age, gender, phone, address } =
         formData.personal;
@@ -305,7 +308,7 @@ export default function TutorRegistrationForm() {
         !phone.trim() ||
         !address.trim()
       ) {
-        alert(
+        setError(
           'Please fill in all required personal details (Full Name, Age, Gender, Phone Number and Address).'
         );
         return false;
@@ -318,14 +321,14 @@ export default function TutorRegistrationForm() {
         ageNumber <= 0 ||
         ageNumber < 18
       ) {
-        alert(
+        setError(
           'Please enter a valid age. Age must be 18 or above and cannot be negative or zero.'
         );
         return false;
       }
 
       if (!/^[6-9]\d{9}$/.test(phone.trim())) {
-        alert(
+        setError(
           'Please enter a valid 10-digit mobile number (must start with 6, 7, 8 or 9).'
         );
         return false;
@@ -346,7 +349,7 @@ export default function TutorRegistrationForm() {
         !schoolingFrom.trim() ||
         !college.trim()
       ) {
-        alert(
+        setError(
           'Please fill in all required education details (Highest Qualification, Stream, Schooling From and College/University).'
         );
         return false;
@@ -376,14 +379,14 @@ export default function TutorRegistrationForm() {
         !t.studentsTaughtFrom.trim() ||
         t.boards.length === 0
       ) {
-        alert(
+        setError(
           'Please fill in all required teaching profile details (Experience, English Fluency, School/Coaching Experience, Students Taught From and Boards).'
         );
         return false;
       }
 
       if (!hasAnyClass || !hasAnySubject) {
-        alert(
+        setError(
           'Please select at least one class and one subject you can teach.'
         );
         return false;
@@ -399,7 +402,7 @@ export default function TutorRegistrationForm() {
         p.availability.length === 0 ||
         p.studentTypes.length === 0
       ) {
-        alert(
+        setError(
           'Please fill in all required teaching preference details (Teaching Mode, Offline Teaching Areas, Availability and Student Type).'
         );
         return false;
@@ -424,6 +427,7 @@ export default function TutorRegistrationForm() {
 
   const previousStep = () => {
     if (step > 1) {
+      setError('');
       setStep(step - 1);
 
       window.scrollTo({
@@ -481,6 +485,7 @@ export default function TutorRegistrationForm() {
             setFormData(initialFormData);
             setStep(1);
             setSubmitted(false);
+            setError('');
           }}
           className="px-6 py-3 rounded-xl bg-[#0A6FF7] text-white font-bold hover:opacity-90 transition"
         >
@@ -533,6 +538,25 @@ export default function TutorRegistrationForm() {
 
       {/* FORM CONTENT */}
       <div className="p-6 sm:p-8">
+
+        {/* ERROR BANNER */}
+        {error && (
+          <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-start gap-3">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="text-red-500 flex-shrink-0 mt-0.5"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 8v4M12 16h.01" />
+            </svg>
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
+        )}
 
         {/* STEP 1 */}
         {step === 1 && (
@@ -838,7 +862,7 @@ export default function TutorRegistrationForm() {
 
             {/* BOARDS */}
             <div>
-              <FieldLabel label="Boards / Curriculam You Can Teach" required />
+              <FieldLabel label="Boards / Curricula You Can Teach" required />
 
               <div className="flex flex-wrap gap-2">
                 {boards.map((board) => (
