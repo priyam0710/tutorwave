@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import WhatsAppButton from '@/app/components/WhatsAppButton';
+import LocationAreasGrid from '@/app/components/LocationAreasGrid';
 import { locations } from '@/lib/data/locations';
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
@@ -130,12 +131,8 @@ export default function LocationDetailPage({ params }: { params: { slug: string 
               <h2 className="text-2xl font-bold text-[#0D1118] mb-4">About {location.name}</h2>
               <p className="text-[#6B7280] leading-relaxed mb-8">{location.description}</p>
               <h3 className="text-xl font-bold text-[#0D1118] mb-4">Areas Covered</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8">
-                {location.areas.map((area) => (
-                  <div key={area} className="px-4 py-2 bg-[#F8FAFC] border border-[#E5E7EB] text-[#6B7280] text-sm font-medium rounded-lg">
-                    {area}
-                  </div>
-                ))}
+              <div className="mb-8">
+                <LocationAreasGrid areas={location.areas} />
               </div>
               <h3 className="text-xl font-bold text-[#0D1118] mb-4">Why Choose TutorWave in {location.name}</h3>
               <ul className="space-y-3">
