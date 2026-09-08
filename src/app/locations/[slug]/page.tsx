@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import WhatsAppButton from '@/app/components/WhatsAppButton';
-import LocationAreasGrid from '@/app/components/LocationAreasGrid';
+   import LocationAreasGrid from '@/app/components/LocationAreasGrid';
 import { locations } from '@/lib/data/locations';
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
