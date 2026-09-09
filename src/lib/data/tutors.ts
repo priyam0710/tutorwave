@@ -133,7 +133,7 @@ export const tutors: Tutor[] = [
     id: 'tutor-005',
     name: 'Ilma Khan',
     slug: 'ilma-khan',
-    photo: "https://img.rocket.new/generatedImages/rocket_gen_img_1e7575f93-1765298093270.png",
+    photo: "/assets/images/ilmakhan.png",
     photoAlt: 'Ilma-khan',
     subjects: [
       'All Subjects',
