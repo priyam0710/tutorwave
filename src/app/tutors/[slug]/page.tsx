@@ -5,7 +5,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import WhatsAppButton from '@/app/components/WhatsAppButton';
 import { tutors } from '@/lib/data/tutors';
-import { getTutorBio } from '@/lib/data/tutorBios';
+
 
 function findTutorBySlug(rawSlug: string) {
   const normalized = decodeURIComponent(rawSlug).trim().toLowerCase();
