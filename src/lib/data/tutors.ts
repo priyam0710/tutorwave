@@ -401,6 +401,38 @@ export const tutors: Tutor[] = [
     gender: 'Female',
     languages: ['English', 'Hindi']
   },
+  {
+    id: 'tutor-014',
+   name: 'Jyoti',
+    slug: 'Jyoti',
+    photo: "/assets/images/jyoti.png",
+    photoAlt: 'Jyoti',
+    subjects: [
+      'All Subjects',
+      'English',
+      'Hindi',
+      'Maths',
+      'Science',
+      'Social Science',
+    ],
+    classes: ['Class 1st - 8th',],
+    boards: ['CBSE',],
+    experience: 3,
+    qualifications: ['B.Ed in Mathematics',],
+    locations: [
+      'Noida Sector 48',
+      'Noida Sector 49',
+      'Barola',
+    ],
+    teachingMode: ['home',],
+    verified: true,
+    rating: 5,
+    reviewCount: 2,
+    bio: 'I specialize in teaching All Subjects for primary and middle school students. Commited to mentoring students not just for academic excellence, but to become lifelong learners and problem solvers',
+    availability: 'Weekdays 3pm–7pm, Weekends flexible',
+    gender: 'female',
+    languages: ['English', 'Hindi']
+  },
 ];
 
 export function getTutorBySlug(slug: string): Tutor | undefined {
