@@ -433,6 +433,30 @@ export const tutors: Tutor[] = [
     gender: 'female',
     languages: ['English', 'Hindi']
   },
+    {
+    id: 'tutor-015',
+    name: 'Vishal',
+    slug: 'vishal',
+    photo: "/assets/images/vishal.png",
+    photoAlt: 'vishal',
+    subjects: ['All Subjects','Maths','Science','Social Science','English','Physics','Chemistry','Hindi',],
+    classes: ['Class 4','Class 5','Class 6','Class 7','Class 8', 'Class 9', 'Class 10','Class 11','Class 12'],
+    boards: ['CBSE', 'ICSE',],
+    experience: 5,
+    qualifications: [ 'M.Sc.(Hons.) in Mathematics',],
+    locations: [
+     'GTB Nagar',
+      'Burari',
+      'North Delhi',],
+    teachingMode: ['home',],
+    verified: true,
+    rating: 5,
+    reviewCount: 2,
+    bio: 'I teach all major subjects for Class 4 to Class 10. I enjoy working with younger students, focusing on building strong reading, writing and reasoning skills alongside core subject knowledge. I offer home tuitions and online classes both.',
+    availability: 'Weekdays 4pm–6pm, Weekends flexible',
+    gender: 'Male',
+    languages: ['English', 'Hindi']
+  },
 ];
 
 export function getTutorBySlug(slug: string): Tutor | undefined {
