@@ -366,9 +366,7 @@ export const tutors: Tutor[] = [
       'Noida Sector 8',
       'Noida Sector 11',
       'Noida Sector 12',
-      'Noida Sector 22',
-      
-    ],
+      'Noida Sector 22',],
     teachingMode: ['home','online',],
     verified: true,
     rating: 5,
@@ -376,6 +374,31 @@ export const tutors: Tutor[] = [
     bio: 'I teach all major subjects for Class 4 to Class 10. I enjoy working with younger students, focusing on building strong reading, writing and reasoning skills alongside core subject knowledge. I offer home tuitions and online classes both.',
     availability: 'Weekdays 4pm–6pm, Weekends flexible',
     gender: 'Male',
+    languages: ['English', 'Hindi']
+  },
+   {
+    id: 'tutor-013',
+    name: 'Simran Sharma',
+    slug: 'Simran-Sharma',
+    photo: "/assets/images/simransharma.png",
+    photoAlt: 'Simran-Sharma',
+    subjects: ['All Subjects','Maths','Science','Social Science','English','Computer','EVS',],
+    classes: ['Class 1','Class 2','Class 3','Class 4','Class 5','Class 6','Class 7','Class 8', 'Class 9', 'Class 10',],
+    boards: ['CBSE', 'Cambridge',],
+    experience: 7,
+    qualifications: [ 'B.Ed & CTET Qualified',],
+    locations: [
+     'Noida Extension',
+      'Greater Noida',
+      'Tech Zone 4',
+      'Gaur City',],
+    teachingMode: ['home','online',],
+    verified: true,
+    rating: 5,
+    reviewCount: 2,
+    bio: 'I teach all major subjects for Class 1 to Class 10. I enjoy working with younger students, focusing on building strong reading, writing and reasoning skills alongside core subject knowledge. I offer home tuitions and online classes both.',
+    availability: 'Weekdays 4pm–6pm, Weekends flexible',
+    gender: 'Female',
     languages: ['English', 'Hindi']
   },
 ];
