@@ -6,7 +6,6 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import WhatsAppButton from '@/app/components/WhatsAppButton';
 import { tutors, Tutor } from '@/lib/data/tutors';
-import { getTutorBio } from '@/lib/data/tutorBios';
 import { locations as locationsData } from '@/lib/data/locations';
 
 const SUBJECT_OPTIONS=['All Subjects','Mathematics','Physics','Chemistry','Biology','English','Hindi','Computer Science','Science','EVS','Economics','Business Studies','French','German','Sanskrit','Social Science'];
