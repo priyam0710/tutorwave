@@ -4,7 +4,6 @@ import React from 'react';
 import Link from 'next/link';
 import AppImage from '@/components/ui/AppImage';
 import { featuredTutors } from '@/lib/data/tutors';
-import { getTutorBio } from '@/lib/data/tutorBios';
 
 function StarRating({
   rating,
@@ -77,6 +76,7 @@ export default function MeetTutorsSection() {
             </p>
           </div>
 
+          {/* Desktop View All */}
           <Link
             href="/tutors"
             className="hidden sm:inline-flex items-center gap-1.5 text-sm font-semibold text-[#0A6FF7] hover:underline whitespace-nowrap"
@@ -97,7 +97,7 @@ export default function MeetTutorsSection() {
           </Link>
         </div>
 
-        {/* Featured tutor cards */}
+        {/* Featured Tutor Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {featuredTutors.map((tutor) => (
             <Link
@@ -126,7 +126,7 @@ export default function MeetTutorsSection() {
               "
             >
 
-              {/* Tutor image */}
+              {/* Tutor Image */}
               <div className="relative aspect-[4/4.45] overflow-hidden bg-[#F8FAFC]">
 
                 <AppImage
@@ -144,10 +144,10 @@ export default function MeetTutorsSection() {
                   "
                 />
 
-                {/* Dark gradient at bottom for readability */}
+                {/* Bottom image gradient */}
                 <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/55 to-transparent pointer-events-none" />
 
-                {/* Verified badge */}
+                {/* Verified Badge */}
                 {tutor.verified && (
                   <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-white/95 backdrop-blur-sm rounded-full px-2.5 py-1.5 shadow-sm">
                     <svg
@@ -168,55 +168,84 @@ export default function MeetTutorsSection() {
                   </div>
                 )}
 
-                {/* Image bottom information */}
+                {/* Image Bottom Information */}
                 <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-3 text-white">
 
                   <div className="min-w-0">
+
+                    {/* Teaching Mode */}
                     <p className="text-[11px] font-medium text-white/80">
                       {getModeLabel(tutor.teachingMode)}
                     </p>
 
-                    <p className="text-xs font-semibold truncate">
-                      {tutor.locations[0]}
-                    </p>
+                    {/* Location */}
+                    <div className="flex items-center gap-1.5 min-w-0 mt-0.5">
+
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        aria-hidden="true"
+                        className="flex-shrink-0"
+                      >
+                        <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0Z" />
+                        <circle
+                          cx="12"
+                          cy="10"
+                          r="3"
+                        />
+                      </svg>
+
+                      <span className="text-xs font-semibold truncate">
+                        {tutor.locations[0]}
+                      </span>
+                    </div>
                   </div>
 
-                  {/* Experience badge */}
+                  {/* Experience */}
                   <div className="flex-shrink-0 px-2.5 py-1 rounded-full bg-white/95 text-[#0A6FF7] text-[10px] font-bold shadow-sm">
                     {tutor.experience}+ yrs
                   </div>
                 </div>
               </div>
 
-              {/* Card content */}
+              {/* Card Content */}
               <div className="p-4 flex flex-col flex-1">
 
-                {/* Name + clickable arrow */}
+                {/* Tutor Name + Arrow */}
                 <div className="flex items-start justify-between gap-3">
 
                   <div className="min-w-0">
 
-                    <h3 className="
-                      font-sans
-                      font-bold
-                      text-[15px]
-                      text-[#0D1118]
-                      leading-tight
-                      truncate
-                      group-hover:text-[#0A6FF7]
-                      transition-colors
-                    ">
+                    <h3
+                      className="
+                        font-sans
+                        font-bold
+                        text-[15px]
+                        text-[#0D1118]
+                        leading-tight
+                        truncate
+                        group-hover:text-[#0A6FF7]
+                        transition-colors
+                      "
+                    >
                       {tutor.name}
                     </h3>
 
+                    {/* Subjects */}
                     <p className="mt-1 text-xs text-[#6B7280] line-clamp-1">
                       {tutor.subjects.slice(0, 3).join(' · ')}
-                      {tutor.subjects.length > 3 ? ' · +more' : ''}
-                    </p>
 
+                      {tutor.subjects.length > 3
+                        ? ' · +more'
+                        : ''}
+                    </p>
                   </div>
 
-                  {/* Arrow button */}
+                  {/* Arrow */}
                   <span
                     className="
                       flex-shrink-0
@@ -245,7 +274,6 @@ export default function MeetTutorsSection() {
                       <path d="M5 12h14M13 5l7 7-7 7" />
                     </svg>
                   </span>
-
                 </div>
 
                 {/* Qualification */}
@@ -260,12 +288,11 @@ export default function MeetTutorsSection() {
                       ? tutor.qualifications.slice(0, 2).join(' • ')
                       : 'View profile for details'}
                   </p>
-
                 </div>
 
-                {/* Short bio */}
+                {/* Bio */}
                 <p className="mt-3 text-[11px] text-[#6B7280] leading-relaxed line-clamp-2">
-                  {getTutorBio(tutor)}
+                  {tutor.bio}
                 </p>
 
                 {/* Rating + View Profile */}
@@ -279,9 +306,7 @@ export default function MeetTutorsSection() {
                   <span className="text-[11px] font-semibold text-[#0A6FF7] group-hover:underline">
                     View Profile
                   </span>
-
                 </div>
-
               </div>
             </Link>
           ))}
@@ -321,11 +346,9 @@ export default function MeetTutorsSection() {
             >
               <path d="M5 12h14M12 5l7 7-7 7" />
             </svg>
-
           </Link>
 
         </div>
-
       </div>
     </section>
   );
