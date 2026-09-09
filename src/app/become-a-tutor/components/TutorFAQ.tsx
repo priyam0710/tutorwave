@@ -5,11 +5,11 @@ import React, { useState } from 'react';
 const faqs = [
   {
     q: 'Does TutorWave charge tutors any registration fee?',
-    a: 'No. Registering on TutorWave is completely free for tutors. We do not charge any upfront fee to join our network or to receive leads.',
+    a: 'Yes. A one-time registration fee of ₹499 applies when you join TutorWave. This fee is fully refundable if you don\'t receive any tuition assignment within 1 year of registering.',
   },
   {
-    q: 'How does TutorWave make money if it is free?',
-    a: 'TutorWave charges a small, transparent service fee on successful tuition placements — only after you have started teaching and the arrangement is confirmed. This is discussed clearly before any placement.',
+    q: 'Why does TutorWave charge a registration fee?',
+    a: 'The ₹499 fee helps us maintain a verified, spam-free tutor network and cover the cost of manually reviewing every profile before it goes live. It is a one-time charge, not a recurring one, and it is fully refundable if you don\'t receive any assignment within 1 year.',
   },
   {
     q: 'What qualifications do I need to join?',
@@ -25,7 +25,7 @@ const faqs = [
   },
   {
     q: 'What is the verification process like?',
-    a: 'After you register, our team will call you for a brief 10–15 minute interview. We will also ask for a copy of your ID and qualification documents. Once verified, your profile is activated.',
+    a: 'After you register and complete the registration fee, our team will call you for a brief 10–15 minute interview. We will also ask for a copy of your ID and qualification documents. Once verified, your profile is activated.',
   },
   {
     q: 'Can I join if I already have my own students?',
@@ -87,10 +87,10 @@ export default function TutorFAQ() {
             Ready to grow your teaching?
           </h3>
           <p className="text-white/65 text-sm mb-6 max-w-sm mx-auto">
-            Join 2,400+ tutors already getting genuine leads through TutorWave across Delhi NCR.
+            Join 1,000+ tutors already getting genuine leads through TutorWave across Delhi NCR.
           </p>
           <a href="#register" className="btn-white">
-            Register Now — It&apos;s Free
+            Register Now
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M5 12h14M12 5l7 7-7 7" />
             </svg>
