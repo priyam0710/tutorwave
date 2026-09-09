@@ -85,7 +85,7 @@ export const tutors: Tutor[] = [
       'Modi Nagar',
       'Kirti Nagar',
     ],
-    teachingMode: ['home', 'online'],
+    teachingMode: ['home',],
     verified: true,
     rating: 5,
     reviewCount: 2,
