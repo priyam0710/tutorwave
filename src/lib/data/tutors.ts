@@ -59,7 +59,7 @@ export const tutors: Tutor[] = [
     verified: true,
     rating: 5,
     reviewCount: 52,
-    bio: 'IIT Patna graduate with 5+ years of teaching experience in Physics, Chemistry and Mathematics for Class 11-12 and IIT-JEE preparation. I focus on problem-solving techniques and exam strategy.',
+    bio: 'IIT Patna graduate with 5+ years of teaching experience in Physics, Chemistry and Mathematics for Class 11-12 and IIT-JEE preparation. I focus on problem-solving techniques and exam strategy',
     availability: 'Weekdays 6pm–10pm, Weekends 10am–6pm',
     gender: 'male',
     languages: ['English', 'Hindi']
