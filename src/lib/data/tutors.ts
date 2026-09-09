@@ -89,13 +89,7 @@ export const tutors: Tutor[] = [
     verified: true,
     rating: 5,
     reviewCount: 2,
-    bio: '',
-    availability: 'Weekdays 3pm–9pm, Weekends flexible',
-    gender: 'Male',
-    languages: ['English', 'Hindi']
-  },
-  {
-    id: 'tutor-004',
+    bio: 'With 17 years of teaching experience, I help students from Class 8 through Class 12 (and BBA/BCA learners too) build strong fundamentals in Maths, Science, Social Science and English. My engineering background helps me connect abstract concepts to real-world examples, which makes difficult topics much easier to grasp. I offer both home and online sessions across West Delhi.',
     name: 'Jyoti Puri',
     slug: 'jyoti-puri',
     photo: "https://img.rocket.new/generatedImages/rocket_gen_img_1e7575f93-1765298093270.png",
@@ -193,7 +187,7 @@ export const tutors: Tutor[] = [
     verified: true,
     rating: 5,
     reviewCount: 4,
-    bio: 'I specialize in',
+    bio: 'With 10 years of teaching experience and a background in Electronics & Communication Engineering, I teach all major subjects to students from Class 4 through Class 12. I focus on building strong fundamentals and exam confidence, with both home and online sessions available across Noida.',
     availability: 'Weekdays 3pm–9pm, Weekends flexible',
     gender: 'Male',
     languages: ['English', 'Hindi']
@@ -224,7 +218,7 @@ export const tutors: Tutor[] = [
     verified: true,
     rating: 5,
     reviewCount: 8,
-    bio: 'I prefer',
+    bio: 'I hold a Ph.D. in Cancer Biology and an M.Sc. in Applied Microbiology, and I bring 10 years of teaching experience to students from Class 4 through Class 12. Alongside core subjects, I have a particular strength in Biology and Computer, and I offer both home and online classes across Noida.',
     availability: 'Weekdays 3pm–9pm, Weekends flexible',
     gender: 'Female',
     languages: ['English', 'Hindi']
@@ -249,7 +243,7 @@ export const tutors: Tutor[] = [
     verified: false,
     rating: 5,
     reviewCount: 2,
-    bio: 'I am very experienced',
+    bio: 'With 15 years of teaching experience and a professional background spanning M.Com, MBA and LLB, I teach Commerce-oriented subjects including Accountancy, Economics and Business Studies alongside core subjects for Class 6 through Class 12. I offer both home and online sessions across West Delhi.',
     availability: 'Weekdays 3pm–9pm, Weekends flexible',
     gender: 'Male',
     languages: ['English', 'Hindi']
@@ -278,7 +272,7 @@ export const tutors: Tutor[] = [
     verified: true,
     rating: 4.9,
     reviewCount: 3,
-    bio: '',
+    bio: 'I am a B.Ed and M.Sc (Botany) graduate with a strong science background, specialising in teaching young learners from KG through Class 8. I focus on building curiosity and confidence in Maths, Science and English through interactive, age-appropriate teaching methods, with both home and online classes available across Noida.',
     availability: 'Weekdays 3pm–9pm, Weekends flexible',
     gender: 'Female',
     languages: ['English', 'Hindi']
@@ -310,7 +304,7 @@ export const tutors: Tutor[] = [
     verified: true,
     rating: 5,
     reviewCount: 8,
-    bio: '',
+    bio: 'As a Computer Science Engineering graduate, I bring a structured, logic-first approach to teaching Maths, Science and allied subjects for Class 4 through Class 12. I focus on step-by-step problem solving and regular practice to help students build genuine confidence ahead of their exams. I currently teach home tuitions across Noida and Greater Noida West.',
     availability: 'Weekdays 3pm–9pm, Weekends flexible',
     gender: 'Male',
     languages: ['English', 'Hindi']
@@ -338,7 +332,7 @@ export const tutors: Tutor[] = [
     verified: true,
     rating: 5,
     reviewCount: 2,
-    bio: '',
+    bio: 'I hold a B.A. in History, Political Science and English, and I teach all major subjects for Class 1 through Class 10. I enjoy working with younger students, focusing on building strong reading, writing and reasoning skills alongside core subject knowledge. I offer home tuitions across Central and West Delhi.',
     availability: 'Weekdays 4pm–9pm, Weekends flexible',
     gender: 'Male',
     languages: ['English', 'Hindi']
