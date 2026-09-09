@@ -354,7 +354,7 @@ export const tutors: Tutor[] = [
     classes: ['Class 4','Class 5','Class 6','Class 7','Class 8', 'Class 9', 'Class 10','Class 11','Class 12'],
     boards: ['CBSE', 'ICSE','NIOS',],
     experience: 4,
-    qualifications: ['Bachelor of Management Studies',],
+    qualifications: [ 'Bachelor of Business Administration in Financial Investment Analysis',],
     locations: [
      'Noida Sector 44',
       'Noida Sector 43',
@@ -373,7 +373,7 @@ export const tutors: Tutor[] = [
     verified: true,
     rating: 5,
     reviewCount: 10,
-    bio: 'I hold a B.M.S. in Commerce and I teach all major subjects for Class 4 to Class 10. I enjoy working with younger students, focusing on building strong reading, writing and reasoning skills alongside core subject knowledge. I offer home tuitions and online classes both.',
+    bio: 'I teach all major subjects for Class 4 to Class 10. I enjoy working with younger students, focusing on building strong reading, writing and reasoning skills alongside core subject knowledge. I offer home tuitions and online classes both.',
     availability: 'Weekdays 4pm–6pm, Weekends flexible',
     gender: 'Male',
     languages: ['English', 'Hindi']
