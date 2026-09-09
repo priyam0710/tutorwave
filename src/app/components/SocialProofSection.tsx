@@ -39,9 +39,9 @@ const testimonials = [
 ];
 
 const platformStats = [
-  { value: '2,400+', label: 'Verified Tutors', sub: 'across Delhi NCR' },
-  { value: '8,500+', label: 'Students Matched', sub: 'since 2022' },
-  { value: '4.8 / 5', label: 'Average Rating', sub: 'from parent reviews' },
+  { value: '1,000+', label: 'Verified Tutors', sub: 'across Delhi NCR' },
+  { value: '1,500+', label: 'Students Matched', sub: 'since 2025' },
+  { value: '4.9 / 5', label: 'Average Rating', sub: 'from parent reviews' },
   { value: '24 hrs', label: 'Match Guarantee', sub: 'or we escalate personally' },
 ];
 
