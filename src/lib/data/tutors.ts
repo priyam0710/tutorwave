@@ -258,7 +258,7 @@ export const tutors: Tutor[] = [
     id: 'tutor-009',
     name: 'Shikha Singh',
     slug: 'shikha-singh',
-    photo: "https://img.rocket.new/generatedImages/rocket_gen_img_1e7575f93-1765298093270.png",
+    photo: "/assets/images/shikhasingh.png",
     photoAlt: 'Shikha Singh',
     subjects: ['All Subjects','Maths','Science','Social Science','English','Biology','Computer'],
     classes: ['Class KG To 5th','Class 6','Class 7','Class 8',],
