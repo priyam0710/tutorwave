@@ -346,7 +346,7 @@ export const tutors: Tutor[] = [
 
    {
     id: 'tutor-012',
-    name: 'Suraj Guptta',
+    name: 'Suraj Gupta',
     slug: 'suraj-gupta',
     photo: "/assets/images/surajgupta.png",
     photoAlt: 'Suraj-Gupta',
