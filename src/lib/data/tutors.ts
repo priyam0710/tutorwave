@@ -457,6 +457,33 @@ export const tutors: Tutor[] = [
     gender: 'Male',
     languages: ['English', 'Hindi']
   },
+
+   {
+    id: 'tutor-016',
+    name: 'Ragini Kumari',
+    slug: 'Ragini-Kumari',
+    photo: "/assets/images/ragini.png",
+    photoAlt: 'Ragini-Kumari',
+    subjects: ['All Subjects','Maths','Science','Social Science','English','Computer','EVS',],
+    classes: ['NUR-KG','Class 1','Class 2','Class 3','Class 4','Class 5','Class 6','Class 7',],
+    boards: ['CBSE', 'State Board',],
+    experience: 5,
+    qualifications: [ 'Bachelor of Arts (B.A.)',],
+    locations: [
+       'Noida Sector 35',
+      'Noida Sector 48',
+      'Noida Sector 49',
+      'Barola',
+      'Bhangel',],
+    teachingMode: ['home',],
+    verified: true,
+    rating: 5,
+    reviewCount: 3,
+    bio: 'I teach all major subjects for Class 1 to Class 10. I enjoy working with younger students, focusing on building strong reading, writing and reasoning skills alongside core subject knowledge. I offer home tuitions and online classes both.',
+    availability: 'Weekdays 3pm–7pm, Weekends flexible',
+    gender: 'Female',
+    languages: ['English', 'Hindi']
+  },
 ];
 
 export function getTutorBySlug(slug: string): Tutor | undefined {
