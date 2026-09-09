@@ -89,7 +89,7 @@ export const tutors: Tutor[] = [
     verified: true,
     rating: 5,
     reviewCount: 2,
-    bio: 'With 17 years of teaching experience, I help students from Class 8 through Class 12 (and BBA/BCA learners too) build strong fundamentals in Maths, Science, Social Science and English. My engineering background helps me connect abstract concepts to real-world examples, which makes difficult topics much easier to grasp. I offer both home and online sessions across West Delhi.',
+    bio: 'With 17 years of teaching experience, I help students from Class 8 through Class 12 (and BBA/BCA learners too) build strong fundamentals in Maths, Science, Social Science and English. My engineering background helps me connect abstract concepts to real-world examples, which makes difficult topics much easier to grasp. I offer home tuitions across West Delhi.',
         availability: 'Weekdays 6pm–10pm, Weekends 10am–6pm',
     gender: 'male',
     languages: ['English', 'Hindi']
