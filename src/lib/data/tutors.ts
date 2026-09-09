@@ -287,7 +287,7 @@ export const tutors: Tutor[] = [
     id: 'tutor-010',
     name: 'Priyanshu Tiwari',
     slug: 'priyanshu-tiwari',
-    photo: "https://img.rocket.new/generatedImages/rocket_gen_img_1e7575f93-1765298093270.png",
+    photo:"/assets/images/priyanshutiwari.png",
     photoAlt: 'Priyanshu-Tiwari',
     subjects: ['Maths','Science','Social Science','English','Physics','Chemistry','Biology',],
     classes: ['Class 4','Class 5','Class 6','Class 7','Class 8', 'Class 9', 'Class 10','Class 11','Class 12',],
