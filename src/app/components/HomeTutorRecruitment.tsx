@@ -65,8 +65,8 @@ export default function HomeTutorRecruitment() {
           {/* Right — Stats */}
           <div className="hidden lg:grid grid-cols-2 gap-4">
             {[
-              { value: '500+', label: 'Verified Tutors', sub: 'across Delhi NCR' },
-              { value: '1,200+', label: 'Students Matched', sub: 'since 2025' },
+              { value: '1,000+', label: 'Verified Tutors', sub: 'across Delhi NCR' },
+              { value: '1,500+', label: 'Students Matched', sub: 'since 2025' },
               { value: '4.9/5', label: 'Average Rating', sub: 'from parent reviews' },
               { value: '24 hrs', label: 'Match Guarantee', sub: 'or we escalate personally' },
             ]?.map((stat) => (
