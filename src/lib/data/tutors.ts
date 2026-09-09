@@ -90,7 +90,13 @@ export const tutors: Tutor[] = [
     rating: 5,
     reviewCount: 2,
     bio: 'With 17 years of teaching experience, I help students from Class 8 through Class 12 (and BBA/BCA learners too) build strong fundamentals in Maths, Science, Social Science and English. My engineering background helps me connect abstract concepts to real-world examples, which makes difficult topics much easier to grasp. I offer both home and online sessions across West Delhi.',
-    name: 'Jyoti Puri',
+        availability: 'Weekdays 6pm–10pm, Weekends 10am–6pm',
+    gender: 'male',
+    languages: ['English', 'Hindi']
+  },
+  {
+    id: 'tutor-012',
+   name: 'Jyoti Puri',
     slug: 'jyoti-puri',
     photo: "https://img.rocket.new/generatedImages/rocket_gen_img_1e7575f93-1765298093270.png",
     photoAlt: 'Jyoti-Puri',
