@@ -484,6 +484,38 @@ export const tutors: Tutor[] = [
     gender: 'Female',
     languages: ['English', 'Hindi']
   },
+   {
+    id: 'tutor-017',
+    name: 'Sumit Kumar',
+    slug: 'sumit-kumar',
+    photo: "/assets/images/sumitkumar.png",
+    photoAlt: 'Sumit-Kumar',
+    subjects: ['All Subjects','Maths','Science','Social Science','English','Physics','Hindi',],
+    classes: ['Class 1','Class 2','Class 3','Class 4','Class 5','Class 6','Class 7','Class 8', 'Class 9', 'Class 10','Class 11','Class 12'],
+    boards: ['CBSE', 'ICSE','NIOS',],
+    experience: 3,
+    qualifications: [ 'B.Tech in Computer Science Engineering',],
+    locations: [
+     'Noida Sector 45',
+      'Noida Sector 43',
+      'Noida Sector 44',
+      'Sadarpur',
+      'Chhalera',
+      'Noida Sector 49',
+      'Noida Sector 18',
+      'Noida Sector 15',
+      'Noida Sector 16',
+      'Noida Sector 104',
+      'Noida Sector 99',],
+    teachingMode: ['home',],
+    verified: true,
+    rating: 5,
+    reviewCount: 3,
+    bio: 'I teach all major subjects for Class 4 to Class 10. I enjoy working with younger students, focusing on building strong reading, writing and reasoning skills alongside core subject knowledge. I offer home tuitions and online classes both.',
+    availability: 'Weekdays 4pm–6pm, Weekends flexible',
+    gender: 'Male',
+    languages: ['English', 'Hindi']
+  },
 ];
 
 export function getTutorBySlug(slug: string): Tutor | undefined {
