@@ -1,29 +1,14 @@
 'use client';
 
-import React, {
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
-
+import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
-
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import WhatsAppButton from '@/app/components/WhatsAppButton';
+import { tutors, Tutor } from '@/lib/data/tutors';
+import { locations as locationsData } from '@/lib/data/locations';
 
-import {
-  tutors,
-  Tutor,
-} from '@/lib/data/tutors';
-
-import {
-  locations as locationsData,
-} from '@/lib/data/locations';
-
-/* -------------------------------------------------------------------------- */
-/*                               FILTER OPTIONS                               */
-/* -------------------------------------------------------------------------- */
+// ─── Filter Options ────────────────────────────────────────────────────────────
 
 const SUBJECT_OPTIONS = [
   'All Subjects',
@@ -35,12 +20,6 @@ const SUBJECT_OPTIONS = [
   'Hindi',
   'Computer Science',
   'Science',
-  'EVS',
-  'Economics',
-  'Business Studies',
-  'French',
-  'German',
-  'Sanskrit',
   'Social Science',
 ];
 
@@ -51,18 +30,14 @@ const CLASS_OPTIONS = [
   'Class 6–8',
   'Class 9–10',
   'Class 11–12',
-  'IIT-JEE',
-  'NEET',
 ];
 
 const BOARD_OPTIONS = [
   'All Boards',
   'CBSE',
   'ICSE',
-  'NIOS',
-  'State Board',
-  'IB',
-  'Cambridge',
+  'IIT-JEE',
+  'NEET',
 ];
 
 const LOCATION_OPTIONS = [
@@ -87,18 +62,31 @@ const EXPERIENCE_OPTIONS = [
   '3+ Years',
   '5+ Years',
   '8+ Years',
-  '10+ Years',
-  '15+ Years',
 ];
 
-/* -------------------------------------------------------------------------- */
-/*                            CLASS FILTER HELPERS                            */
-/* -------------------------------------------------------------------------- */
+// ─── Normalization Helpers ──────────────────────────────────────────────────────
+//
+// Different search widgets across the site (HomeTutorSearch, SearchFilterBar,
+// this page's own sidebar) send slightly different value formats through the
+// URL — e.g. "Class 9" vs "Class 9–10", or "Online Classes" vs "Online".
+// If those raw values are stored directly into filter state, the matching
+// logic below (which expects the exact bucketed labels used by this page)
+// silently fails and wrongly reports "no tutor found" even when a match
+// exists. These helpers canonicalize any incoming value to the exact
+// vocabulary this page's filters and matching logic understand.
 
-const CLASS_BUCKET_RANGES: Record<
-  string,
-  [number, number]
-> = {
+const CLASS_BUCKET_LABELS: Record<string, string[]> = {
+  'Nursery–UKG': ['Nursery', 'LKG', 'UKG', 'KG', 'Class Nursery', 'Class LKG', 'Class UKG', 'Class KG'],
+  'Class 1–5': ['Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5'],
+  'Class 6–8': ['Class 6', 'Class 7', 'Class 8'],
+  'Class 9–10': ['Class 9', 'Class 10'],
+  'Class 11–12': ['Class 11', 'Class 12'],
+};
+
+// Numeric range each bucket covers. Pre-primary levels (Nursery/LKG/UKG) are
+// given negative placeholder numbers purely so they sit below "Class 1" on
+// the same number line and the range-overlap math below works for them too.
+const CLASS_BUCKET_RANGES: Record<string, [number, number]> = {
   'Nursery–UKG': [-3, -1],
   'Class 1–5': [1, 5],
   'Class 6–8': [6, 8],
@@ -106,10 +94,7 @@ const CLASS_BUCKET_RANGES: Record<
   'Class 11–12': [11, 12],
 };
 
-const CLASS_KEYWORD_TOKENS: Record<
-  string,
-  number
-> = {
+const CLASS_KEYWORD_TOKENS: Record<string, number> = {
   nursery: -3,
   nur: -3,
   lkg: -2,
@@ -117,190 +102,132 @@ const CLASS_KEYWORD_TOKENS: Record<
   ukg: -1,
 };
 
-function extractClassTokens(
-  raw: string
-): number[] {
+// Tutor data doesn't always list each class individually — some tutors are
+// stored as a single range string like "Class 1st - 8th", "Class NUR - 8th",
+// or "Class KG To 5th". Comparing these as plain text substrings caused two
+// problems: "Class 10".includes("Class 1") is true, so a "Class 1–5" search
+// wrongly matched tutors who only teach Class 10/11/12; and "Class NUR - 8th"
+// never literally contains the text "Class 5", so a tutor who does teach
+// Class 5 was wrongly excluded. Extracting the actual numbers/keywords from
+// any class string and comparing numeric ranges fixes both problems.
+function extractClassTokens(raw: string): number[] {
   const lower = raw.toLowerCase();
-
   const tokens = new Set<number>();
 
-  const numericTokens =
-    lower.match(/\d+/g) || [];
+  (lower.match(/\d+/g) || []).forEach((n) => tokens.add(parseInt(n, 10)));
 
-  numericTokens.forEach((value) => {
-    tokens.add(parseInt(value, 10));
-  });
-
-  Object.keys(CLASS_KEYWORD_TOKENS).forEach(
-    (keyword) => {
-      const regex = new RegExp(
-        `\\b${keyword}\\b`
-      );
-
-      if (regex.test(lower)) {
-        tokens.add(
-          CLASS_KEYWORD_TOKENS[keyword]
-        );
-      }
+  Object.keys(CLASS_KEYWORD_TOKENS).forEach((keyword) => {
+    if (new RegExp(`\\b${keyword}\\b`).test(lower)) {
+      tokens.add(CLASS_KEYWORD_TOKENS[keyword]);
     }
-  );
+  });
 
   return Array.from(tokens);
 }
 
 function classMatchesBucket(
   tutorClasses: string[],
-  range: [number, number]
+  bucketRange: [number, number]
 ): boolean {
-  const [bucketMin, bucketMax] = range;
+  const [bucketMin, bucketMax] = bucketRange;
 
-  return tutorClasses.some((className) => {
-    const tokens = extractClassTokens(className);
+  return tutorClasses.some((cls) => {
+    const tokens = extractClassTokens(cls);
 
     if (tokens.length === 0) {
+      // Non-grade entries like "IIT-JEE", "NEET", "BBA", "BCA" — irrelevant
+      // to a school-class filter, never match a class bucket.
       return false;
     }
 
-    const classMin = Math.min(...tokens);
-    const classMax = Math.max(...tokens);
+    const clsMin = Math.min(...tokens);
+    const clsMax = Math.max(...tokens);
 
-    return (
-      classMin <= bucketMax &&
-      classMax >= bucketMin
-    );
+    // True if the tutor's class span and the requested bucket overlap at all.
+    return clsMin <= bucketMax && clsMax >= bucketMin;
   });
 }
 
-function resolveClassBucket(
-  rawClass: string
-): string {
-  const value = rawClass.trim();
-  const lower = value.toLowerCase();
+function resolveClassBucket(rawClass: string): string {
+  const trimmed = rawClass.trim();
 
-  if (CLASS_BUCKET_RANGES[value]) {
-    return value;
+  // Already one of this page's bucket labels (e.g. selected via the sidebar).
+  if (CLASS_BUCKET_LABELS[trimmed]) {
+    return trimmed;
   }
 
-  const bucketValues: Record<
-    string,
-    string[]
-  > = {
-    'Nursery–UKG': [
-      'Nursery',
-      'LKG',
-      'UKG',
-      'KG',
-      'Class Nursery',
-      'Class LKG',
-      'Class UKG',
-      'Class KG',
-    ],
+  const lower = trimmed.toLowerCase();
 
-    'Class 1–5': [
-      'Class 1',
-      'Class 2',
-      'Class 3',
-      'Class 4',
-      'Class 5',
-    ],
-
-    'Class 6–8': [
-      'Class 6',
-      'Class 7',
-      'Class 8',
-    ],
-
-    'Class 9–10': [
-      'Class 9',
-      'Class 10',
-    ],
-
-    'Class 11–12': [
-      'Class 11',
-      'Class 12',
-    ],
-  };
-
-  for (const [
-    bucket,
-    values,
-  ] of Object.entries(bucketValues)) {
-    if (
-      values.some(
-        (entry) =>
-          entry.toLowerCase() === lower
-      )
-    ) {
+  for (const [bucket, values] of Object.entries(CLASS_BUCKET_LABELS)) {
+    if (values.some((value) => value.toLowerCase() === lower)) {
       return bucket;
     }
   }
 
+  // Unrecognised value (e.g. 'IIT-JEE', 'NEET', 'other', or anything unexpected)
+  // — fall back to no class filter rather than incorrectly zeroing out results.
   return 'All Classes';
 }
 
-/* -------------------------------------------------------------------------- */
-/*                           SUBJECT NORMALIZATION                            */
-/* -------------------------------------------------------------------------- */
+function resolveModeFilter(rawMode: string): string {
+  const lower = rawMode.trim().toLowerCase();
 
-const SUBJECT_ALIASES: Record<
-  string,
-  string
-> = {
+  if (!lower || lower.includes('all')) return 'All Modes';
+  if (lower.includes('home')) return 'Home';
+  if (lower.includes('online')) return 'Online';
+
+  // "Both" (or anything unrecognised) means the parent is open to either
+  // mode, so don't filter by mode at all.
+  return 'All Modes';
+}
+
+const SUBJECT_ALIASES: Record<string, string> = {
   maths: 'Mathematics',
   math: 'Mathematics',
-
   bio: 'Biology',
-
   phy: 'Physics',
   physic: 'Physics',
-
   chem: 'Chemistry',
-
   cs: 'Computer Science',
   comp: 'Computer Science',
   computers: 'Computer Science',
-
   eng: 'English',
-
   social: 'Social Science',
   socialscience: 'Social Science',
   socialstudies: 'Social Science',
-
   eco: 'Economics',
   econ: 'Economics',
   economics: 'Economics',
-
   accounts: 'Accountancy',
   accountancy: 'Accountancy',
 };
 
-function resolveSubject(
-  rawSubject: string
-): string {
+function resolveSubject(rawSubject: string): string {
   const trimmed = rawSubject.trim();
+  const key = trimmed.toLowerCase().replace(/\s+/g, '');
 
-  const key = trimmed
-    .toLowerCase()
-    .replace(/\s+/g, '');
+  if (SUBJECT_ALIASES[key]) {
+    return SUBJECT_ALIASES[key];
+  }
 
-  return (
-    SUBJECT_ALIASES[key] ||
-    SUBJECT_OPTIONS.find(
-      (option) =>
-        option.toLowerCase() ===
-        trimmed.toLowerCase()
-    ) ||
-    trimmed
+  const matchedOption = SUBJECT_OPTIONS.find(
+    (option) => option.toLowerCase() === trimmed.toLowerCase()
   );
+
+  return matchedOption || trimmed;
 }
 
-/* -------------------------------------------------------------------------- */
-/*                           LOCATION NORMALIZATION                           */
-/* -------------------------------------------------------------------------- */
-
-function normalizeAreaText(
-  value: string
-): string {
+// A tutor's `locations` array stores actual serviced localities
+// (e.g. "Malviya Nagar", "Noida Sector 44"), not the parent city name
+// itself. Comparing those directly against a city filter like "Delhi"
+// via plain substring matching fails whenever the locality name doesn't
+// happen to contain the city's name — which is the normal case for
+// Delhi neighbourhoods (Malviya Nagar, Saket, India Gate, etc. never say
+// "Delhi"), silently excluding perfectly matching tutors. This resolver
+// uses the master locations.ts area lists to map any locality back to
+// its parent city, with a safety-net fallback for the rare locality not
+// yet present in that master list.
+function normalizeAreaText(value: string): string {
   return value
     .toLowerCase()
     .replace(/[.,]/g, '')
@@ -308,59 +235,35 @@ function normalizeAreaText(
     .trim();
 }
 
-function cityForArea(
-  area: string
-): string | null {
-  const normalizedArea =
-    normalizeAreaText(area);
+function cityForArea(area: string): string | null {
+  const normalizedArea = normalizeAreaText(area);
 
-  if (
-    !normalizedArea ||
-    normalizedArea === 'online'
-  ) {
+  if (!normalizedArea || normalizedArea === 'online') {
     return null;
   }
 
-  /* Direct city match */
+  // The raw string already names a known city directly, e.g. "Noida Sector 44".
   for (const city of locationsData) {
-    if (
-      normalizedArea.includes(
-        normalizeAreaText(city.name)
-      )
-    ) {
+    if (normalizedArea.includes(normalizeAreaText(city.name))) {
       return city.name;
     }
   }
 
-  /* Locality -> city */
+  // Otherwise check which city's known locality list this area belongs to.
   for (const city of locationsData) {
-    const matched = city.areas.some(
-      (rawAreaName) => {
-        const normalizedCityArea =
-          normalizeAreaText(
-            rawAreaName
-          );
+    const matched = city.areas.some((rawAreaName) => {
+      const normalizedCityArea = normalizeAreaText(rawAreaName);
 
-        if (
-          !normalizedCityArea ||
-          normalizedCityArea ===
-            '& more...'
-        ) {
-          return false;
-        }
-
-        return (
-          normalizedCityArea ===
-            normalizedArea ||
-          normalizedArea.includes(
-            normalizedCityArea
-          ) ||
-          normalizedCityArea.includes(
-            normalizedArea
-          )
-        );
+      if (!normalizedCityArea || normalizedCityArea === '& more...') {
+        return false;
       }
-    );
+
+      return (
+        normalizedCityArea === normalizedArea ||
+        normalizedArea.includes(normalizedCityArea) ||
+        normalizedCityArea.includes(normalizedArea)
+      );
+    });
 
     if (matched) {
       return city.name;
@@ -370,9 +273,7 @@ function cityForArea(
   return null;
 }
 
-/* -------------------------------------------------------------------------- */
-/*                              SMALL UI PIECES                               */
-/* -------------------------------------------------------------------------- */
+// ─── Verified Badge ────────────────────────────────────────────────────────────
 
 function VerifiedBadge() {
   return (
@@ -384,13 +285,7 @@ function VerifiedBadge() {
         fill="none"
         aria-hidden="true"
       >
-        <circle
-          cx="6"
-          cy="6"
-          r="6"
-          fill="#0C8F81"
-        />
-
+        <circle cx="6" cy="6" r="6" fill="#0C8F81" />
         <path
           d="M3.5 6l1.8 1.8 3.2-3.2"
           stroke="white"
@@ -399,17 +294,14 @@ function VerifiedBadge() {
           strokeLinejoin="round"
         />
       </svg>
-
       Verified
     </span>
   );
 }
 
-function ModePill({
-  mode,
-}: {
-  mode: string;
-}) {
+// ─── Teaching Mode Pill ────────────────────────────────────────────────────────
+
+function ModePill({ mode }: { mode: string }) {
   const isHome = mode === 'Home';
 
   return (
@@ -430,7 +322,7 @@ function ModePill({
           strokeWidth="2.5"
           aria-hidden="true"
         >
-          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
           <polyline points="9 22 9 12 15 12 15 22" />
         </svg>
       ) : (
@@ -443,14 +335,7 @@ function ModePill({
           strokeWidth="2.5"
           aria-hidden="true"
         >
-          <rect
-            x="2"
-            y="3"
-            width="20"
-            height="14"
-            rx="2"
-          />
-
+          <rect x="2" y="3" width="20" height="14" rx="2" />
           <path d="M8 21h8M12 17v4" />
         </svg>
       )}
@@ -460,15 +345,9 @@ function ModePill({
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/*                                TUTOR CARD                                  */
-/* -------------------------------------------------------------------------- */
+// ─── Tutor Card ────────────────────────────────────────────────────────────────
 
-function TutorCard({
-  tutor,
-}: {
-  tutor: Tutor;
-}) {
+function TutorCard({ tutor }: { tutor: Tutor }) {
   const modes: string[] = [];
 
   if (
@@ -486,27 +365,11 @@ function TutorCard({
   }
 
   return (
-    <article
-      className="
-        bg-white
-        rounded-2xl
-        border
-        border-[#E5E7EB]
-        overflow-hidden
-        hover:border-[#0A6FF7]/40
-        hover:shadow-[0_8px_32px_rgba(10,111,247,0.08)]
-        transition-all
-        duration-300
-        flex
-        flex-col
-      "
-    >
-      {/* ------------------------------------------------------------------ */}
-      {/* Photo + Basic Information                                          */}
-      {/* ------------------------------------------------------------------ */}
-
+    <article className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden hover:border-[#0A6FF7]/40 hover:shadow-[0_8px_32px_rgba(10,111,247,0.08)] transition-all duration-300 flex flex-col">
+      
+      {/* Photo + Basic Info */}
       <div className="p-5 pb-4 flex gap-4">
-
+        
         {/* Photo */}
         <div className="flex-shrink-0">
           <div className="w-[72px] h-[72px] rounded-xl overflow-hidden bg-[#F8FAFC] border border-[#E5E7EB]">
@@ -519,24 +382,20 @@ function TutorCard({
           </div>
         </div>
 
-        {/* Basic information */}
+        {/* Name + Details */}
         <div className="flex-1 min-w-0">
-
-          {/* Name + verified */}
+          
           <div className="flex items-start justify-between gap-2 mb-1.5">
             <h2 className="font-bold text-[#0D1118] text-[15px] leading-tight">
               {tutor.name}
             </h2>
 
-            {tutor.verified && (
-              <VerifiedBadge />
-            )}
+            {tutor.verified && <VerifiedBadge />}
           </div>
 
           {/* Experience + Location */}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-[#6B7280] mb-2">
-
-            {/* Experience */}
+            
             <span className="flex items-center gap-1">
               <svg
                 width="11"
@@ -547,21 +406,14 @@ function TutorCard({
                 strokeWidth="2"
                 aria-hidden="true"
               >
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="10"
-                />
-
+                <circle cx="12" cy="12" r="10" />
                 <polyline points="12 6 12 12 16 14" />
               </svg>
 
-              {tutor.experience}+ Years Experience
+              {tutor.experience} Years Experience
             </span>
 
-            {/* Location */}
             <span className="flex items-center gap-1">
-
               <svg
                 width="11"
                 height="11"
@@ -571,118 +423,58 @@ function TutorCard({
                 strokeWidth="2"
                 aria-hidden="true"
               >
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                <circle
-                  cx="12"
-                  cy="10"
-                  r="3"
-                />
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                <circle cx="12" cy="10" r="3" />
               </svg>
 
               {tutor.locations[0]}
             </span>
           </div>
 
-          {/* Qualification */}
-          <div className="mb-2">
-
-            <p className="text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider mb-1">
-              Qualification
-            </p>
-
-            <p className="text-[12px] font-medium text-[#1F2937] leading-snug">
-              {tutor.qualifications?.length
-                ? tutor.qualifications.join(
-                    ' • '
-                  )
-                : 'Qualification details available on profile'}
-            </p>
-          </div>
-
-          {/* Teaching modes */}
+          {/* Teaching Modes */}
           <div className="flex gap-1.5 flex-wrap">
             {modes.map((mode) => (
-              <ModePill
-                key={mode}
-                mode={mode}
-              />
+              <ModePill key={mode} mode={mode} />
             ))}
           </div>
-
         </div>
       </div>
 
       {/* Divider */}
       <div className="mx-5 border-t border-[#F0F2F5]" />
 
-      {/* ------------------------------------------------------------------ */}
-      {/* Subjects                                                           */}
-      {/* ------------------------------------------------------------------ */}
-
+      {/* Subjects */}
       <div className="px-5 py-3">
-
         <p className="text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider mb-2">
           Subjects
         </p>
 
         <div className="flex flex-wrap gap-1.5">
-
-          {tutor.subjects
-            .slice(0, 3)
-            .map((subject) => (
-              <span
-                key={subject}
-                className="
-                  text-[12px]
-                  font-medium
-                  px-2.5
-                  py-1
-                  bg-[#F8FAFC]
-                  text-[#0D1118]
-                  rounded-lg
-                  border
-                  border-[#E5E7EB]
-                "
-              >
-                {subject}
-              </span>
-            ))}
+          {tutor.subjects.slice(0, 3).map((subject) => (
+            <span
+              key={subject}
+              className="text-[12px] font-medium px-2.5 py-1 bg-[#F8FAFC] text-[#0D1118] rounded-lg border border-[#E5E7EB]"
+            >
+              {subject}
+            </span>
+          ))}
 
           {tutor.subjects.length > 3 && (
-            <span
-              className="
-                text-[12px]
-                font-medium
-                px-2.5
-                py-1
-                bg-[#F8FAFC]
-                text-[#6B7280]
-                rounded-lg
-                border
-                border-[#E5E7EB]
-              "
-            >
+            <span className="text-[12px] font-medium px-2.5 py-1 bg-[#F8FAFC] text-[#6B7280] rounded-lg border border-[#E5E7EB]">
               +{tutor.subjects.length - 3}
             </span>
           )}
-
         </div>
       </div>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* Classes                                                            */}
-      {/* ------------------------------------------------------------------ */}
-
+      {/* Classes */}
       <div className="px-5 pb-3">
-
         <p className="text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider mb-2">
           Classes
         </p>
 
         <p className="text-[12px] text-[#0D1118]">
-          {tutor.classes
-            .slice(0, 4)
-            .join(', ')}
+          {tutor.classes.slice(0, 4).join(', ')}
 
           {tutor.classes.length > 4
             ? ` +${tutor.classes.length - 4} more`
@@ -690,75 +482,50 @@ function TutorCard({
         </p>
       </div>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* About                                                              */}
-      {/* ------------------------------------------------------------------ */}
+      {/* Qualifications */}
+      {tutor.qualifications.length > 0 && (
+        <div className="px-5 pb-4">
+          <p className="text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider mb-2">
+            Qualifications
+          </p>
 
-      <div className="px-5 pb-4">
-
-        <p className="text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider mb-2">
-          About the tutor
-        </p>
-
-        <p className="text-[12px] text-[#6B7280] leading-relaxed line-clamp-3">
-          {tutor.bio}
-        </p>
-      </div>
+          <div className="flex flex-wrap gap-1.5">
+            {tutor.qualifications.map((qualification) => (
+              <span
+                key={qualification}
+                className="text-[12px] font-medium px-2.5 py-1 bg-[#EBF4FF] text-[#0A6FF7] rounded-lg"
+              >
+                {qualification}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="flex-1" />
 
-      {/* ------------------------------------------------------------------ */}
-      {/* Actions                                                            */}
-      {/* ------------------------------------------------------------------ */}
-
+      {/* Actions */}
       <div className="px-5 pb-5 pt-3 border-t border-[#F0F2F5] flex gap-2.5">
-
+        
         <Link
           href={`/tutors/${tutor.slug}`}
-          className="
-            flex-1
-            text-center
-            text-[13px]
-            font-semibold
-            text-[#0A6FF7]
-            bg-[#EBF4FF]
-            hover:bg-[#D6EAFF]
-            px-4
-            py-2.5
-            rounded-xl
-            transition-colors
-          "
+          className="flex-1 text-center text-[13px] font-semibold text-[#0A6FF7] bg-[#EBF4FF] hover:bg-[#D6EAFF] px-4 py-2.5 rounded-xl transition-colors"
         >
           View Profile
         </Link>
 
         <Link
           href={`/find-a-tutor?tutor=${tutor.slug}`}
-          className="
-            flex-1
-            text-center
-            text-[13px]
-            font-semibold
-            text-white
-            bg-[#0A6FF7]
-            hover:bg-[#0858c8]
-            px-4
-            py-2.5
-            rounded-xl
-            transition-colors
-          "
+          className="flex-1 text-center text-[13px] font-semibold text-white bg-[#0A6FF7] hover:bg-[#0858c8] px-4 py-2.5 rounded-xl transition-colors"
         >
           Request Tutor
         </Link>
-
       </div>
     </article>
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/*                              FILTER SIDEBAR                                */
-/* -------------------------------------------------------------------------- */
+// ─── Filter State ──────────────────────────────────────────────────────────────
 
 interface FilterState {
   subject: string;
@@ -769,15 +536,14 @@ interface FilterState {
   experience: string;
 }
 
+// ─── Filter Sidebar ────────────────────────────────────────────────────────────
+
 function FilterSidebar({
   filters,
   onChange,
 }: {
   filters: FilterState;
-  onChange: (
-    key: keyof FilterState,
-    value: string
-  ) => void;
+  onChange: (key: keyof FilterState, value: string) => void;
 }) {
   const filterGroups: {
     label: string;
@@ -818,9 +584,8 @@ function FilterSidebar({
 
   return (
     <aside className="w-full lg:w-64 flex-shrink-0">
-
       <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden sticky top-[84px]">
-
+        
         <div className="px-5 py-4 border-b border-[#F0F2F5]">
           <h3 className="text-[13px] font-bold text-[#0D1118] uppercase tracking-wider">
             Filters
@@ -828,431 +593,311 @@ function FilterSidebar({
         </div>
 
         <div className="divide-y divide-[#F0F2F5]">
+          {filterGroups.map(({ label, key, options }) => (
+            <div key={key} className="px-5 py-4">
+              
+              <p className="text-[11px] font-bold text-[#6B7280] uppercase tracking-wider mb-3">
+                {label}
+              </p>
 
-          {filterGroups.map(
-            ({
-              label,
-              key,
-              options,
-            }) => (
-              <div
-                key={key}
-                className="px-5 py-4"
-              >
-                <p className="text-[11px] font-bold text-[#6B7280] uppercase tracking-wider mb-3">
-                  {label}
-                </p>
-
-                <div className="flex flex-col gap-1.5">
-
-                  {options.map((option) => (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() =>
-                        onChange(
-                          key,
-                          option
-                        )
-                      }
-                      className={`
-                        text-left
-                        text-[13px]
-                        px-3
-                        py-2
-                        rounded-lg
-                        transition-colors
-                        ${
-                          filters[key] ===
-                          option
-                            ? 'bg-[#EBF4FF] text-[#0A6FF7] font-semibold'
-                            : 'text-[#6B7280] hover:bg-[#F8FAFC] hover:text-[#0D1118]'
-                        }
-                      `}
-                    >
-                      {option}
-                    </button>
-                  ))}
-
-                </div>
+              <div className="flex flex-col gap-1.5">
+                {options.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => onChange(key, option)}
+                    className={`text-left text-[13px] px-3 py-2 rounded-lg transition-colors ${
+                      filters[key] === option
+                        ? 'bg-[#EBF4FF] text-[#0A6FF7] font-semibold'
+                        : 'text-[#6B7280] hover:bg-[#F8FAFC] hover:text-[#0D1118]'
+                    }`}
+                  >
+                    {option}
+                  </button>
+                ))}
               </div>
-            )
-          )}
-
+            </div>
+          ))}
         </div>
       </div>
     </aside>
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/*                                MAIN PAGE                                   */
-/* -------------------------------------------------------------------------- */
+// ─── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function TutorsPage() {
-  const [searchQuery, setSearchQuery] =
-    useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const [filters, setFilters] =
-    useState<FilterState>({
-      subject: 'All Subjects',
-      classRange: 'All Classes',
-      board: 'All Boards',
-      location: 'All Locations',
-      mode: 'All Modes',
-      experience: 'Any Experience',
-    });
+  const [filters, setFilters] = useState<FilterState>({
+    subject: 'All Subjects',
+    classRange: 'All Classes',
+    board: 'All Boards',
+    location: 'All Locations',
+    mode: 'All Modes',
+    experience: 'Any Experience',
+  });
 
-  const [
-    mobileFiltersOpen,
-    setMobileFiltersOpen,
-  ] = useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  /* ---------------------------------------------------------------------- */
-  /* URL FILTERS                                                            */
-  /* ---------------------------------------------------------------------- */
+  // ──────────────────────────────────────────────────────────────────────────
+  // Read URL filters when page loads
+  //
+  // IMPORTANT: values arriving here can come from several different search
+  // widgets across the site (home page search bar, hero search bar, or this
+  // page's own sidebar), and they don't all use the same vocabulary. Every
+  // incoming value is normalized via the resolve* helpers above before being
+  // stored, so the matching logic further down can always rely on a known,
+  // consistent set of values instead of silently failing to match anything.
+  // ──────────────────────────────────────────────────────────────────────────
 
-  useEffect(() => {
-    const params = new URLSearchParams(
-      window.location.search
-    );
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
 
-    const subject =
-      params.get('subject') ||
-      params.get('subjects');
-
-    const classParam =
-      params.get('class');
-
-    const board =
-      params.get('board');
-
-    const location =
-      params.get('location');
-
-    const mode =
-      params.get('mode');
-
-    const experience =
-      params.get('experience');
-
-    const query =
-      params.get('q');
+    // Some widgets send a single "subject" param, others send a
+    // comma-separated "subjects" param (multi-select). Support both.
+    const subjectParam =
+      params.get('subject') || params.get('subjects');
+    const classParam = params.get('class');
+    const board = params.get('board');
+    const location = params.get('location');
+    const mode = params.get('mode');
+    const experience = params.get('experience');
 
     setFilters((previous) => ({
       ...previous,
 
-      ...(subject
+      ...(subjectParam
         ? {
             subject:
-              subject === 'All Subjects'
+              subjectParam === 'All Subjects'
                 ? 'All Subjects'
-                : resolveSubject(
-                    subject.split(',')[0]
-                  ),
+                : resolveSubject(subjectParam.split(',')[0]),
           }
         : {}),
 
       ...(classParam
         ? {
             classRange:
-              classParam ===
-              'All Classes'
+              classParam === 'All Classes'
                 ? 'All Classes'
-                : resolveClassBucket(
-                    classParam
-                  ),
+                : resolveClassBucket(classParam),
           }
         : {}),
 
       ...(board
         ? {
-            board,
+            board:
+              board === 'All Boards'
+                ? 'All Boards'
+                : board,
           }
         : {}),
 
       ...(location
         ? {
-            location,
+            location:
+              location === 'All Locations'
+                ? 'All Locations'
+                : location,
           }
         : {}),
 
       ...(mode
         ? {
-            mode: mode
-              .toLowerCase()
-              .includes('home')
-              ? 'Home'
-              : mode
-                  .toLowerCase()
-                  .includes('online')
-              ? 'Online'
-              : 'All Modes',
+            mode: resolveModeFilter(mode),
           }
         : {}),
 
       ...(experience
         ? {
-            experience,
+            experience:
+              experience === 'Any Experience'
+                ? 'Any Experience'
+                : experience,
           }
         : {}),
     }));
+
+    const query = params.get('q');
 
     if (query) {
       setSearchQuery(query);
     }
   }, []);
 
-  /* ---------------------------------------------------------------------- */
-  /* FILTER TUTORS                                                          */
-  /* ---------------------------------------------------------------------- */
+  // ──────────────────────────────────────────────────────────────────────────
+  // Filter Tutors
+  // ──────────────────────────────────────────────────────────────────────────
 
-  const filteredTutors =
-    useMemo(() => {
-      return tutors.filter(
-        (tutor) => {
+  const filteredTutors = useMemo(() => {
+  return tutors.filter((tutor) => {
 
-          /* -------------------------------------------------------------- */
-          /* SEARCH                                                         */
-          /* -------------------------------------------------------------- */
+    // ─────────────────────────────────────────────
+    // SEARCH
+    // ─────────────────────────────────────────────
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      const aliasTarget = SUBJECT_ALIASES[q.replace(/\s+/g, '')]?.toLowerCase();
 
-          if (searchQuery.trim()) {
-            const query =
-              searchQuery
-                .toLowerCase()
-                .trim();
+      const matchesName =
+        tutor.name.toLowerCase().includes(q);
 
-            const aliasTarget =
-              SUBJECT_ALIASES[
-                query.replace(/\s+/g, '')
-              ]?.toLowerCase();
+      const matchesSubject =
+        tutor.subjects.some((subject) => {
+          const s = subject.toLowerCase();
+          return (
+            s.includes(q) ||
+            q.includes(s) ||
+            (!!aliasTarget && s.includes(aliasTarget))
+          );
+        });
 
-            const searchableText = [
-              tutor.name,
-              ...tutor.subjects,
-              ...tutor.locations,
-              ...tutor.qualifications,
-              tutor.bio,
-            ]
-              .join(' ')
-              .toLowerCase();
+      const matchesLocation =
+        tutor.locations.some((location) =>
+          location.toLowerCase().includes(q)
+        );
 
-            if (
-              !searchableText.includes(
-                query
-              ) &&
-              !(
-                aliasTarget &&
-                searchableText.includes(
-                  aliasTarget
-                )
-              )
-            ) {
-              return false;
-            }
-          }
+      if (!matchesName && !matchesSubject && !matchesLocation) {
+        return false;
+      }
+    }
 
-          /* -------------------------------------------------------------- */
-          /* SUBJECT                                                        */
-          /* -------------------------------------------------------------- */
+    // ─────────────────────────────────────────────
+    // SUBJECT
+    //
+    // Comparing raw substrings here used to cause two problems: selecting
+    // "Science" would wrongly match tutors who only teach "Social Science"
+    // (since "social science".includes("science") is true), and tutors
+    // whose data says "Maths" instead of "Mathematics" would be missed
+    // entirely. Canonicalizing both sides through resolveSubject() before
+    // comparing fixes both issues.
+    // ─────────────────────────────────────────────
+    if (filters.subject !== 'All Subjects') {
+      const selectedSubject = filters.subject.toLowerCase();
 
-          if (
-            filters.subject !==
-            'All Subjects'
-          ) {
-            const selectedSubject =
-              filters.subject.toLowerCase();
+      const subjectMatch = tutor.subjects.some(
+        (subject) => resolveSubject(subject).toLowerCase() === selectedSubject
+      );
 
-            const subjectMatch =
-              tutor.subjects.some(
-                (subject) =>
-                  resolveSubject(
-                    subject
-                  ).toLowerCase() ===
-                  selectedSubject
-              );
+      if (!subjectMatch) {
+        return false;
+      }
+    }
 
-            if (!subjectMatch) {
-              return false;
-            }
-          }
+    // ─────────────────────────────────────────────
+    // BOARD
+    // ─────────────────────────────────────────────
+    if (filters.board !== 'All Boards') {
+      const selectedBoard = filters.board.toLowerCase();
 
-          /* -------------------------------------------------------------- */
-          /* BOARD                                                          */
-          /* -------------------------------------------------------------- */
+      const boardMatch = tutor.boards.some(
+        (board) =>
+          board.toLowerCase() === selectedBoard ||
+          board.toLowerCase().includes(selectedBoard) ||
+          selectedBoard.includes(board.toLowerCase())
+      );
 
-          if (
-            filters.board !==
-            'All Boards'
-          ) {
-            const selectedBoard =
-              filters.board.toLowerCase();
+      if (!boardMatch) {
+        return false;
+      }
+    }
 
-            const boardMatch =
-              tutor.boards.some(
-                (boardName) =>
-                  boardName
-                    .toLowerCase() ===
-                    selectedBoard ||
-                  boardName
-                    .toLowerCase()
-                    .includes(
-                      selectedBoard
-                    )
-              );
+    // ─────────────────────────────────────────────
+    // LOCATION
+    //
+    // Tutors store actual serviced localities (e.g. "Malviya Nagar"), not
+    // the parent city name. Resolve each locality to its city via the
+    // master locations.ts area lists before comparing, with a Delhi
+    // fallback for the rare locality that isn't yet listed there — so a
+    // real Delhi-based tutor is never silently dropped from a Delhi search
+    // just because their neighbourhood name doesn't literally say "Delhi".
+    // ─────────────────────────────────────────────
+    if (filters.location !== 'All Locations') {
+      const selectedLocation = filters.location.toLowerCase();
 
-            if (!boardMatch) {
-              return false;
-            }
-          }
+      const locationMatch = tutor.locations.some((location) => {
+        const lower = location.toLowerCase();
 
-          /* -------------------------------------------------------------- */
-          /* LOCATION                                                       */
-          /* -------------------------------------------------------------- */
-
-          if (
-            filters.location !==
-            'All Locations'
-          ) {
-            const selectedLocation =
-              filters.location.toLowerCase();
-
-            const locationMatch =
-              tutor.locations.some(
-                (area) => {
-
-                  const lower =
-                    area.toLowerCase();
-
-                  /* Online tutors */
-                  if (
-                    lower === 'online'
-                  ) {
-                    return true;
-                  }
-
-                  /* Direct match */
-                  if (
-                    lower.includes(
-                      selectedLocation
-                    ) ||
-                    selectedLocation.includes(
-                      lower
-                    )
-                  ) {
-                    return true;
-                  }
-
-                  /* City resolution */
-                  const resolvedCity =
-                    cityForArea(area);
-
-                  if (resolvedCity) {
-                    return (
-                      resolvedCity
-                        .toLowerCase() ===
-                      selectedLocation
-                    );
-                  }
-
-                  /*
-                   * Default fallback for unresolved
-                   * localities in the platform's
-                   * primary Delhi market.
-                   */
-                  return (
-                    selectedLocation ===
-                    'delhi'
-                  );
-                }
-              );
-
-            if (!locationMatch) {
-              return false;
-            }
-          }
-
-          /* -------------------------------------------------------------- */
-          /* TEACHING MODE                                                  */
-          /* -------------------------------------------------------------- */
-
-          if (
-            filters.mode !==
-            'All Modes'
-          ) {
-            const selectedMode =
-              filters.mode.toLowerCase();
-
-            const modeMatch =
-              tutor.teachingMode.includes(
-                selectedMode as
-                  | 'home'
-                  | 'online'
-                  | 'both'
-              ) ||
-              tutor.teachingMode.includes(
-                'both'
-              );
-
-            if (!modeMatch) {
-              return false;
-            }
-          }
-
-          /* -------------------------------------------------------------- */
-          /* EXPERIENCE                                                     */
-          /* -------------------------------------------------------------- */
-
-          if (
-            filters.experience !==
-            'Any Experience'
-          ) {
-            const minimumYears =
-              parseInt(
-                filters.experience,
-                10
-              );
-
-            if (
-              tutor.experience <
-              minimumYears
-            ) {
-              return false;
-            }
-          }
-
-          /* -------------------------------------------------------------- */
-          /* CLASS                                                          */
-          /* -------------------------------------------------------------- */
-
-          if (
-            filters.classRange !==
-            'All Classes'
-          ) {
-            const range =
-              CLASS_BUCKET_RANGES[
-                filters.classRange
-              ];
-
-            if (
-              range &&
-              !classMatchesBucket(
-                tutor.classes,
-                range
-              )
-            ) {
-              return false;
-            }
-          }
-
+        // An online-only tutor can teach a student anywhere, so they should
+        // never be excluded from a specific-city search.
+        if (lower === 'online') {
           return true;
         }
-      );
-    }, [searchQuery, filters]);
 
-  /* ---------------------------------------------------------------------- */
-  /* ACTIVE FILTERS                                                         */
-  /* ---------------------------------------------------------------------- */
+        if (lower.includes(selectedLocation) || selectedLocation.includes(lower)) {
+          return true;
+        }
+
+        const resolvedCity = cityForArea(location);
+
+        if (resolvedCity) {
+          return resolvedCity.toLowerCase() === selectedLocation;
+        }
+
+        // Unresolved bare locality name (not in the master area list) —
+        // assume Delhi proper rather than incorrectly excluding the tutor,
+        // since that's this platform's default/hub city.
+        return selectedLocation === 'delhi';
+      });
+
+      if (!locationMatch) {
+        return false;
+      }
+    }
+
+    // ─────────────────────────────────────────────
+    // TEACHING MODE
+    // ─────────────────────────────────────────────
+    if (filters.mode !== 'All Modes') {
+      const selectedMode = filters.mode.toLowerCase();
+
+      const modeMatch =
+        tutor.teachingMode.includes(
+          selectedMode as 'home' | 'online' | 'both'
+        ) ||
+        tutor.teachingMode.includes('both');
+
+      if (!modeMatch) {
+        return false;
+      }
+    }
+
+    // ─────────────────────────────────────────────
+    // EXPERIENCE
+    // ─────────────────────────────────────────────
+    if (filters.experience !== 'Any Experience') {
+      const minYears = parseInt(filters.experience, 10);
+
+      if (tutor.experience < minYears) {
+        return false;
+      }
+    }
+
+    // ─────────────────────────────────────────────
+    // CLASS
+    //
+    // Uses numeric range overlap (see classMatchesBucket above) instead of
+    // text substring comparison, so range-phrased class lists like
+    // "Class 1st - 8th" or "Class NUR - 8th" are correctly recognised as
+    // covering Class 5, and "Class 10/11/12" no longer wrongly matches a
+    // "Class 1–5" search.
+    // ─────────────────────────────────────────────
+    if (filters.classRange !== 'All Classes') {
+      const bucketRange = CLASS_BUCKET_RANGES[filters.classRange];
+
+      if (bucketRange && !classMatchesBucket(tutor.classes, bucketRange)) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+}, [searchQuery, filters]);
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Active Filters
+  // ──────────────────────────────────────────────────────────────────────────
 
   const hasActiveFilters =
     Object.values(filters).some(
@@ -1265,12 +910,11 @@ export default function TutorsPage() {
           'All Modes',
           'Any Experience',
         ].includes(value)
-    ) ||
-    searchQuery.trim() !== '';
+    ) || searchQuery.trim() !== '';
 
-  /* ---------------------------------------------------------------------- */
-  /* CLEAR FILTERS                                                          */
-  /* ---------------------------------------------------------------------- */
+  // ──────────────────────────────────────────────────────────────────────────
+  // Clear Filters
+  // ──────────────────────────────────────────────────────────────────────────
 
   const clearFilters = () => {
     setFilters({
@@ -1284,6 +928,7 @@ export default function TutorsPage() {
 
     setSearchQuery('');
 
+    // Remove URL filters too
     window.history.replaceState(
       {},
       '',
@@ -1291,9 +936,9 @@ export default function TutorsPage() {
     );
   };
 
-  /* ---------------------------------------------------------------------- */
-  /* FILTER CHANGE                                                          */
-  /* ---------------------------------------------------------------------- */
+  // ──────────────────────────────────────────────────────────────────────────
+  // Filter Change
+  // ──────────────────────────────────────────────────────────────────────────
 
   const handleFilterChange = (
     key: keyof FilterState,
@@ -1305,9 +950,9 @@ export default function TutorsPage() {
     }));
   };
 
-  /* ---------------------------------------------------------------------- */
-  /* RENDER                                                                 */
-  /* ---------------------------------------------------------------------- */
+  // ──────────────────────────────────────────────────────────────────────────
+  // Render
+  // ──────────────────────────────────────────────────────────────────────────
 
   return (
     <>
@@ -1315,12 +960,8 @@ export default function TutorsPage() {
 
       <main className="pt-16 md:pt-[68px]">
 
-        {/* ---------------------------------------------------------------- */}
-        {/* PAGE HEADER                                                       */}
-        {/* ---------------------------------------------------------------- */}
-
+        {/* Page Header */}
         <section className="bg-white border-b border-[#E5E7EB]">
-
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-10 md:py-14">
 
             {/* Breadcrumb */}
@@ -1355,13 +996,9 @@ export default function TutorsPage() {
 
             {/* Heading */}
             <div className="max-w-2xl mb-8">
-
               <h1
                 className="text-3xl md:text-[2.5rem] font-extrabold text-[#0D1118] mb-3 leading-tight"
-                style={{
-                  letterSpacing:
-                    '-0.025em',
-                }}
+                style={{ letterSpacing: '-0.025em' }}
               >
                 Find a Tutor
               </h1>
@@ -1373,7 +1010,6 @@ export default function TutorsPage() {
 
             {/* Search */}
             <div className="relative max-w-2xl">
-
               <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                 <svg
                   width="18"
@@ -1384,11 +1020,7 @@ export default function TutorsPage() {
                   strokeWidth="2"
                   aria-hidden="true"
                 >
-                  <circle
-                    cx="11"
-                    cy="11"
-                    r="8"
-                  />
+                  <circle cx="11" cy="11" r="8" />
                   <path d="M21 21l-4.35-4.35" />
                 </svg>
               </div>
@@ -1397,37 +1029,16 @@ export default function TutorsPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(event) =>
-                  setSearchQuery(
-                    event.target.value
-                  )
+                  setSearchQuery(event.target.value)
                 }
-                placeholder="Search by tutor name, subject, qualification or location…"
-                className="
-                  w-full
-                  pl-11
-                  pr-10
-                  py-3.5
-                  text-[15px]
-                  text-[#0D1118]
-                  bg-[#F8FAFC]
-                  border
-                  border-[#E5E7EB]
-                  rounded-xl
-                  focus:outline-none
-                  focus:ring-2
-                  focus:ring-[#0A6FF7]/20
-                  focus:border-[#0A6FF7]
-                  transition-all
-                  placeholder:text-[#9CA3AF]
-                "
+                placeholder="Search by tutor name, subject or location…"
+                className="w-full pl-11 pr-10 py-3.5 text-[15px] text-[#0D1118] bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0A6FF7]/20 focus:border-[#0A6FF7] transition-all placeholder:text-[#9CA3AF]"
               />
 
               {searchQuery && (
                 <button
                   type="button"
-                  onClick={() =>
-                    setSearchQuery('')
-                  }
+                  onClick={() => setSearchQuery('')}
                   className="absolute inset-y-0 right-4 flex items-center text-[#9CA3AF] hover:text-[#6B7280]"
                   aria-label="Clear search"
                 >
@@ -1448,17 +1059,12 @@ export default function TutorsPage() {
           </div>
         </section>
 
-        {/* ---------------------------------------------------------------- */}
-        {/* CONTENT                                                           */}
-        {/* ---------------------------------------------------------------- */}
-
+        {/* Content */}
         <section className="bg-[#F8FAFC] py-10 md:py-14 min-h-screen">
-
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
 
-            {/* Mobile Filters */}
+            {/* Mobile Filter Toggle */}
             <div className="lg:hidden mb-5 flex items-center justify-between">
-
               <p className="text-[13px] text-[#6B7280]">
                 <span className="font-bold text-[#0D1118]">
                   {filteredTutors.length}
@@ -1470,26 +1076,10 @@ export default function TutorsPage() {
                 type="button"
                 onClick={() =>
                   setMobileFiltersOpen(
-                    (previous) =>
-                      !previous
+                    !mobileFiltersOpen
                   )
                 }
-                className="
-                  flex
-                  items-center
-                  gap-2
-                  text-[13px]
-                  font-semibold
-                  text-[#0D1118]
-                  bg-white
-                  border
-                  border-[#E5E7EB]
-                  px-4
-                  py-2
-                  rounded-xl
-                  hover:border-[#0A6FF7]
-                  transition-colors
-                "
+                className="flex items-center gap-2 text-[13px] font-semibold text-[#0D1118] bg-white border border-[#E5E7EB] px-4 py-2 rounded-xl hover:border-[#0A6FF7] transition-colors"
               >
                 <svg
                   width="15"
@@ -1500,24 +1090,9 @@ export default function TutorsPage() {
                   strokeWidth="2"
                   aria-hidden="true"
                 >
-                  <line
-                    x1="4"
-                    y1="6"
-                    x2="20"
-                    y2="6"
-                  />
-                  <line
-                    x1="8"
-                    y1="12"
-                    x2="20"
-                    y2="12"
-                  />
-                  <line
-                    x1="12"
-                    y1="18"
-                    x2="20"
-                    y2="18"
-                  />
+                  <line x1="4" y1="6" x2="20" y2="6" />
+                  <line x1="8" y1="12" x2="20" y2="12" />
+                  <line x1="12" y1="18" x2="20" y2="18" />
                 </svg>
 
                 Filters
@@ -1532,22 +1107,15 @@ export default function TutorsPage() {
 
               {/* Sidebar */}
               <div
-                className={`
-                  ${
-                    mobileFiltersOpen
-                      ? 'block'
-                      : 'hidden'
-                  }
-                  lg:block
-                  w-full
-                  lg:w-auto
-                `}
+                className={`${
+                  mobileFiltersOpen
+                    ? 'block'
+                    : 'hidden'
+                } lg:block w-full lg:w-auto`}
               >
                 <FilterSidebar
                   filters={filters}
-                  onChange={
-                    handleFilterChange
-                  }
+                  onChange={handleFilterChange}
                 />
               </div>
 
@@ -1556,17 +1124,14 @@ export default function TutorsPage() {
 
                 {/* Results Header */}
                 <div className="flex items-center justify-between mb-6">
-
                   <div>
-
                     <h2 className="text-[17px] font-bold text-[#0D1118]">
                       Tutors available for your learning needs
                     </h2>
 
                     <p className="text-[13px] text-[#6B7280] mt-0.5">
                       {filteredTutors.length}{' '}
-                      {filteredTutors.length ===
-                      1
+                      {filteredTutors.length === 1
                         ? 'tutor'
                         : 'tutors'}{' '}
                       found
@@ -1574,46 +1139,33 @@ export default function TutorsPage() {
                       {hasActiveFilters &&
                         ' · Filters applied'}
                     </p>
-
                   </div>
 
                   {hasActiveFilters && (
                     <button
                       type="button"
                       onClick={clearFilters}
-                      className="
-                        text-[13px]
-                        font-semibold
-                        text-[#0A6FF7]
-                        hover:text-[#0858c8]
-                        transition-colors
-                        whitespace-nowrap
-                      "
+                      className="text-[13px] font-semibold text-[#0A6FF7] hover:text-[#0858c8] transition-colors whitespace-nowrap"
                     >
                       Clear all
                     </button>
                   )}
-
                 </div>
 
-                {/* Tutor Results */}
-                {filteredTutors.length >
-                0 ? (
+                {/* Results */}
+                {filteredTutors.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-                    {filteredTutors.map(
-                      (tutor) => (
-                        <TutorCard
-                          key={tutor.id}
-                          tutor={tutor}
-                        />
-                      )
-                    )}
+                    {filteredTutors.map((tutor) => (
+                      <TutorCard
+                        key={tutor.id}
+                        tutor={tutor}
+                      />
+                    ))}
                   </div>
                 ) : (
                   <div className="bg-white rounded-2xl border border-[#E5E7EB] p-10 md:p-12 text-center">
 
                     <div className="w-12 h-12 bg-[#F8FAFC] rounded-xl flex items-center justify-center mx-auto mb-4">
-
                       <svg
                         width="22"
                         height="22"
@@ -1623,14 +1175,9 @@ export default function TutorsPage() {
                         strokeWidth="1.5"
                         aria-hidden="true"
                       >
-                        <circle
-                          cx="11"
-                          cy="11"
-                          r="8"
-                        />
+                        <circle cx="11" cy="11" r="8" />
                         <path d="M21 21l-4.35-4.35" />
                       </svg>
-
                     </div>
 
                     <h3 className="text-[16px] font-bold text-[#0D1118] mb-2">
@@ -1638,30 +1185,30 @@ export default function TutorsPage() {
                     </h3>
 
                     <p className="text-[13px] text-[#6B7280] max-w-md mx-auto mb-6">
-                      Don't worry. Try broadening your search or tell us what you need and we'll help you find suitable options.
+                      Don't worry. Our tutor network is growing.
+                      You can broaden your search or tell us what
+                      you need and we'll help you find suitable
+                      options.
                     </p>
 
-                    <button
-                      type="button"
-                      onClick={
-                        clearFilters
-                      }
-                      className="
-                        text-[13px]
-                        font-semibold
-                        text-[#0A6FF7]
-                        border
-                        border-[#0A6FF7]
-                        px-5
-                        py-2.5
-                        rounded-xl
-                        hover:bg-[#EBF4FF]
-                        transition-colors
-                      "
-                    >
-                      Browse All Tutors
-                    </button>
+                    <div className="flex flex-col sm:flex-row justify-center gap-3">
 
+                      <button
+                        type="button"
+                        onClick={clearFilters}
+                        className="text-[13px] font-semibold text-[#0A6FF7] border border-[#0A6FF7] px-5 py-2.5 rounded-xl hover:bg-[#EBF4FF] transition-colors"
+                      >
+                        Browse All Tutors
+                      </button>
+
+                      <Link
+                        href="/find-a-tutor"
+                        className="text-[13px] font-semibold text-white bg-[#0A6FF7] px-5 py-2.5 rounded-xl hover:bg-[#0858c8] transition-colors"
+                      >
+                        Let Us Match a Tutor
+                      </Link>
+
+                    </div>
                   </div>
                 )}
 
@@ -1669,35 +1216,19 @@ export default function TutorsPage() {
                 <div className="mt-10 bg-[#0D1118] rounded-2xl p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
 
                   <div>
-
                     <h3 className="text-[17px] font-bold text-white mb-1">
                       Can't find the right tutor?
                     </h3>
 
                     <p className="text-[13px] text-[#9CA3AF] leading-relaxed">
-                      Share your requirement and we'll identify suitable tutor options for your child.
+                      Share your requirement and we'll identify
+                      suitable tutor options for your child.
                     </p>
-
                   </div>
 
                   <Link
                     href="/find-a-tutor"
-                    className="
-                      flex-shrink-0
-                      inline-flex
-                      items-center
-                      gap-2
-                      bg-[#0A6FF7]
-                      text-white
-                      font-bold
-                      text-[14px]
-                      px-6
-                      py-3
-                      rounded-xl
-                      hover:bg-[#0858c8]
-                      transition-colors
-                      whitespace-nowrap
-                    "
+                    className="flex-shrink-0 inline-flex items-center gap-2 bg-[#0A6FF7] text-white font-bold text-[14px] px-6 py-3 rounded-xl hover:bg-[#0858c8] transition-colors whitespace-nowrap"
                   >
                     Let Us Match a Tutor
 
@@ -1723,7 +1254,6 @@ export default function TutorsPage() {
       </main>
 
       <Footer />
-
       <WhatsAppButton />
     </>
   );
