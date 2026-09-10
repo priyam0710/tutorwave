@@ -7,6 +7,8 @@ export const featuredTutorIds = [
   'tutor-002',
   'tutor-001',
   'tutor-003',
+  'tutor-011',
+  'tutor-013',
 ];
 
 // Renders the tutor's teachingMode array ('home' | 'online' | 'both') as a
