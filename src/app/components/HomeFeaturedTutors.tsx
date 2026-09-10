@@ -102,12 +102,12 @@ export default function HomeFeaturedTutors() {
                   <p className="text-xs text-[#6B7280] mb-1">{formatList(tutor.subjects, 3)}</p>
                   <p className="text-xs text-[#6B7280] mb-3">{formatList(tutor.classes, 3)}</p>
 
-                  <div className="flex items-center gap-3 mb-3 text-xs text-[#6B7280]">
+                  <div className="flex flex-col gap-1 mb-3 text-xs text-[#6B7280]">
                     <div className="flex items-center gap-1">
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
                       </svg>
-                      {tutor?.experience} yrs
+                      {tutor?.experience} Years Experience
                     </div>
                     {primaryLocation && (
                       <div className="flex items-center gap-1">
