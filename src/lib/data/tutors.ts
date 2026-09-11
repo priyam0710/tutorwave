@@ -37,7 +37,7 @@ export const tutors: Tutor[] = [
     verified: true,
     rating: 5,
     reviewCount: 3,
-    bio: 'I have been teaching Mathematics and Science for over 15 years. My approach focuses on building strong conceptual foundations rather than rote learning. I work with students of Class 9th and 10th and have helped many students improve their board exam scores significantly.',
+    bio: 'With 15 years of teaching experience, I help Class 9 and Class 10 students build strong fundamentals in Mathematics, Science, Physics, Chemistry and Biology. My approach focuses on conceptual clarity over rote learning, and I have helped many students significantly improve their board exam scores.',
     availability: 'Weekdays 3pm–8pm, Weekends 9am–6pm',
     gender: 'male',
     languages: ['English', 'Hindi']
@@ -59,7 +59,7 @@ export const tutors: Tutor[] = [
     verified: true,
     rating: 5,
     reviewCount: 52,
-    bio: 'IIT Patna graduate with 5+ years of teaching experience in Physics, Chemistry and Mathematics for Class 11-12 and IIT-JEE preparation. I focus on problem-solving techniques and exam strategy',
+    bio: 'An IIT Patna graduate with 5 years of teaching experience, I teach Physics, Chemistry, Mathematics and Science to students from Class 9 through Class 12, with a focus on IIT-JEE preparation. My sessions emphasise problem-solving techniques and exam strategy alongside strong conceptual foundations.',
     availability: 'Weekdays 6pm–10pm, Weekends 10am–6pm',
     gender: 'male',
     languages: ['English', 'Hindi']
@@ -90,14 +90,14 @@ export const tutors: Tutor[] = [
     rating: 5,
     reviewCount: 2,
     bio: 'With 17 years of teaching experience, I help students from Class 8 through Class 12 (and BBA/BCA learners too) build strong fundamentals in Maths, Science, Social Science and English. My engineering background helps me connect abstract concepts to real-world examples, which makes difficult topics much easier to grasp. I offer home tuitions across West Delhi.',
-        availability: 'Weekdays 6pm–10pm, Weekends 10am–6pm',
+    availability: 'Weekdays 6pm–10pm, Weekends 10am–6pm',
     gender: 'male',
     languages: ['English', 'Hindi']
   },
   {
-    id: 'tutor-012',
+    id: 'tutor-004',
    name: 'Jyoti Puri',
-    slug: 'Jyoti-puri',
+    slug: 'jyoti-puri',
     photo: "/assets/images/jyotipuri.png",
     photoAlt: 'Jyoti-Puri',
     subjects: [
@@ -124,7 +124,7 @@ export const tutors: Tutor[] = [
     verified: true,
     rating: 5,
     reviewCount: 7,
-    bio: 'I specialize in teaching All Subjects for primary, middle and secondary school students. Commited to mentoring students not just for academic excellence, but to become lifelong learners and problem solvers',
+    bio: 'With 5 years of teaching experience, I teach all subjects — English, Hindi, Maths, Science and Social Science — to students from Class 1 through Class 10. I am committed to mentoring students not just for academic excellence, but to become confident, lifelong learners and problem solvers.',
     availability: 'Weekdays 3pm–9pm, Weekends flexible',
     gender: 'female',
     languages: ['English', 'Hindi']
@@ -163,7 +163,7 @@ export const tutors: Tutor[] = [
     verified: true,
     rating: 5,
     reviewCount: 20,
-    bio: 'I specialize in teaching All Subjects for primary and middle school students. My teaching style is interactive and encourages reading, writing and communication skills. I have a particular focus on making language learning enjoyable.',
+    bio: 'With 5 years of teaching experience, I teach all subjects from Nursery through Class 8, along with Psychology and Urdu for Class 11 and Class 12 students. My teaching style is interactive and encourages reading, writing and communication skills, with a particular focus on making language learning enjoyable.',
     availability: 'Weekdays 2pm–9pm, Weekends flexible',
     gender: 'female',
     languages: ['English', 'Hindi']
@@ -249,7 +249,7 @@ export const tutors: Tutor[] = [
     verified: false,
     rating: 5,
     reviewCount: 2,
-    bio: 'With 15 years of teaching experience and a professional background spanning M.Com, MBA and LLB, I teach Commerce-oriented subjects including Accountancy, Economics and Business Studies alongside core subjects for Class 6 through Class 12. I offer both home and online sessions across West Delhi.',
+    bio: 'With 15 years of teaching experience and a professional background spanning M.Com, MBA and LLB, I teach Maths, Science, Social Science and English alongside Commerce subjects — Accountancy, Economics, Business Studies and Legal Studies — for students from Class 6 through Class 12. I offer both home and online sessions across West Delhi.',
     availability: 'Weekdays 3pm–9pm, Weekends flexible',
     gender: 'Male',
     languages: ['English', 'Hindi']
@@ -278,7 +278,7 @@ export const tutors: Tutor[] = [
     verified: true,
     rating: 4.9,
     reviewCount: 3,
-    bio: 'I am a B.Ed and M.Sc (Botany) graduate with a strong science background, specialising in teaching young learners from KG through Class 8. I focus on building curiosity and confidence in Maths, Science and English through interactive, age-appropriate teaching methods, with both home and online classes available across Noida.',
+    bio: 'With 3 years of teaching experience and a B.Ed and M.Sc (Botany) background, I teach all subjects — including Maths, Science, Social Science, English, Biology and Computer — to students from KG through Class 8. I focus on building curiosity and confidence through interactive, age-appropriate teaching methods, with both home and online classes available across Noida.',
     availability: 'Weekdays 3pm–9pm, Weekends flexible',
     gender: 'Female',
     languages: ['English', 'Hindi']
@@ -310,7 +310,7 @@ export const tutors: Tutor[] = [
     verified: true,
     rating: 5,
     reviewCount: 8,
-    bio: 'As a Computer Science Engineering graduate, I bring a structured, logic-first approach to teaching Maths, Science and allied subjects for Class 4 through Class 12. I focus on step-by-step problem solving and regular practice to help students build genuine confidence ahead of their exams. I currently teach home tuitions across Noida and Greater Noida West.',
+    bio: 'With 4 years of teaching experience and a Computer Science Engineering background, I bring a structured, logic-first approach to teaching Maths, Science, Physics, Chemistry, Biology, Social Science and English for students from Class 4 through Class 12. I focus on step-by-step problem solving and regular practice to help students build genuine confidence ahead of their exams. I currently teach home tuitions across Noida and Greater Noida West.',
     availability: 'Weekdays 3pm–9pm, Weekends flexible',
     gender: 'Male',
     languages: ['English', 'Hindi']
@@ -338,7 +338,7 @@ export const tutors: Tutor[] = [
     verified: true,
     rating: 5,
     reviewCount: 2,
-    bio: 'I hold a B.A. in History, Political Science and English, and I teach all major subjects for Class 1 through Class 10. I enjoy working with younger students, focusing on building strong reading, writing and reasoning skills alongside core subject knowledge. I offer home tuitions across Central and West Delhi.',
+    bio: 'With 4 years of teaching experience and a B.A. in History, Political Science and English, I teach all subjects — including Maths, Science, Physics, Chemistry, Biology and Social Science — for students from Class 1 through Class 10. I enjoy working with younger students, focusing on building strong reading, writing and reasoning skills alongside core subject knowledge. I offer home tuitions across Central and West Delhi.',
     availability: 'Weekdays 4pm–9pm, Weekends flexible',
     gender: 'Male',
     languages: ['English', 'Hindi']
@@ -371,7 +371,7 @@ export const tutors: Tutor[] = [
     verified: true,
     rating: 5,
     reviewCount: 10,
-    bio: 'I teach all major subjects for Class 4 to Class 10. I enjoy working with younger students, focusing on building strong reading, writing and reasoning skills alongside core subject knowledge. I offer home tuitions and online classes both.',
+    bio: 'With 4 years of teaching experience and a Business Administration background specialising in Financial Investment Analysis, I teach all subjects for Class 4 through Class 12, with particular strength in Economics and Business Studies for senior students. I offer both home tuitions and online classes across Noida.',
     availability: 'Weekdays 4pm–6pm, Weekends flexible',
     gender: 'Male',
     languages: ['English', 'Hindi']
@@ -379,7 +379,7 @@ export const tutors: Tutor[] = [
    {
     id: 'tutor-013',
     name: 'Simran Sharma',
-    slug: 'Simran-Sharma',
+    slug: 'simran-sharma',
     photo: "/assets/images/simransharma.png",
     photoAlt: 'Simran-Sharma',
     subjects: ['All Subjects','Maths','Science','Social Science','English','Computer','EVS',],
@@ -390,13 +390,13 @@ export const tutors: Tutor[] = [
     locations: [
      'Noida Extension',
       'Greater Noida',
-      'Tech Zone 4',
+      'Techzone 4',
       'Gaur City',],
     teachingMode: ['home','online',],
     verified: true,
     rating: 5,
     reviewCount: 2,
-    bio: 'I teach all major subjects for Class 1 to Class 10. I enjoy working with younger students, focusing on building strong reading, writing and reasoning skills alongside core subject knowledge. I offer home tuitions and online classes both.',
+    bio: 'With 7 years of teaching experience and a B.Ed with CTET qualification, I teach all subjects for students from Class 1 through Class 10, including CBSE and Cambridge curricula. I have a particular focus on EVS and Computer for younger learners, building strong fundamentals through structured, engaging lessons, with both home and online classes available across Greater Noida.',
     availability: 'Weekdays 4pm–6pm, Weekends flexible',
     gender: 'Female',
     languages: ['English', 'Hindi']
@@ -404,7 +404,7 @@ export const tutors: Tutor[] = [
   {
     id: 'tutor-014',
    name: 'Jyoti',
-    slug: 'Jyoti',
+    slug: 'jyoti',
     photo: "/assets/images/jyoti.png",
     photoAlt: 'Jyoti',
     subjects: [
@@ -428,7 +428,7 @@ export const tutors: Tutor[] = [
     verified: true,
     rating: 5,
     reviewCount: 2,
-    bio: 'I specialize in teaching All Subjects for primary and middle school students. Commited to mentoring students not just for academic excellence, but to become lifelong learners and problem solvers',
+    bio: 'With 3 years of teaching experience and a B.Ed in Mathematics, I teach all subjects — English, Hindi, Maths, Science and Social Science — to students from Class 1 through Class 8. I am committed to mentoring students not just for academic excellence, but to become confident, lifelong learners and problem solvers.',
     availability: 'Weekdays 3pm–7pm, Weekends flexible',
     gender: 'female',
     languages: ['English', 'Hindi']
@@ -452,7 +452,7 @@ export const tutors: Tutor[] = [
     verified: true,
     rating: 5,
     reviewCount: 2,
-    bio: 'I teach all major subjects for Class 4 to Class 10. I enjoy working with younger students, focusing on building strong reading, writing and reasoning skills alongside core subject knowledge. I offer home tuitions and online classes both.',
+    bio: 'With 5 years of teaching experience and an M.Sc.(Hons.) in Mathematics, I teach all subjects for students from Class 4 through Class 12, with particular strength in Maths, Physics and Chemistry for senior classes. I focus on building strong problem-solving skills and exam confidence. I currently offer home tuitions across North Delhi.',
     availability: 'Weekdays 4pm–6pm, Weekends flexible',
     gender: 'Male',
     languages: ['English', 'Hindi']
@@ -461,7 +461,7 @@ export const tutors: Tutor[] = [
    {
     id: 'tutor-016',
     name: 'Ragini Kumari',
-    slug: 'Ragini-Kumari',
+    slug: 'ragini-kumari',
     photo: "/assets/images/ragini.png",
     photoAlt: 'Ragini-Kumari',
     subjects: ['All Subjects','Maths','Science','Social Science','English','Computer','EVS',],
@@ -479,7 +479,7 @@ export const tutors: Tutor[] = [
     verified: true,
     rating: 5,
     reviewCount: 3,
-    bio: 'I teach all major subjects for Class 1 to Class 10. I enjoy working with younger students, focusing on building strong reading, writing and reasoning skills alongside core subject knowledge. I offer home tuitions and online classes both.',
+    bio: 'With 5 years of teaching experience and a Bachelor of Arts background, I teach all subjects — including EVS and Computer — for students from Nursery through Class 7. I enjoy working with younger learners, focusing on building strong foundational reading, writing and reasoning skills. I offer home tuitions across Noida.',
     availability: 'Weekdays 3pm–7pm, Weekends flexible',
     gender: 'Female',
     languages: ['English', 'Hindi']
@@ -511,35 +511,9 @@ export const tutors: Tutor[] = [
     verified: true,
     rating: 5,
     reviewCount: 3,
-    bio: 'I teach all major subjects for Class 4 to Class 10. I enjoy working with younger students, focusing on building strong reading, writing and reasoning skills alongside core subject knowledge. I offer home tuitions and online classes both.',
+    bio: 'With 3 years of teaching experience and a B.Tech in Computer Science Engineering, I teach all subjects for students from Class 1 through Class 12, with particular strength in Maths and Physics. I bring a structured, logic-first approach to problem solving. I currently offer home tuitions across Noida.',
     availability: 'Weekdays 4pm–6pm, Weekends flexible',
     gender: 'Male',
-    languages: ['English', 'Hindi']
-  },
-   {
-    id: 'tutor-018',
-    name: 'Yamini Gond',
-    slug: 'Yamini-Gond',
-    photo: "/assets/images/yamini.png",
-    photoAlt: 'Yamini-Gond',
-    subjects: ['All Subjects','Maths','Science','Social Science','English','Hindi',],
-    classes: ['Class 6','Class 7','Class 8', 'Class 9', 'Class 10','Class 11','Class 12'],
-    boards: ['CBSE', 'ICSE','NIOS',],
-    experience: 5,
-    qualifications: [ 'Bachelors of Science [B.Sc] in mathematics',],
-    locations: [
-      'GTB Nagar',
-      'Sector 16 Rohini',
-      'Sector 17 Rohini',
-      'Rithala',
-      'Samaypur Badli',],
-    teachingMode: ['home',],
-    verified: true,
-    rating: 5,
-    reviewCount: 3,
-    bio: 'I teach all major subjects for Class 4 to Class 10. I enjoy working with younger students, focusing on building strong reading, writing and reasoning skills alongside core subject knowledge. I offer home tuitions and online classes both.',
-    availability: 'Weekdays 4pm–8pm, Weekends flexible',
-    gender: 'Female',
     languages: ['English', 'Hindi']
   },
 ];
@@ -570,7 +544,7 @@ export function getTutorsByLocation(location: string): Tutor[] {
 export const featuredTutorIds = [
   'tutor-002', // Priyanshu Singh
   'tutor-001', // Dheeraj Sharma
-  'tutor-003', // Ilma Khan
+  'tutor-003', // Rupesh Jha
 ];
 
 // Automatically get the full tutor data from the main tutors list
