@@ -205,6 +205,7 @@ export const locations: Location[] = [
   'Bhangel',
   'Salarpur',
   'Barola',
+  'chhalera',
   'Gejha',
   'Mamura',
   'Khora',
