@@ -21,6 +21,11 @@ const SUBJECT_OPTIONS = [
   'Computer Science',
   'Science',
   'Social Science',
+  'Economics',
+  'Accountancy',
+  'Business Studies',
+  'Legal Studies',
+  'EVS',
 ];
 
 const CLASS_OPTIONS = [
@@ -38,6 +43,7 @@ const BOARD_OPTIONS = [
   'ICSE',
   'IIT-JEE',
   'NEET',
+  'Cambridge',
 ];
 
 const LOCATION_OPTIONS = [
@@ -190,6 +196,7 @@ const SUBJECT_ALIASES: Record<string, string> = {
   chem: 'Chemistry',
   cs: 'Computer Science',
   comp: 'Computer Science',
+  computer: 'Computer Science',
   computers: 'Computer Science',
   eng: 'English',
   social: 'Social Science',
@@ -200,6 +207,10 @@ const SUBJECT_ALIASES: Record<string, string> = {
   economics: 'Economics',
   accounts: 'Accountancy',
   accountancy: 'Accountancy',
+  businessstudies: 'Business Studies',
+  legalstudies: 'Legal Studies',
+  evs: 'EVS',
+  environmentalstudies: 'EVS',
 };
 
 function resolveSubject(rawSubject: string): string {
