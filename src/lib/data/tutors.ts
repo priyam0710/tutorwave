@@ -516,6 +516,33 @@ export const tutors: Tutor[] = [
     gender: 'Male',
     languages: ['English', 'Hindi']
   },
+  {
+    id: 'tutor-018',
+    name: 'Yamini Gond',
+    slug: 'Yamini-Gond',
+    photo: "/assets/images/yamini.png",
+    photoAlt: 'Yamini-Gond',
+    subjects: ['All Subjects','Maths','Science','Social Science','English','Hindi',],
+    classes: ['Class 6','Class 7','Class 8', 'Class 9', 'Class 10','Class 11','Class 12'],
+    boards: ['CBSE', 'ICSE','NIOS',],
+    experience: 5,
+    qualifications: [ 'Bachelors of Science [B.Sc] in mathematics',],
+    locations: [
+      'GTB Nagar',
+      'Sector 16 Rohini',
+      'Sector 17 Rohini',
+      'Rithala',
+      'Samaypur Badli',],
+    teachingMode: ['home',],
+    verified: true,
+    rating: 5,
+    reviewCount: 3,
+    bio: 'I teach all major subjects for Class 4 to Class 10. I enjoy working with younger students, focusing on building strong reading, writing and reasoning skills alongside core subject knowledge. I offer home tuitions and online classes both.',
+    availability: 'Weekdays 4pm–8pm, Weekends flexible',
+    gender: 'Female',
+    languages: ['English', 'Hindi']
+  },
+
 ];
 
 export function getTutorBySlug(slug: string): Tutor | undefined {
