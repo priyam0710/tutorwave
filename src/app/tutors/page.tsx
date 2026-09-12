@@ -253,6 +253,8 @@ function cityForArea(area: string): string | null {
     return null;
   }
 
+  const compactArea = normalizedArea.replace(/\s+/g, '');
+
   // The raw string already names a known city directly, e.g. "Noida Sector 44".
   for (const city of locationsData) {
     if (normalizedArea.includes(normalizeAreaText(city.name))) {
@@ -260,9 +262,40 @@ function cityForArea(area: string): string | null {
     }
   }
 
-  // Otherwise check which city's known locality list this area belongs to.
+  // Exact matches are checked across every city BEFORE any fuzzy fallback
+  // runs. This matters because several cities' master lists include bare,
+  // unqualified numbers (e.g. Noida's list has a plain "Sector 2"), while
+  // other cities have their own fully-qualified names that happen to share
+  // that trailing text (e.g. Delhi's "Dwarka Sector 2"). A loose substring
+  // check run city-by-city would let the ambiguous bare entry win purely
+  // because that city happened to be checked first — checking for an exact
+  // match everywhere first means the correctly-qualified name always wins.
   for (const city of locationsData) {
-    const matched = city.areas.some((rawAreaName) => {
+    const exactMatch = city.areas.some((rawAreaName) => {
+      const normalizedCityArea = normalizeAreaText(rawAreaName);
+
+      if (!normalizedCityArea || normalizedCityArea === '& more...') {
+        return false;
+      }
+
+      const compactCityArea = normalizedCityArea.replace(/\s+/g, '');
+
+      return (
+        normalizedCityArea === normalizedArea ||
+        compactCityArea === compactArea
+      );
+    });
+
+    if (exactMatch) {
+      return city.name;
+    }
+  }
+
+  // Only if nothing matched exactly anywhere do we fall back to fuzzy
+  // substring matching, which is inherently more permissive and therefore
+  // riskier for ambiguous, unqualified locality names.
+  for (const city of locationsData) {
+    const fuzzyMatch = city.areas.some((rawAreaName) => {
       const normalizedCityArea = normalizeAreaText(rawAreaName);
 
       if (!normalizedCityArea || normalizedCityArea === '& more...') {
@@ -270,13 +303,12 @@ function cityForArea(area: string): string | null {
       }
 
       return (
-        normalizedCityArea === normalizedArea ||
         normalizedArea.includes(normalizedCityArea) ||
         normalizedCityArea.includes(normalizedArea)
       );
     });
 
-    if (matched) {
+    if (fuzzyMatch) {
       return city.name;
     }
   }
