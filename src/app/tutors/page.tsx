@@ -35,28 +35,25 @@ const CLASS_OPTIONS = [
   'Class 6–8',
   'Class 9–10',
   'Class 11–12',
-  'IIT-JEE',
-  'NEET',
 ];
 
 const BOARD_OPTIONS = [
   'All Boards',
   'CBSE',
   'ICSE',
-  'NIOS',
-  'State Board',
-  'IB',
+  'IIT-JEE',
+  'NEET',
   'Cambridge',
 ];
 
 const LOCATION_OPTIONS = [
   'All Locations',
-  'Noida',
   'Delhi',
+  'Noida',
   'Greater Noida',
+  'Gurugram',
   'Ghaziabad',
   'Faridabad',
-  'Gurugram',
 ];
 
 const MODE_OPTIONS = [
@@ -71,8 +68,6 @@ const EXPERIENCE_OPTIONS = [
   '3+ Years',
   '5+ Years',
   '8+ Years',
-  '10+ Years',
-  '15+ Years',
 ];
 
 // ─── Normalization Helpers ──────────────────────────────────────────────────────
