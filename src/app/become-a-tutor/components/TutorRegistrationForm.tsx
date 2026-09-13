@@ -437,18 +437,67 @@ export default function TutorRegistrationForm() {
     }
   };
 
-  const handleSubmit = () => {
-    console.log(
-      'Tutor Registration:',
-      formData
-    );
+  const handleSubmit = async () => {
+    setError('');
 
-    setSubmitted(true);
+    try {
+      const response = await fetch('/api/tutor-registration', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          personal: formData.personal,
+          education: formData.education,
+          teaching: formData.teaching,
+          preferences: formData.preferences,
+          acquisition: {
+            source: 'website',
+            sourceDetails: 'Tutor Registration Form',
+            landingPage:
+              typeof window !== 'undefined'
+                ? window.location.href
+                : '',
+            referrer:
+              typeof document !== 'undefined'
+                ? document.referrer
+                : '',
+          },
+        }),
+      });
 
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setError(
+          data?.error ||
+            'We could not submit your registration right now. Please try again.'
+        );
+        return;
+      }
+
+      console.log(
+        'Tutor registration submitted successfully:',
+        data
+      );
+
+      setSubmitted(true);
+
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      });
+    } catch (error) {
+      console.error(
+        'Tutor registration submission error:',
+        error
+      );
+
+      setError(
+        'We could not submit your registration right now. Please check your internet connection and try again.'
+      );
+    }
   };
 
   if (submitted) {
