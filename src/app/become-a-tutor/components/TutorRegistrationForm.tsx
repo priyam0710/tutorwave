@@ -10,6 +10,7 @@ type FormData = {
     phone: string;
     email: string;
     address: string;
+    profilePhoto: string;
   };
 
   education: {
@@ -55,6 +56,7 @@ const initialFormData: FormData = {
     phone: '',
     email: '',
     address: '',
+    profilePhoto: '',
   },
 
   education: {
@@ -172,6 +174,7 @@ const studentTypes = [
 export default function TutorRegistrationForm() {
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   const [formData, setFormData] =
@@ -294,6 +297,56 @@ export default function TutorRegistrationForm() {
     }));
   };
 
+  const handlePhotoChange = (file: File | null) => {
+    setError('');
+
+    if (!file) {
+      setFormData((prev) => ({
+        ...prev,
+        personal: {
+          ...prev.personal,
+          profilePhoto: '',
+        },
+      }));
+      return;
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+
+    if (!allowedTypes.includes(file.type)) {
+      setError('Please upload a JPG, PNG or WebP image.');
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      setError('Please upload a profile photo smaller than 2 MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      if (typeof reader.result !== 'string') {
+        setError('We could not read the selected photo. Please try again.');
+        return;
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        personal: {
+          ...prev.personal,
+          profilePhoto: reader.result as string,
+        },
+      }));
+    };
+
+    reader.onerror = () => {
+      setError('We could not read the selected photo. Please try again.');
+    };
+
+    reader.readAsDataURL(file);
+  };
+
   const validateStep = () => {
     setError('');
 
@@ -306,10 +359,11 @@ export default function TutorRegistrationForm() {
         !age.trim() ||
         !gender ||
         !phone.trim() ||
-        !address.trim()
+        !address.trim() ||
+        !formData.personal.profilePhoto
       ) {
         setError(
-          'Please fill in all required personal details (Full Name, Age, Gender, Phone Number and Address).'
+          'Please fill in all required personal details and upload your profile photo.'
         );
         return false;
       }
@@ -437,18 +491,137 @@ export default function TutorRegistrationForm() {
     }
   };
 
-  const handleSubmit = () => {
-    console.log(
-      'Tutor Registration:',
-      formData
-    );
+  const handleSubmit = async () => {
+    if (submitting || submitted) return;
 
-    setSubmitted(true);
+    if (!validateStep()) return;
 
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    });
+    setError('');
+    setSubmitting(true);
+
+    try {
+      const payload = {
+        personal: {
+          fullName: formData.personal.fullName.trim(),
+          age: formData.personal.age ? Number(formData.personal.age) : null,
+          gender: formData.personal.gender,
+          phone: formData.personal.phone.trim(),
+          email: formData.personal.email
+            ? formData.personal.email.trim().toLowerCase()
+            : '',
+          address: formData.personal.address.trim(),
+          profilePhoto: formData.personal.profilePhoto || null,
+        },
+
+        education: {
+          highestQualification: formData.education.highestQualification,
+          stream: formData.education.stream.trim(),
+          schoolingFrom: formData.education.schoolingFrom.trim(),
+          college: formData.education.college.trim(),
+          additionalQualification:
+            formData.education.additionalQualification.trim(),
+        },
+
+        teaching: {
+          experience: formData.teaching.experience,
+          schoolExperience: formData.teaching.schoolExperience,
+          studentsTaughtFrom:
+            formData.teaching.studentsTaughtFrom.trim(),
+          boards: formData.teaching.boards,
+          primaryClasses: formData.teaching.primaryClasses,
+          primaryAllSubjects: formData.teaching.primaryAllSubjects,
+          primarySubjects: formData.teaching.primarySubjects,
+          secondaryClasses: formData.teaching.secondaryClasses,
+          secondarySubjects: formData.teaching.secondarySubjects,
+          seniorSecondaryClasses:
+            formData.teaching.seniorSecondaryClasses,
+          seniorSecondarySubjects:
+            formData.teaching.seniorSecondarySubjects,
+          englishFluency: formData.teaching.englishFluency,
+        },
+
+        preferences: {
+          teachingMode: formData.preferences.teachingMode,
+          offlineAreas: formData.preferences.offlineAreas.trim(),
+          availability: formData.preferences.availability,
+          studentTypes: formData.preferences.studentTypes,
+        },
+
+        acquisition: {
+          source: 'website',
+          sourceDetails: 'TutorWave tutor registration form',
+          landingPage:
+            typeof window !== 'undefined'
+              ? window.location.pathname
+              : '/become-a-tutor',
+          referrer:
+            typeof document !== 'undefined'
+              ? document.referrer
+              : '',
+        },
+      };
+
+      const response = await fetch('/api/tutor-registration', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(payload),
+        cache: 'no-store',
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        if (
+          response.status === 409 ||
+          data?.code === 'DUPLICATE_TUTOR'
+        ) {
+          throw new Error(
+            data?.error ||
+              'A TutorWave registration already exists with this mobile number or email address.'
+          );
+        }
+
+        throw new Error(
+          data?.error ||
+            'We could not submit your registration. Please try again.'
+        );
+      }
+
+      if (!data?.ok && !data?.tutorId) {
+        throw new Error(
+          data?.error ||
+            'The registration could not be confirmed.'
+        );
+      }
+
+      setSubmitted(true);
+
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      });
+    } catch (err) {
+      console.error(
+        'Tutor registration submission failed:',
+        err
+      );
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Something went wrong while submitting your profile. Please try again.'
+      );
+
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (submitted) {
@@ -485,6 +658,7 @@ export default function TutorRegistrationForm() {
             setFormData(initialFormData);
             setStep(1);
             setSubmitted(false);
+            setSubmitting(false);
             setError('');
           }}
           className="px-6 py-3 rounded-xl bg-[#0A6FF7] text-white font-bold hover:opacity-90 transition"
@@ -653,6 +827,65 @@ export default function TutorRegistrationForm() {
                 )
               }
             />
+
+            <div>
+              <FieldLabel label="Profile Photo" required />
+
+              <div className="flex flex-col sm:flex-row gap-5 items-start">
+                <div className="w-28 h-28 rounded-2xl border border-[#DDE2E8] bg-[#F8FAFC] overflow-hidden flex items-center justify-center flex-shrink-0">
+                  {formData.personal.profilePhoto ? (
+                    <img
+                      src={formData.personal.profilePhoto}
+                      alt="Profile preview"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <svg
+                      width="36"
+                      height="36"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      className="text-[#9AA3AF]"
+                    >
+                      <circle cx="12" cy="8" r="4" />
+                      <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" />
+                    </svg>
+                  )}
+                </div>
+
+                <div className="flex-1">
+                  <label className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-3 rounded-xl border border-[#DDE2E8] bg-white text-[#0D1118] font-semibold cursor-pointer hover:bg-[#F8FAFC] transition">
+                    Choose Photo
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      onChange={(e) =>
+                        handlePhotoChange(
+                          e.target.files?.[0] || null
+                        )
+                      }
+                    />
+                  </label>
+
+                  <p className="text-xs text-[#6B7280] mt-2">
+                    JPG, PNG or WebP. Maximum size 2 MB.
+                  </p>
+
+                  {formData.personal.profilePhoto && (
+                    <button
+                      type="button"
+                      onClick={() => handlePhotoChange(null)}
+                      className="text-xs text-red-500 font-semibold mt-2 hover:underline"
+                    >
+                      Remove photo
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -1124,10 +1357,11 @@ export default function TutorRegistrationForm() {
           <button
             type="button"
             onClick={handleSubmit}
-            className="px-7 py-3 rounded-xl bg-[#0A6FF7] text-white font-bold hover:opacity-90 transition inline-flex items-center justify-center gap-2"
+            disabled={submitting}
+            className="px-7 py-3 rounded-xl bg-[#0A6FF7] text-white font-bold hover:opacity-90 transition inline-flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Submit Profile
-            <span>→</span>
+            {submitting ? 'Submitting...' : 'Submit Profile'}
+            {!submitting && <span>→</span>}
           </button>
         )}
       </div>
@@ -1546,6 +1780,24 @@ function ReviewSection({
           label="Address"
           value={formData.personal.address}
         />
+
+        <div className="border-t border-[#E5E7EB] pt-4 mt-4">
+          <p className="text-sm text-[#6B7280] mb-2">
+            Profile Photo
+          </p>
+
+          {formData.personal.profilePhoto ? (
+            <img
+              src={formData.personal.profilePhoto}
+              alt="Profile preview"
+              className="w-24 h-24 rounded-xl object-cover border border-[#E5E7EB]"
+            />
+          ) : (
+            <p className="text-sm font-medium text-[#0D1118]">
+              Not provided
+            </p>
+          )}
+        </div>
       </ReviewCard>
 
       <ReviewCard title="Education">
