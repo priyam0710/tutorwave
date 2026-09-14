@@ -202,31 +202,75 @@ export default function FindATutorPage() {
      * - Your own API
      */
 const enquiryData = {
-  // Parent
-  parentName: parentName.trim(),
-  parentPhone: phone.trim(),
-  parentEmail: email.trim(),
+  parent: {
+    name: parentName.trim(),
+    phone: phone.trim(),
+    email: email.trim().toLowerCase(),
+  },
 
-  // Student requirement
-  studentName: '',
-  studentClass,
-  board,
-  subjects,
+  student: {
+    name: '',
+    class: studentClass,
+    age: null,
+    gender: '',
+    board,
+    subjects,
+  },
 
-  // Requirement details
-  area: location.trim(),
-  city: location.trim(),
-  mode,
-  preferredGender,
-  classesPerWeek,
-  preferredTime,
-  additionalRequirements,
+  location: {
+    location: location.trim(),
+    area: location.trim(),
+    city: location.trim(),
+    locality: '',
+    address: '',
+    pincode: '',
+  },
 
-  // CRM tracking
-  source: 'website',
-  enquiryType: 'parent_tutor_requirement',
+  requirement: {
+    mode,
+    learningGoal: '',
+    description: '',
+    additionalRequirements: additionalRequirements.trim(),
+  },
 
-  // Timestamp
+  schedule: {
+    classesPerWeek: classesPerWeek
+      ? Number(classesPerWeek)
+      : null,
+    preferredDays: [],
+    preferredTime,
+    preferredTimeSlots: [],
+    classDurationMins: null,
+  },
+
+  tutorPreferences: {
+    preferredGender: preferredGender || 'Any',
+    preferredTutorExperience: null,
+    preferredTutorQualification: '',
+    preferredLanguage: [],
+  },
+
+  budget: {
+    min: 300,
+    max: 800,
+    type: 'Monthly',
+    negotiable: true,
+  },
+
+  acquisition: {
+    source: 'website',
+    sourceDetails: 'TutorWave parent enquiry form',
+    enquiryType: 'parent_tutor_requirement',
+    landingPage:
+      typeof window !== 'undefined'
+        ? window.location.pathname
+        : '/find-a-tutor',
+    referrer:
+      typeof document !== 'undefined'
+        ? document.referrer
+        : '',
+  },
+
   submittedAt: new Date().toISOString(),
 };
    
