@@ -201,31 +201,35 @@ export default function FindATutorPage() {
      * - WhatsApp automation
      * - Your own API
      */
+const enquiryData = {
+  // Parent
+  parentName: parentName.trim(),
+  parentPhone: phone.trim(),
+  parentEmail: email.trim(),
 
-    const enquiryData = {
-      studentClass,
-      subjects,
-      board,
+  // Student requirement
+  studentName: '',
+  studentClass,
+  board,
+  subjects,
 
-      location,
-      mode,
-      preferredGender,
-      classesPerWeek,
-      preferredTime,
+  // Requirement details
+  area: location.trim(),
+  city: location.trim(),
+  mode,
+  preferredGender,
+  classesPerWeek,
+  preferredTime,
+  additionalRequirements,
 
-      parentName,
-      phone,
-      email,
-      additionalRequirements,
+  // CRM tracking
+  source: 'website',
+  enquiryType: 'parent_tutor_requirement',
 
-      // Useful for CRM tracking
-      source: 'website',
-      enquiryType: 'parent_tutor_requirement',
-
-      // Timestamp
-      submittedAt: new Date().toISOString(),
-    };
-
+  // Timestamp
+  submittedAt: new Date().toISOString(),
+};
+   
     console.log('TUTORWAVE ENQUIRY:', enquiryData);
 
     /*
