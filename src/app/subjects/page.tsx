@@ -122,25 +122,28 @@ export default function SubjectsPage() {
         </div>
       </section>
       {/* CTA */}
-      <section className="py-20 bg-[#0D1118]">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-12 text-center">
-          <h2 className="text-3xl font-bold text-white mb-4" style={{ letterSpacing: '-0.02em' }}>
-            Don&apos;t see your subject?
-          </h2>
-          <p className="text-white/60 mb-8 leading-relaxed">
-            Submit your tuition requirement and our team will work to find suitable tutor options for your specific needs.
-          </p>
-          <Link
-            href="/find-a-tutor"
-            className="inline-flex items-center gap-2 bg-[#0A6FF7] text-white font-bold px-8 py-4 rounded-xl hover:bg-[#0858c8] transition-all duration-200 shadow-lg hover:shadow-xl"
-          >
-            Find a Tutor
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M5 12h14M12 5l7 7-7 7" />
-            </svg>
-          </Link>
-        </div>
-      </section>
+     <section className="bg-white py-20 md:py-24">
+  <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+      Don&apos;t see your subject?
+    </h2>
+
+    <p className="mt-5 text-lg text-gray-600 leading-8">
+      Submit your tuition requirement and our team will work to find suitable
+      tutor options for your specific needs.
+    </p>
+
+    <div className="mt-8">
+      <Link
+        href="/find-a-tutor"
+        className="inline-flex items-center justify-center rounded-xl bg-[#0A6FF7] px-8 py-4 text-base font-semibold text-white hover:bg-[#0862DD] transition-colors"
+      >
+        Find a Tutor
+        <span className="ml-2">→</span>
+      </Link>
+    </div>
+  </div>
+</section>
       <Footer />
       <WhatsAppButton />
     </main>
