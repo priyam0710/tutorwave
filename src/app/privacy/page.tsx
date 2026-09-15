@@ -393,7 +393,7 @@ export default function PrivacyPolicyPage() {
                   Phone: +91 8588879239
                 </p>
                 <p className="text-gray-600 mt-1">
-                  Email: Please use the official TutorWave contact email.
+                  Email: teamtutorwave@gmail.com
                 </p>
               </div>
             </section>
