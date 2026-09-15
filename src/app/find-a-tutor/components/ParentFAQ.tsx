@@ -25,11 +25,11 @@ const faqs = [
   },
   {
     q: 'Do you cover all areas in Delhi NCR?',
-    a: 'We currently serve Delhi (all major areas), Noida, Greater Noida, Gurugram, Faridabad, and Ghaziabad. If you are in a less central area, tutor availability may vary — our team will advise you when they call.',
+    a: 'We currently serve Noida , Delhi , Greater Noida, Gurugram, Faridabad, and Ghaziabad. If you are in a less central area, tutor availability may vary — our team will advise you when they call.',
   },
   {
     q: 'What subjects and classes do you cover?',
-    a: "We cover all major subjects from Nursery to Class 12 (CBSE, ICSE, IB, State Board), competitive exam preparation (IIT-JEE, NEET, NDA, CA Foundation), and select college-level subjects. If you don't see your subject listed, contact us anyway — we will try to help.",
+    a: "We cover all major subjects from Nursery to Class 12 (CBSE, ICSE, IB, Cambridge, State Board), competitive exam preparation (IIT-JEE, NEET, NDA, CA Foundation), and selected college-level subjects. If you don't see your subject listed, contact us anyway — we will try to help.",
   },
 ];
 
