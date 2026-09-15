@@ -23,8 +23,8 @@ export default function HomeFooter() {
                 <Image
                   src="/assets/images/TutorWave_logo-1786512070481.webp"
                   alt="TutorWave logo"
-                  width={27}
-                  height={27}
+                  width={32}
+                  height={29}
                   className="object-contain"
                 />
               </div>
