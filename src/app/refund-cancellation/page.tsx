@@ -1,32 +1,30 @@
-```tsx
 import Link from "next/link";
 
 export default function RefundCancellationPage() {
   return (
     <main className="min-h-screen bg-[#F8FAFC]">
-      {/* Header */}
-      <section className="bg-[#0D1118] relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-72 h-72 rounded-full bg-[#0A6FF7]/10 blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full bg-[#4BC2FD]/5 blur-3xl" />
+      <section className="relative overflow-hidden bg-[#0D1118]">
+        <div className="absolute right-0 top-0 h-72 w-72 rounded-full bg-[#0A6FF7]/10 blur-3xl" />
+        <div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-[#4BC2FD]/5 blur-3xl" />
 
-        <div className="relative z-10 max-w-5xl mx-auto px-5 sm:px-8 lg:px-12 py-16 sm:py-20">
+        <div className="relative z-10 mx-auto max-w-5xl px-5 py-16 sm:px-8 sm:py-20 lg:px-12">
           <Link
             href="/"
-            className="inline-flex items-center text-sm text-white/50 hover:text-white transition-colors mb-8"
+            className="mb-8 inline-flex text-sm text-white/50 transition-colors hover:text-white"
           >
             ← Back to TutorWave
           </Link>
 
           <div className="max-w-3xl">
-            <p className="text-sm font-semibold tracking-widest uppercase text-[#4BC2FD] mb-4">
+            <p className="mb-4 text-sm font-semibold uppercase tracking-widest text-[#4BC2FD]">
               TutorWave
             </p>
 
-            <h1 className="text-4xl sm:text-5xl font-bold text-white tracking-tight">
-              Refund & Cancellation Policy
+            <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">
+              Refund &amp; Cancellation Policy
             </h1>
 
-            <p className="mt-5 text-base sm:text-lg text-white/60 leading-relaxed">
+            <p className="mt-5 text-base leading-relaxed text-white/60 sm:text-lg">
               This policy explains how cancellations, refunds, and
               payment-related requests are handled by TutorWave.
             </p>
@@ -38,14 +36,12 @@ export default function RefundCancellationPage() {
         </div>
       </section>
 
-      {/* Main Content */}
-      <section className="max-w-4xl mx-auto px-5 sm:px-8 py-12 sm:py-16">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-10 lg:p-12">
+      <section className="mx-auto max-w-4xl px-5 py-12 sm:px-8 sm:py-16">
+        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm sm:p-10 lg:p-12">
           <div className="space-y-10 text-gray-700 leading-7">
 
-            {/* 1 */}
             <section>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              <h2 className="mb-4 text-2xl font-bold text-gray-900">
                 1. About This Policy
               </h2>
 
@@ -55,23 +51,23 @@ export default function RefundCancellationPage() {
               </p>
 
               <p className="mt-4">
-                This Refund & Cancellation Policy explains how TutorWave
+                This Refund &amp; Cancellation Policy explains how TutorWave
                 handles payments, cancellations, and refund requests relating
                 to services or fees charged directly by TutorWave.
               </p>
 
               <p className="mt-4">
-                This policy should be read together with the TutorWave{" "}
+                This policy should be read together with our{" "}
                 <Link
                   href="/terms"
-                  className="text-[#0A6FF7] hover:underline font-medium"
+                  className="font-medium text-[#0A6FF7] hover:underline"
                 >
-                  Terms & Conditions
+                  Terms &amp; Conditions
                 </Link>{" "}
                 and{" "}
                 <Link
                   href="/privacy"
-                  className="text-[#0A6FF7] hover:underline font-medium"
+                  className="font-medium text-[#0A6FF7] hover:underline"
                 >
                   Privacy Policy
                 </Link>
@@ -79,9 +75,8 @@ export default function RefundCancellationPage() {
               </p>
             </section>
 
-            {/* 2 */}
             <section>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              <h2 className="mb-4 text-2xl font-bold text-gray-900">
                 2. Types of Payments
               </h2>
 
@@ -99,9 +94,8 @@ export default function RefundCancellationPage() {
               </p>
             </section>
 
-            {/* 3 */}
             <section>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              <h2 className="mb-4 text-2xl font-bold text-gray-900">
                 3. Tutor Registration Fees
               </h2>
 
@@ -125,9 +119,8 @@ export default function RefundCancellationPage() {
               </p>
             </section>
 
-            {/* 4 */}
             <section>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              <h2 className="mb-4 text-2xl font-bold text-gray-900">
                 4. Tuition Fees Paid to Tutors
               </h2>
 
@@ -135,15 +128,15 @@ export default function RefundCancellationPage() {
                 TutorWave primarily facilitates the connection between parents
                 or students and tutors. Unless TutorWave has expressly
                 collected a particular tuition payment on behalf of a tutor,
-                tuition fees agreed directly between a parent/student and a
+                tuition fees agreed directly between a parent or student and a
                 tutor are not payments made to TutorWave.
               </p>
 
               <p className="mt-4">
-                Accordingly, disputes concerning tuition fees, missed classes,
-                class cancellations, replacement classes, or refunds relating
-                to a direct parent-tutor arrangement should ordinarily be
-                resolved between the relevant parent/student and tutor.
+                Disputes concerning tuition fees, missed classes, class
+                cancellations, replacement classes, or refunds relating to a
+                direct parent-tutor arrangement should ordinarily be resolved
+                between the relevant parent or student and tutor.
               </p>
 
               <p className="mt-4">
@@ -153,9 +146,8 @@ export default function RefundCancellationPage() {
               </p>
             </section>
 
-            {/* 5 */}
             <section>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              <h2 className="mb-4 text-2xl font-bold text-gray-900">
                 5. Cancellation by Tutors
               </h2>
 
@@ -173,16 +165,15 @@ export default function RefundCancellationPage() {
               </p>
             </section>
 
-            {/* 6 */}
             <section>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              <h2 className="mb-4 text-2xl font-bold text-gray-900">
                 6. Cancellation by Parents or Students
               </h2>
 
               <p>
                 Parents or students should inform TutorWave and the relevant
-                tutor as soon as possible if a tuition requirement is cancelled
-                or changed.
+                tutor as soon as possible if a tuition requirement is
+                cancelled or changed.
               </p>
 
               <p className="mt-4">
@@ -193,9 +184,8 @@ export default function RefundCancellationPage() {
               </p>
             </section>
 
-            {/* 7 */}
             <section>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              <h2 className="mb-4 text-2xl font-bold text-gray-900">
                 7. Refund Eligibility
               </h2>
 
@@ -208,7 +198,7 @@ export default function RefundCancellationPage() {
                 A refund may be considered where:
               </p>
 
-              <ul className="list-disc pl-6 space-y-2 mt-4">
+              <ul className="mt-4 list-disc space-y-2 pl-6">
                 <li>
                   TutorWave has expressly offered a refundable service or
                   registration plan.
@@ -225,8 +215,8 @@ export default function RefundCancellationPage() {
                   A refund is required under applicable law.
                 </li>
                 <li>
-                  TutorWave determines, at its reasonable discretion, that a
-                  refund is appropriate in the circumstances.
+                  TutorWave determines that a refund is appropriate in the
+                  circumstances.
                 </li>
               </ul>
 
@@ -237,10 +227,9 @@ export default function RefundCancellationPage() {
               </p>
             </section>
 
-            {/* 8 */}
             <section>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                8. Non-Refundable Situations
+              <h2 className="mb-4 text-2xl font-bold text-gray-900">
+                8. Situations Where a Refund May Not Apply
               </h2>
 
               <p>
@@ -248,9 +237,9 @@ export default function RefundCancellationPage() {
                 be available where:
               </p>
 
-              <ul className="list-disc pl-6 space-y-2 mt-4">
+              <ul className="mt-4 list-disc space-y-2 pl-6">
                 <li>
-                  The user has violated TutorWave's Terms & Conditions.
+                  The user has violated TutorWave's Terms &amp; Conditions.
                 </li>
                 <li>
                   False, misleading, or incomplete information was provided.
@@ -274,41 +263,34 @@ export default function RefundCancellationPage() {
               </p>
             </section>
 
-            {/* 9 */}
             <section>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              <h2 className="mb-4 text-2xl font-bold text-gray-900">
                 9. How to Request a Refund
               </h2>
 
               <p>
-                To request a refund, please contact TutorWave using the contact
-                details provided below.
+                To request a refund, please contact TutorWave using the
+                contact details provided below.
               </p>
 
               <p className="mt-4">
                 A refund request should include:
               </p>
 
-              <ul className="list-disc pl-6 space-y-2 mt-4">
+              <ul className="mt-4 list-disc space-y-2 pl-6">
                 <li>Name of the person who made the payment</li>
                 <li>Registered mobile number or email address</li>
                 <li>Date of payment</li>
                 <li>Amount paid</li>
                 <li>Reason for the refund request</li>
                 <li>
-                  Any relevant payment or transaction reference, if available
+                  Payment or transaction reference, if available
                 </li>
               </ul>
-
-              <p className="mt-4">
-                TutorWave may request additional information reasonably
-                necessary to verify the payment and assess the request.
-              </p>
             </section>
 
-            {/* 10 */}
             <section>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              <h2 className="mb-4 text-2xl font-bold text-gray-900">
                 10. Refund Processing
               </h2>
 
@@ -325,14 +307,14 @@ export default function RefundCancellationPage() {
               </p>
 
               <p className="mt-4">
-                TutorWave is not responsible for delays caused solely by banks,
-                payment gateways, or other third-party financial institutions.
+                TutorWave is not responsible for delays caused solely by
+                banks, payment gateways, or other third-party financial
+                institutions.
               </p>
             </section>
 
-            {/* 11 */}
             <section>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              <h2 className="mb-4 text-2xl font-bold text-gray-900">
                 11. Duplicate or Incorrect Payments
               </h2>
 
@@ -348,16 +330,15 @@ export default function RefundCancellationPage() {
               </p>
             </section>
 
-            {/* 12 */}
             <section>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              <h2 className="mb-4 text-2xl font-bold text-gray-900">
                 12. Promotional Offers
               </h2>
 
               <p>
-                From time to time, TutorWave may offer promotional pricing,
-                discounted registration fees, refundable registration offers,
-                or other special arrangements.
+                TutorWave may offer promotional pricing, discounted
+                registration fees, refundable registration offers, or other
+                special arrangements from time to time.
               </p>
 
               <p className="mt-4">
@@ -367,10 +348,9 @@ export default function RefundCancellationPage() {
               </p>
             </section>
 
-            {/* 13 */}
             <section>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                13. Disputes and Payment Concerns
+              <h2 className="mb-4 text-2xl font-bold text-gray-900">
+                13. Payment Disputes
               </h2>
 
               <p>
@@ -385,15 +365,14 @@ export default function RefundCancellationPage() {
               </p>
             </section>
 
-            {/* 14 */}
             <section>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              <h2 className="mb-4 text-2xl font-bold text-gray-900">
                 14. Changes to This Policy
               </h2>
 
               <p>
-                TutorWave may update this Refund & Cancellation Policy from
-                time to time to reflect changes in our services, payment
+                TutorWave may update this Refund &amp; Cancellation Policy
+                from time to time to reflect changes in our services, payment
                 arrangements, business practices, or applicable laws.
               </p>
 
@@ -403,9 +382,8 @@ export default function RefundCancellationPage() {
               </p>
             </section>
 
-            {/* 15 */}
             <section>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              <h2 className="mb-4 text-2xl font-bold text-gray-900">
                 15. Contact TutorWave
               </h2>
 
@@ -414,20 +392,20 @@ export default function RefundCancellationPage() {
                 contact TutorWave.
               </p>
 
-              <div className="mt-6 rounded-xl bg-[#F8FAFC] border border-gray-200 p-5">
+              <div className="mt-6 rounded-xl border border-gray-200 bg-[#F8FAFC] p-5">
                 <p className="font-semibold text-gray-900">
                   TutorWave
                 </p>
 
-                <p className="text-gray-600 mt-1">
+                <p className="mt-1 text-gray-600">
                   Delhi NCR, India
                 </p>
 
-                <p className="text-gray-600 mt-1">
+                <p className="mt-1 text-gray-600">
                   Phone: +91 8588879239
                 </p>
 
-                <p className="text-gray-600 mt-1">
+                <p className="mt-1 text-gray-600">
                   Email: Please use the official TutorWave contact email.
                 </p>
               </div>
@@ -435,11 +413,10 @@ export default function RefundCancellationPage() {
 
           </div>
 
-          {/* Bottom Navigation */}
-          <div className="mt-12 pt-8 border-t border-gray-200 flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
+          <div className="mt-12 flex flex-col gap-4 border-t border-gray-200 pt-8 sm:flex-row sm:items-center sm:justify-between">
             <Link
               href="/"
-              className="text-sm font-medium text-[#0A6FF7] hover:text-[#0759C9] transition-colors"
+              className="text-sm font-medium text-[#0A6FF7] transition-colors hover:text-[#0759C9]"
             >
               ← Back to TutorWave
             </Link>
@@ -447,16 +424,16 @@ export default function RefundCancellationPage() {
             <div className="flex flex-wrap gap-4">
               <Link
                 href="/privacy"
-                className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
+                className="text-sm font-medium text-gray-500 transition-colors hover:text-gray-900"
               >
                 Privacy Policy
               </Link>
 
               <Link
                 href="/terms"
-                className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
+                className="text-sm font-medium text-gray-500 transition-colors hover:text-gray-900"
               >
-                Terms & Conditions
+                Terms &amp; Conditions
               </Link>
             </div>
           </div>
@@ -465,4 +442,3 @@ export default function RefundCancellationPage() {
     </main>
   );
 }
-```
