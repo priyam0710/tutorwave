@@ -159,21 +159,21 @@ export default function HomeFooter() {
                 href="/contact"
                 className="text-sm text-white/65 hover:text-white transition-colors"
               >
-                Contact
+                Contact Us
               </Link>
 
               <Link
                 href="/privacy"
                 className="text-sm text-white/65 hover:text-white transition-colors"
               >
-                Privacy
+                Privacy Policy
               </Link>
 
               <Link
                 href="/terms"
                 className="text-sm text-white/65 hover:text-white transition-colors"
               >
-                Terms
+                Terms &amp; Conditions
               </Link>
 
               {/* Refund & Cancellation */}
