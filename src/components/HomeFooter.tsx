@@ -28,7 +28,7 @@ export default function HomeFooter() {
             <div className="flex items-center gap-2.5 mb-3">
               <div className="bg-white rounded-lg p-1.5 flex-shrink-0">
                 <Image
-                  src="/assets/images/TutorWave_logo-1786512070481.webp"
+                  src="/assets/images/app_logo.png"
                   alt="TutorWave logo"
                   width={25}
                   height={25}
