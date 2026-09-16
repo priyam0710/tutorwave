@@ -22,8 +22,10 @@ export const metadata: Metadata = {
   description:
     'TutorWave connects Delhi NCR parents and students with verified home tutors for CBSE, ICSE, IIT-JEE, NEET and more.',
   icons: {
-    icon: [{ url: '/favicon.ico', type: 'image/x-icon' }],
-  },
+  icon: '/assets/images/app_logo.png',
+  shortcut: '/assets/images/app_logo.png',
+  apple: '/assets/images/app_logo.png',
+},
   alternates: {
     canonical: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
   },
