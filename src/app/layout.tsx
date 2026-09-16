@@ -20,6 +20,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
   title: 'TutorWave — Verified Home Tutors in Delhi NCR',
   description:
+    
 icons: {
   icon: '/assets/images/app_logo.png',
   shortcut: '/assets/images/app_logo.png',
