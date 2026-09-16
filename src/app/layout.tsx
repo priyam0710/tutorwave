@@ -22,6 +22,7 @@ export const metadata: Metadata = {
   description:
     
 icons: {
+  
   icon: '/assets/images/app_logo.png',
   shortcut: '/assets/images/app_logo.png',
   apple: '/assets/images/app_logo.png',
