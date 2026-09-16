@@ -17,25 +17,30 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+  ),
+
   title: 'TutorWave — Verified Home Tutors in Delhi NCR',
+
   description:
-    
-icons: {
-  
-  icon: '/assets/images/app_logo.png',
-  shortcut: '/assets/images/app_logo.png',
-  apple: '/assets/images/app_logo.png',
-},
+    'TutorWave connects Delhi NCR parents and students with verified home tutors for CBSE, ICSE, IIT-JEE, NEET and more.',
+
   alternates: {
-    canonical: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
+    canonical:
+      process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
   },
+
   openGraph: {
     type: 'website',
     locale: 'en_IN',
     url: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
+
     title: 'Find Verified Home & Online Tutors | TutorWave',
-    description: 'Connect with verified home tutors in Delhi NCR for CBSE, ICSE, IIT-JEE, NEET. Home and online classes available.',
+
+    description:
+      'Connect with verified home tutors in Delhi NCR for CBSE, ICSE, IIT-JEE, NEET. Home and online classes available.',
+
     images: [
       {
         url: '/assets/images/app_logo.png',
@@ -46,10 +51,15 @@ icons: {
       },
     ],
   },
+
   twitter: {
     card: 'summary_large_image',
+
     title: 'Find Verified Home & Online Tutors | TutorWave',
-    description: 'Connect with verified home tutors in Delhi NCR for CBSE, ICSE, IIT-JEE, NEET.',
+
+    description:
+      'Connect with verified home tutors in Delhi NCR for CBSE, ICSE, IIT-JEE, NEET.',
+
     images: ['/assets/images/app_logo.png'],
   },
 };
@@ -67,17 +77,41 @@ export default function RootLayout({
               '@context': 'https://schema.org',
               '@type': 'Organization',
               name: 'TutorWave',
-              url: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
-              logo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/assets/images/app_logo.png`,
-              description: 'TutorWave connects Delhi NCR parents and students with verified home tutors for CBSE, ICSE, IIT-JEE, NEET and more.',
-              areaServed: ['Delhi', 'Noida', 'Greater Noida', 'Ghaziabad', 'Gurugram', 'Faridabad'],
+              url:
+                process.env.NEXT_PUBLIC_SITE_URL ||
+                'http://localhost:3000',
+              logo: `${
+                process.env.NEXT_PUBLIC_SITE_URL ||
+                'http://localhost:3000'
+              }/assets/images/app_logo.png`,
+              description:
+                'TutorWave connects Delhi NCR parents and students with verified home tutors for CBSE, ICSE, IIT-JEE, NEET and more.',
+              areaServed: [
+                'Delhi',
+                'Noida',
+                'Greater Noida',
+                'Ghaziabad',
+                'Gurugram',
+                'Faridabad',
+              ],
               sameAs: [],
             }),
           }}
         />
 
-        <script type="module" async src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Ftutorwave3501back.builtwithrocket.new&_be=https%3A%2F%2Fappanalytics.rocket.new&_v=0.1.20" />
-        <script type="module" defer src="https://static.rocket.new/rocket-shot.js?v=0.0.2" /></head>
+        <script
+          type="module"
+          async
+          src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Ftutorwave3501back.builtwithrocket.new&_be=https%3A%2F%2Fappanalytics.rocket.new&_v=0.1.20"
+        />
+
+        <script
+          type="module"
+          defer
+          src="https://static.rocket.new/rocket-shot.js?v=0.0.2"
+        />
+      </head>
+
       <body className={manrope.className}>
         {children}
       </body>
