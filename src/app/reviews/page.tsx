@@ -282,7 +282,6 @@ export default function ReviewsPage() {
               </h1>
               <p className="text-[#6B7280] text-lg leading-relaxed max-w-xl">
                 Real experiences from families and educators who use TutorWave across Delhi NCR.
-                Genuine testimonials will appear here as they are collected and verified.
               </p>
             </div>
           </div>
@@ -311,7 +310,6 @@ export default function ReviewsPage() {
                   <circle cx="12" cy="12" r="10" />
                   <path d="M12 8v4M12 16h.01" />
                 </svg>
-                Placeholders — real testimonials coming soon
               </div>
             </div>
 
@@ -445,12 +443,28 @@ export default function ReviewsPage() {
             <p className="text-[#6B7280] mb-8 max-w-md mx-auto leading-relaxed">
               We&apos;d love to hear about your experience. Verified testimonials help other families make confident decisions.
             </p>
-            <Link
-              href="/contact"
-              className="inline-flex items-center gap-2 border border-[#E5E7EB] bg-white text-[#0D1118] font-semibold px-6 py-3 rounded-xl hover:border-[#0A6FF7] hover:text-[#0A6FF7] transition-colors text-sm"
-            >
-              Share Your Story
-            </Link>
+            <a
+  href="https://g.page/r/CfHuPfj4_Z9-EAE/review"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="inline-flex items-center gap-2 border border-[#E5E7EB] bg-white text-[#0D1118] font-semibold px-6 py-3 rounded-xl hover:border-[#0A6FF7] hover:text-[#0A6FF7] transition-colors text-sm"
+>
+  Share Your Story
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+    <path d="M15 3h6v6" />
+    <path d="M10 14L21 3" />
+  </svg>
+</a>
           </div>
         </section>
 
