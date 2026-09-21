@@ -562,21 +562,21 @@ export default function TutorRegistrationForm() {
       };
 
       const crmBaseUrl =
-  process.env.NEXT_PUBLIC_CRM_URL ||
-  'https://tutorwave-crm-xi.vercel.app';
+        process.env.NEXT_PUBLIC_CRM_URL ||
+        'https://tutorwave-crm-xi.vercel.app';
 
-const response = await fetch(
-  `${crmBaseUrl}/api/public/tutors/register`,
-  {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    },
-    body: JSON.stringify(payload),
-    cache: 'no-store',
-  }
-);
+      const response = await fetch(
+        `${crmBaseUrl}/api/public/tutors/register`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify(payload),
+          cache: 'no-store',
+        }
+      );
 
       const data = await response.json().catch(() => null);
 
