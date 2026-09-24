@@ -1,4 +1,3 @@
-
 import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
@@ -21,56 +20,32 @@ type Tutor = {
   gender?: string;
 
   city?: string;
-  location?: string;
-  area?: string;
-  locality?: string;
-  areas?: string[] | string;
+  areas?: string[];
 
-  subjects?: string[] | string;
-  classes?: string[] | string;
-  boards?: string[] | string;
+  subjects?: string[];
+  classes?: string[];
+  boards?: string[];
 
   mode?: string;
-  teachingMode?: string | string[];
-  preferredMode?: string;
-  modes?: string[];
 
   highestQualification?: string;
-  degree?: string;
-  qualification?: string;
   college?: string;
-  collegeUniversity?: string;
-  university?: string;
-  institution?: string;
   specialization?: string;
 
   experienceYears?: number | string;
-  experience?: number | string;
 
   bio?: string;
-  about?: string;
-  aboutTutor?: string;
-  description?: string;
 
-  rating?: number | string;
-  averageRating?: number | string;
+  rating?: number;
 
   isVerified?: boolean;
-  verified?: boolean;
-  verificationStatus?: string;
-  status?: string;
 
-  languages?: string[] | string;
-  teachingLanguages?: string[] | string;
-  language?: string;
-  spokenLanguages?: string[] | string;
+  languages?: string[];
+  teachingLanguages?: string[];
 
   availability?: string;
-  availabilityDays?: string[] | string;
+  availabilityDays?: string[];
   availabilityTime?: string;
-  availableTimings?: string;
-  preferredTiming?: string;
-  timings?: string;
 
   feeRange?: string;
   hourlyRate?: string | number;
@@ -78,83 +53,21 @@ type Tutor = {
 
   studentsTaught?: number | string;
   totalStudents?: number | string;
-  studentsCount?: number | string;
 
-  /*
-   * School / teaching background
-   */
-  schoolsTaught?: string[] | string;
-  previousInstitutions?: string[] | string;
+  schoolsTaught?: string[];
+  previousInstitutions?: string[];
   institutions?: string[];
-  schoolNames?: string[] | string;
-  studentsTaughtFromSchools?: string[] | string;
-
-  schoolExperience?: string;
-  schoolTeachingExperience?: string;
-  schoolExperienceYears?: string | number;
 
   teachingExperience?: string;
   experienceDetails?: string;
 
   teachingApproach?: string;
   teachingMethodology?: string;
-  approach?: string;
-  teachingMethods?: string[] | string;
 
-  achievements?: string[] | string;
-  certifications?: string[] | string;
+  achievements?: string[];
+  certifications?: string[];
 
-  /*
-   * Important:
-   * The registration form submits these inside `teaching`.
-   * Keeping this flexible allows the profile page to read
-   * the actual CRM structure without breaking.
-   */
-  teaching?: {
-    experience?: number | string;
-    schoolExperience?: string;
-    schoolTeachingExperience?: string;
-    schoolExperienceYears?: number | string;
-
-    studentsTaughtFrom?: string | string[];
-    studentsTaughtFromSchools?: string | string[];
-
-    boards?: string[] | string;
-
-    primaryClasses?: string[] | string;
-    primarySubjects?: string[] | string;
-
-    secondaryClasses?: string[] | string;
-    secondarySubjects?: string[] | string;
-
-    seniorSecondaryClasses?: string[] | string;
-    seniorSecondarySubjects?: string[] | string;
-
-    englishFluency?: string;
-  };
-
-  education?: {
-    highestQualification?: string;
-    college?: string;
-    university?: string;
-    stream?: string;
-    specialization?: string;
-    additionalQualification?: string;
-  };
-
-  personal?: {
-    fullName?: string;
-    profilePhoto?: string;
-    city?: string;
-    location?: string;
-  };
-
-  preferences?: {
-    teachingMode?: string[] | string;
-    offlineAreas?: string | string[];
-    availability?: string[] | string;
-    studentTypes?: string[] | string;
-  };
+  schoolExperience?: string;
 
   [key: string]: any;
 };
@@ -185,7 +98,10 @@ function normalize(value: string) {
     .replace(/^-+|-+$/g, '');
 }
 
-function tutorMatchesSlug(tutor: Tutor, rawSlug: string) {
+function tutorMatchesSlug(
+  tutor: Tutor,
+  rawSlug: string
+) {
   if (!tutor?.id || !tutor?.fullName) {
     return false;
   }
@@ -243,7 +159,8 @@ async function getTutors(): Promise<Tutor[]> {
       return [];
     }
 
-    const data: ApiResponse = await response.json();
+    const data: ApiResponse =
+      await response.json();
 
     return Array.isArray(data?.tutors)
       ? data.tutors
@@ -270,86 +187,9 @@ async function findTutorBySlug(
   );
 }
 
-/* =========================================================
-   ARRAY / TEXT NORMALIZATION
-========================================================= */
-
-/*
- * Converts:
- *
- * ["CBSE", "ICSE"]
- *
- * OR
- *
- * "CBSE, ICSE"
- *
- * OR
- *
- * "CBSE • ICSE"
- *
- * into a clean array.
- */
-function cleanArray(value: any): string[] {
-  if (value === undefined || value === null) {
-    return [];
-  }
-
-  if (Array.isArray(value)) {
-    return value
-      .flat(Infinity)
-      .filter(
-        (item) =>
-          item !== undefined &&
-          item !== null &&
-          String(item).trim() !== ''
-      )
-      .map((item) => String(item).trim())
-      .filter(Boolean);
-  }
-
-  if (typeof value === 'string') {
-    const text = value.trim();
-
-    if (!text) {
-      return [];
-    }
-
-    return text
-      .split(/[,;|•\n]+/)
-      .map((item) => item.trim())
-      .filter(Boolean);
-  }
-
-  return [String(value).trim()].filter(Boolean);
-}
-
-function firstArray(...values: any[]): string[] {
-  for (const value of values) {
-    const result = cleanArray(value);
-
-    if (result.length > 0) {
-      return result;
-    }
-  }
-
-  return [];
-}
-
-function firstText(...values: any[]): string | null {
-  for (const value of values) {
-    if (
-      value !== undefined &&
-      value !== null &&
-      String(value).trim() !== ''
-    ) {
-      return String(value).trim();
-    }
-  }
-
-  return null;
-}
-
-function formatExperience(value?: number | string | null) {
+function formatExperience(
+  value?: number | string
+) {
   if (
     value === undefined ||
     value === null ||
@@ -358,58 +198,34 @@ function formatExperience(value?: number | string | null) {
     return null;
   }
 
-  const text = String(value).trim();
-
-  /*
-   * If the CRM already contains text such as
-   * "10+ years", don't append another "years".
-   */
-  if (
-    /year|years|month|months/i.test(text)
-  ) {
-    return text;
-  }
-
-  return `${text} ${
-    text === '1' ? 'year' : 'years'
+  return `${value} ${
+    String(value) === '1'
+      ? 'year'
+      : 'years'
   }`;
 }
 
-function formatMode(
-  mode?: string | string[] | null
-) {
-  const values = cleanArray(mode);
+function formatMode(mode?: string) {
+  if (!mode) return null;
 
-  if (values.length === 0) {
-    return null;
-  }
+  const value = mode.toLowerCase().trim();
 
-  const normalized = values.map((value) =>
-    value.toLowerCase().trim()
-  );
-
-  const hasHome =
-    normalized.includes('home') ||
-    normalized.includes('offline') ||
-    normalized.includes('home tuition');
-
-  const hasOnline =
-    normalized.includes('online') ||
-    normalized.includes('online tuition');
-
-  if (hasHome && hasOnline) {
+  if (value === 'both') {
     return 'Home & Online';
   }
 
-  if (hasOnline) {
+  if (value === 'online') {
     return 'Online Tuition';
   }
 
-  if (hasHome) {
+  if (
+    value === 'offline' ||
+    value === 'home'
+  ) {
     return 'Home Tuition';
   }
 
-  return values.join(' • ');
+  return mode;
 }
 
 function initials(name?: string) {
@@ -425,8 +241,128 @@ function initials(name?: string) {
     .join('');
 }
 
+/* ---------------------------------------------------------
+   ARRAY NORMALIZER
+--------------------------------------------------------- */
+
+function cleanArray(
+  value: any
+): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .filter(
+        (item) =>
+          item !== undefined &&
+          item !== null &&
+          String(item).trim() !== ''
+      )
+      .map((item) => String(item).trim())
+      .filter(Boolean);
+  }
+
+  /*
+   * Also support CRM values that may arrive as
+   * comma-separated / newline-separated strings.
+   */
+  if (typeof value === 'string') {
+    return value
+      .split(/[,|\n]+/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
+/* ---------------------------------------------------------
+   FIRST ARRAY
+--------------------------------------------------------- */
+
+function firstArray(
+  ...values: any[]
+): string[] {
+  const combined: string[] = [];
+
+  for (const value of values) {
+    const result = cleanArray(value);
+
+    if (result.length > 0) {
+      combined.push(...result);
+    }
+  }
+
+  return [...new Set(combined)];
+}
+
+/* ---------------------------------------------------------
+   SCHOOL / INSTITUTION NORMALIZER
+--------------------------------------------------------- */
+
+function getSchoolsTaught(
+  tutor: Tutor
+): string[] {
+  const possibleSchoolFields = [
+    tutor.schoolsTaught,
+    tutor.previousInstitutions,
+    tutor.institutions,
+
+    /*
+     * Additional possible CRM field names.
+     * These make the profile resilient if the form
+     * stores school names under a slightly different key.
+     */
+    tutor.schools,
+    tutor.schoolNames,
+    tutor.teachingInstitutions,
+    tutor.institutionsTaught,
+    tutor.schoolsTaughtFrom,
+    tutor.studentSchools,
+  ];
+
+  const schools: string[] = [];
+
+  for (
+    const field of possibleSchoolFields
+  ) {
+    const values = cleanArray(field);
+
+    if (values.length > 0) {
+      schools.push(...values);
+    }
+  }
+
+  return [
+    ...new Set(
+      schools.filter(
+        (school) =>
+          school.trim() !== ''
+      )
+    ),
+  ];
+}
+
+/* ---------------------------------------------------------
+   TEXT
+--------------------------------------------------------- */
+
+function firstText(
+  ...values: any[]
+): string | null {
+  for (const value of values) {
+    if (
+      value !== undefined &&
+      value !== null &&
+      String(value).trim() !== ''
+    ) {
+      return String(value).trim();
+    }
+  }
+
+  return null;
+}
+
 function formatNumber(
-  value?: number | string | null
+  value?: number | string
 ) {
   if (
     value === undefined ||
@@ -455,7 +391,7 @@ function Section({
   return (
     <section className="bg-white border border-[#E5E7EB] rounded-3xl p-6 sm:p-8">
       {eyebrow && (
-        <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#0A6FF7] mb-2">
+        <p className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.12em] text-[#0A6FF7] mb-2">
           {eyebrow}
         </p>
       )}
@@ -528,10 +464,26 @@ function CheckIcon() {
       fill="none"
       stroke="currentColor"
       strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
     >
       <path d="M5 12l4 4L19 6" />
+    </svg>
+  );
+}
+
+function SchoolIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <path d="M3 21h18" />
+      <path d="M5 21V9l7-5 7 5v12" />
+      <path d="M9 21v-6h6v6" />
+      <path d="M8 11h2M14 11h2" />
     </svg>
   );
 }
@@ -547,46 +499,35 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
 
-  const tutor = await findTutorBySlug(slug);
+  const tutor =
+    await findTutorBySlug(slug);
 
   if (!tutor) {
     return {
-      title: 'Tutor Profile | TutorWave',
+      title:
+        'Tutor Profile | TutorWave',
       description:
         'Explore verified tutors available through TutorWave.',
     };
   }
 
   const name =
-    tutor.fullName ||
-    tutor.personal?.fullName ||
-    'Tutor';
+    tutor.fullName || 'Tutor';
 
-  const subjects = firstArray(
-    tutor.subjects,
-    tutor.teaching?.primarySubjects,
-    tutor.teaching?.secondarySubjects,
-    tutor.teaching?.seniorSecondarySubjects
-  );
+  const subjects =
+    Array.isArray(tutor.subjects) &&
+    tutor.subjects.length
+      ? tutor.subjects.join(', ')
+      : 'Multiple Subjects';
 
   const city =
-    firstText(
-      tutor.city,
-      tutor.location,
-      tutor.personal?.city,
-      tutor.personal?.location
-    ) || 'Delhi NCR';
+    tutor.city || 'Delhi NCR';
 
   return {
-    title: `${name} — ${
-      subjects.length
-        ? subjects.join(', ')
-        : 'Home Tuition'
-    } Tutor in ${city} | TutorWave`,
+    title: `${name} — ${subjects} Tutor in ${city} | TutorWave`,
     description:
       tutor.bio ||
-      tutor.about ||
-      `${name} is a TutorWave tutor available for personalized tuition in ${city}.`,
+      `${name} is a TutorWave tutor available for ${subjects} in ${city}.`,
   };
 }
 
@@ -601,7 +542,8 @@ export default async function TutorDetailPage({
 }) {
   const { slug } = await params;
 
-  const tutor = await findTutorBySlug(slug);
+  const tutor =
+    await findTutorBySlug(slug);
 
   /* =======================================================
      NOT FOUND
@@ -624,7 +566,11 @@ export default async function TutorDetailPage({
                 stroke="#0A6FF7"
                 strokeWidth="1.8"
               >
-                <circle cx="12" cy="8" r="4" />
+                <circle
+                  cx="12"
+                  cy="8"
+                  r="4"
+                />
                 <path d="M4 21c0-4 3.5-7 8-7s8 3 8 7" />
               </svg>
             </div>
@@ -634,10 +580,11 @@ export default async function TutorDetailPage({
             </h1>
 
             <p className="text-[#6B7280] leading-relaxed mb-8">
-              We couldn't find this tutor profile in the
-              TutorWave tutor network. The profile may have
-              been removed, unpublished or is still being
-              verified.
+              We couldn't find this tutor
+              profile in the TutorWave
+              tutor network. The profile may
+              have been removed, unpublished
+              or is still being verified.
             </p>
 
             <Link
@@ -658,6 +605,7 @@ export default async function TutorDetailPage({
 
               Browse Tutors
             </Link>
+
           </div>
         </section>
 
@@ -672,248 +620,88 @@ export default async function TutorDetailPage({
   ======================================================= */
 
   const name =
-    tutor.fullName ||
-    tutor.personal?.fullName ||
-    'Tutor';
+    tutor.fullName || 'Tutor';
 
   const photo =
-    tutor.profilePhoto ||
-    tutor.personal?.profilePhoto ||
-    '';
+    tutor.profilePhoto || '';
+
+  const subjects =
+    cleanArray(tutor.subjects);
+
+  const classes =
+    cleanArray(tutor.classes);
+
+  const boards =
+    cleanArray(tutor.boards);
+
+  const areas =
+    cleanArray(tutor.areas);
+
+  const languages =
+    firstArray(
+      tutor.languages,
+      tutor.teachingLanguages
+    );
 
   /*
-   * Subjects
+   * Robust school extraction
    */
-  const subjects = firstArray(
-    tutor.subjects,
-    tutor.teaching?.primarySubjects,
-    tutor.teaching?.secondarySubjects,
-    tutor.teaching?.seniorSecondarySubjects
-  );
+  const schoolsTaught =
+    getSchoolsTaught(tutor);
 
-  /*
-   * Classes
-   */
-  const classes = firstArray(
-    tutor.classes,
-    tutor.teaching?.primaryClasses,
-    tutor.teaching?.secondaryClasses,
-    tutor.teaching?.seniorSecondaryClasses
-  );
+  const achievements =
+    cleanArray(tutor.achievements);
 
-  /*
-   * Boards
-   */
-  const boards = firstArray(
-    tutor.boards,
-    tutor.teaching?.boards
-  );
+  const certifications =
+    cleanArray(tutor.certifications);
 
-  /*
-   * Location
-   */
   const city =
-    firstText(
-      tutor.city,
-      tutor.location,
-      tutor.area,
-      tutor.locality,
-      tutor.personal?.city,
-      tutor.personal?.location
-    ) || 'Delhi NCR';
-
-  /*
-   * Areas
-   */
-  const areas = firstArray(
-    tutor.areas,
-    tutor.preferences?.offlineAreas
-  );
-
-  /*
-   * Languages
-   */
-  const languages = firstArray(
-    tutor.languages,
-    tutor.teachingLanguages,
-    tutor.language,
-    tutor.spokenLanguages
-  );
-
-  /*
-   * Experience
-   *
-   * IMPORTANT:
-   * The registration form stores experience inside:
-   *
-   * teaching.experience
-   */
-  const rawExperience =
-    tutor.experienceYears ??
-    tutor.experience ??
-    tutor.teaching?.experience;
+    tutor.city || 'Delhi NCR';
 
   const experience =
-    formatExperience(rawExperience);
+    formatExperience(
+      tutor.experienceYears
+    );
 
-  /*
-   * Teaching mode
-   */
-  const mode = formatMode(
-    tutor.mode ??
-    tutor.teachingMode ??
-    tutor.modes ??
-    tutor.preferredMode ??
-    tutor.preferences?.teachingMode
-  );
+  const mode =
+    formatMode(tutor.mode);
 
-  /*
-   * Qualification
-   */
   const qualification =
     firstText(
-      tutor.highestQualification,
-      tutor.qualification,
-      tutor.degree,
-      tutor.education?.highestQualification
+      tutor.highestQualification
     );
 
-  /*
-   * College / university
-   */
   const college =
-    firstText(
-      tutor.college,
-      tutor.university,
-      tutor.collegeUniversity,
-      tutor.institution,
-      tutor.education?.college,
-      tutor.education?.university
-    );
+    firstText(tutor.college);
 
-  /*
-   * Specialisation
-   */
   const specialization =
-    firstText(
-      tutor.specialization,
-      tutor.education?.specialization
-    );
+    firstText(tutor.specialization);
 
-  /*
-   * Teaching experience details
-   */
   const experienceDetails =
     firstText(
       tutor.teachingExperience,
       tutor.experienceDetails
     );
 
-  /*
-   * =======================================================
-   * SCHOOL TEACHING EXPERIENCE
-   *
-   * The registration form submits:
-   *
-   * teaching.schoolExperience
-   *
-   * so we explicitly read that field.
-   * =======================================================
-   */
-
   const schoolExperience =
     firstText(
-      tutor.schoolExperience,
-      tutor.schoolTeachingExperience,
-      tutor.schoolExperienceYears,
-      tutor.teaching?.schoolExperience,
-      tutor.teaching?.schoolTeachingExperience,
-      tutor.teaching?.schoolExperienceYears
+      tutor.schoolExperience
     );
 
-  /*
-   * =======================================================
-   * STUDENTS TAUGHT FROM / SCHOOL NAMES
-   *
-   * The registration form submits:
-   *
-   * teaching.studentsTaughtFrom
-   *
-   * This is the important fix.
-   * =======================================================
-   */
-
-  const schoolsTaught = firstArray(
-    /*
-     * Direct CRM fields
-     */
-    tutor.schoolsTaught,
-    tutor.schoolNames,
-    tutor.studentsTaughtFromSchools,
-    tutor.previousInstitutions,
-    tutor.institutions,
-
-    /*
-     * Nested CRM fields
-     */
-    tutor.teaching?.studentsTaughtFrom,
-    tutor.teaching?.studentsTaughtFromSchools
-  );
-
-  /*
-   * Students taught count
-   */
-  const studentsTaught =
-    formatNumber(
-      tutor.studentsTaught ??
-      tutor.totalStudents ??
-      tutor.studentsCount
-    );
-
-  /*
-   * About
-   */
-  const bio =
-    firstText(
-      tutor.bio,
-      tutor.about,
-      tutor.aboutTutor,
-      tutor.description
-    ) ||
-    `${name} is a TutorWave tutor available for personalized tuition support.`;
-
-  /*
-   * Teaching approach
-   */
   const teachingApproach =
     firstText(
       tutor.teachingApproach,
-      tutor.teachingMethodology,
-      tutor.approach,
-      tutor.teachingMethods
+      tutor.teachingMethodology
     );
 
-  /*
-   * Availability
-   */
   const availability =
-    firstText(
-      tutor.availability,
-      tutor.availableTimings,
-      tutor.preferredTiming,
-      tutor.timings,
-      tutor.preferences?.availability
-    );
+    firstText(tutor.availability);
 
   const availabilityTime =
-    firstText(tutor.availabilityTime);
+    firstText(
+      tutor.availabilityTime
+    );
 
-  const availabilityDays =
-    firstArray(tutor.availabilityDays);
-
-  /*
-   * Fees
-   */
   const feeRange =
     firstText(
       tutor.feeRange,
@@ -921,45 +709,65 @@ export default async function TutorDetailPage({
       tutor.hourlyRate
     );
 
-  /*
-   * Verification
-   */
-  const isVerified =
-    tutor.isVerified === true ||
-    tutor.verified === true ||
-    String(tutor.verificationStatus || '')
-      .toLowerCase() === 'verified' ||
-    String(tutor.status || '')
-      .toLowerCase() === 'verified';
-
-  /*
-   * Rating
-   *
-   * Kept only if the CRM actually has a rating.
-   * No placements.
-   */
-  const ratingValue =
-    tutor.rating ??
-    tutor.averageRating;
+  const studentsTaught =
+    formatNumber(
+      tutor.studentsTaught ??
+      tutor.totalStudents
+    );
 
   const rating =
-    ratingValue !== undefined &&
-    ratingValue !== null &&
-    ratingValue !== ''
-      ? Number(ratingValue)
+    typeof tutor.rating === 'number'
+      ? tutor.rating
       : null;
 
-  /*
-   * Achievements
-   */
-  const achievements =
-    cleanArray(tutor.achievements);
+  const bio =
+    tutor.bio?.trim() ||
+    `${name} is a TutorWave tutor available for personalized tuition support.`;
 
-  /*
-   * Certifications
-   */
-  const certifications =
-    cleanArray(tutor.certifications);
+  /* =======================================================
+     WHY THIS TUTOR MAY BE A GOOD FIT
+  ======================================================= */
+
+  const fitPoints: string[] = [];
+
+  if (experience) {
+    fitPoints.push(
+      `${experience} teaching experience`
+    );
+  }
+
+  if (boards.length > 0) {
+    fitPoints.push(
+      `${boards.join(' & ')} curriculum experience`
+    );
+  }
+
+  if (subjects.length > 0) {
+    fitPoints.push(
+      subjects.length === 1
+        ? subjects[0]
+        : subjects.slice(0, 4).join(', ')
+    );
+  }
+
+  if (classes.length > 0) {
+    fitPoints.push(
+      `Classes ${classes.join(', ')}`
+    );
+  }
+
+  if (mode) {
+    fitPoints.push(mode);
+  }
+
+  if (city) {
+    fitPoints.push(
+      `Tuition available in ${city}`
+    );
+  }
+
+  const finalFitPoints =
+    fitPoints.slice(0, 6);
 
   /* =======================================================
      RETURN
@@ -1014,7 +822,7 @@ export default async function TutorDetailPage({
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-8 sm:py-10">
 
-          <div className="grid grid-cols-1 lg:grid-cols-[180px_1fr_auto] gap-7 lg:gap-10 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-[180px_minmax(0,1fr)_190px] gap-7 lg:gap-10 items-start">
 
             {/* PHOTO */}
 
@@ -1045,7 +853,7 @@ export default async function TutorDetailPage({
                   {name}
                 </h1>
 
-                {isVerified && (
+                {tutor.isVerified && (
                   <span className="inline-flex items-center gap-1.5 bg-[#E6F7F5] text-[#0C8F81] px-3 py-1.5 rounded-full text-xs font-bold">
                     <CheckIcon />
                     Verified Tutor
@@ -1070,7 +878,6 @@ export default async function TutorDetailPage({
 
                 {experience && (
                   <div className="inline-flex items-center gap-2 bg-[#F8FAFC] border border-[#E5E7EB] px-4 py-2.5 rounded-xl text-sm font-medium text-[#374151]">
-
                     <svg
                       width="16"
                       height="16"
@@ -1079,17 +886,18 @@ export default async function TutorDetailPage({
                       stroke="#0A6FF7"
                       strokeWidth="2"
                     >
-                      <circle cx="12" cy="12" r="9" />
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="9"
+                      />
                       <path d="M12 7v5l3 2" />
                     </svg>
-
                     {experience}
-
                   </div>
                 )}
 
                 <div className="inline-flex items-center gap-2 bg-[#F8FAFC] border border-[#E5E7EB] px-4 py-2.5 rounded-xl text-sm font-medium text-[#374151]">
-
                   <svg
                     width="16"
                     height="16"
@@ -1099,16 +907,17 @@ export default async function TutorDetailPage({
                     strokeWidth="2"
                   >
                     <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0Z" />
-                    <circle cx="12" cy="10" r="3" />
+                    <circle
+                      cx="12"
+                      cy="10"
+                      r="3"
+                    />
                   </svg>
-
                   {city}
-
                 </div>
 
                 {mode && (
                   <div className="inline-flex items-center gap-2 bg-[#F8FAFC] border border-[#E5E7EB] px-4 py-2.5 rounded-xl text-sm font-medium text-[#374151]">
-
                     <svg
                       width="16"
                       height="16"
@@ -1126,9 +935,7 @@ export default async function TutorDetailPage({
                       />
                       <path d="M7 8h10M7 12h10M7 16h6" />
                     </svg>
-
                     {mode}
-
                   </div>
                 )}
 
@@ -1136,46 +943,30 @@ export default async function TutorDetailPage({
 
             </div>
 
-            {/* QUICK STATS */}
+            {/* REQUEST CARD */}
 
-            <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
+            <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl p-5">
 
-              {rating !== null &&
-                !Number.isNaN(rating) && (
-                  <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl px-5 py-4 min-w-[145px]">
+              <p className="text-xs uppercase tracking-[0.12em] font-bold text-[#0A6FF7] mb-2">
+                TutorWave
+              </p>
 
-                    <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-1">
-                      Rating
-                    </p>
+              <p className="font-bold text-[#0D1118] mb-2">
+                Interested in this tutor?
+              </p>
 
-                    <div className="flex items-center gap-2">
+              <p className="text-xs text-[#6B7280] leading-5 mb-4">
+                Share your requirement and
+                our team will help you proceed.
+              </p>
 
-                      <span className="text-2xl font-bold text-[#0D1118]">
-                        {rating.toFixed(1)}
-                      </span>
-
-                      <span className="text-[#F59E0B]">
-                        ★
-                      </span>
-
-                    </div>
-
-                  </div>
-                )}
-
-              <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl px-5 py-4 min-w-[145px]">
-
-                <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-1">
-                  Profile
-                </p>
-
-                <span className="text-base font-bold text-[#0D1118]">
-                  {isVerified
-                    ? 'Verified'
-                    : 'TutorWave Tutor'}
-                </span>
-
-              </div>
+              <Link
+                href="/find-a-tutor"
+                className="flex items-center justify-center gap-2 w-full bg-[#0A6FF7] text-white font-bold py-3 rounded-xl hover:bg-[#0858c8] transition-colors text-sm"
+              >
+                Request This Tutor
+                <span>→</span>
+              </Link>
 
             </div>
 
@@ -1202,91 +993,40 @@ export default async function TutorDetailPage({
             <div className="space-y-6">
 
               {/* =================================================
-                  WHY THIS TUTOR MAY BE A GOOD FIT
+                  WHY THIS TUTOR
               ================================================= */}
 
-              <Section
-                title="Why This Tutor May Be a Good Fit"
-                eyebrow="Profile highlights"
-              >
+              {finalFitPoints.length > 0 && (
+                <Section
+                  title="Why This Tutor May Be a Good Fit"
+                  eyebrow="Quick suitability check"
+                >
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
-                  {experience && (
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 text-[#0A6FF7]">
-                        <CheckIcon />
-                      </div>
+                    {finalFitPoints.map(
+                      (point, index) => (
+                        <div
+                          key={`${point}-${index}`}
+                          className="flex items-start gap-3 p-4 rounded-2xl bg-[#F8FAFC] border border-[#E5E7EB]"
+                        >
 
-                      <p className="text-[#374151] leading-7">
-                        {experience} teaching experience
-                      </p>
-                    </div>
-                  )}
+                          <div className="w-7 h-7 rounded-full bg-[#E6F7F5] text-[#0C8F81] flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <CheckIcon />
+                          </div>
 
-                  {boards.length > 0 && (
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 text-[#0A6FF7]">
-                        <CheckIcon />
-                      </div>
+                          <p className="text-sm sm:text-[15px] font-medium text-[#374151] leading-6">
+                            {point}
+                          </p>
 
-                      <p className="text-[#374151] leading-7">
-                        {boards.join(' & ')}
-                      </p>
-                    </div>
-                  )}
+                        </div>
+                      )
+                    )}
 
-                  {subjects.length > 0 && (
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 text-[#0A6FF7]">
-                        <CheckIcon />
-                      </div>
+                  </div>
 
-                      <p className="text-[#374151] leading-7">
-                        {subjects.join(', ')}
-                      </p>
-                    </div>
-                  )}
-
-                  {classes.length > 0 && (
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 text-[#0A6FF7]">
-                        <CheckIcon />
-                      </div>
-
-                      <p className="text-[#374151] leading-7">
-                        Classes: {classes.join(', ')}
-                      </p>
-                    </div>
-                  )}
-
-                  {mode && (
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 text-[#0A6FF7]">
-                        <CheckIcon />
-                      </div>
-
-                      <p className="text-[#374151] leading-7">
-                        {mode}
-                      </p>
-                    </div>
-                  )}
-
-                  {city && (
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 text-[#0A6FF7]">
-                        <CheckIcon />
-                      </div>
-
-                      <p className="text-[#374151] leading-7">
-                        Teaching in {city}
-                      </p>
-                    </div>
-                  )}
-
-                </div>
-
-              </Section>
+                </Section>
+              )}
 
               {/* =================================================
                   TUTOR AT A GLANCE
@@ -1301,7 +1041,7 @@ export default async function TutorDetailPage({
 
                   {experience && (
                     <InfoRow
-                      label="Teaching Experience"
+                      label="Experience"
                       value={experience}
                       icon={
                         <svg
@@ -1312,7 +1052,11 @@ export default async function TutorDetailPage({
                           stroke="currentColor"
                           strokeWidth="1.8"
                         >
-                          <circle cx="12" cy="12" r="9" />
+                          <circle
+                            cx="12"
+                            cy="12"
+                            r="9"
+                          />
                           <path d="M12 7v5l3 2" />
                         </svg>
                       }
@@ -1320,8 +1064,8 @@ export default async function TutorDetailPage({
                   )}
 
                   <InfoRow
-                    label="Qualification"
-                    value={qualification}
+                    label="Location"
+                    value={city}
                     icon={
                       <svg
                         width="19"
@@ -1331,54 +1075,12 @@ export default async function TutorDetailPage({
                         stroke="currentColor"
                         strokeWidth="1.8"
                       >
-                        <path d="M22 10l-10-5-10 5 10 5 10-5Z" />
-                        <path d="M6 12v5c3 2 9 2 12 0v-5" />
-                      </svg>
-                    }
-                  />
-
-                  <InfoRow
-                    label="Classes"
-                    value={
-                      classes.length
-                        ? classes.join(' • ')
-                        : null
-                    }
-                    icon={
-                      <svg
-                        width="19"
-                        height="19"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                      >
-                        <path d="M4 19V5a2 2 0 012-2h12a2 2 0 012 2v14" />
-                        <path d="M4 19c0-1.1.9-2 2-2h14" />
-                        <path d="M8 7h8M8 11h8" />
-                      </svg>
-                    }
-                  />
-
-                  <InfoRow
-                    label="Boards"
-                    value={
-                      boards.length
-                        ? boards.join(' • ')
-                        : null
-                    }
-                    icon={
-                      <svg
-                        width="19"
-                        height="19"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                      >
-                        <path d="M3 6h18" />
-                        <path d="M5 6v14h14V6" />
-                        <path d="M8 3h8v3H8z" />
+                        <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0Z" />
+                        <circle
+                          cx="12"
+                          cy="10"
+                          r="3"
+                        />
                       </svg>
                     }
                   />
@@ -1408,8 +1110,8 @@ export default async function TutorDetailPage({
                   />
 
                   <InfoRow
-                    label="Location"
-                    value={city}
+                    label="Students Taught"
+                    value={studentsTaught}
                     icon={
                       <svg
                         width="19"
@@ -1419,32 +1121,34 @@ export default async function TutorDetailPage({
                         stroke="currentColor"
                         strokeWidth="1.8"
                       >
-                        <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0Z" />
-                        <circle cx="12" cy="10" r="3" />
+                        <circle
+                          cx="9"
+                          cy="8"
+                          r="3"
+                        />
+                        <path d="M3 20c0-3.5 2.5-6 6-6s6 2.5 6 6" />
+                        <path d="M16 11c2.5 0 5 1.8 5 5" />
                       </svg>
                     }
                   />
 
-                  {studentsTaught && (
-                    <InfoRow
-                      label="Students Taught"
-                      value={studentsTaught}
-                      icon={
-                        <svg
-                          width="19"
-                          height="19"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.8"
-                        >
-                          <circle cx="9" cy="8" r="3" />
-                          <path d="M3 20c0-3.5 2.5-6 6-6s6 2.5 6 6" />
-                          <path d="M16 11c2.5 0 5 1.8 5 5" />
-                        </svg>
-                      }
-                    />
-                  )}
+                  <InfoRow
+                    label="Qualification"
+                    value={qualification}
+                    icon={
+                      <svg
+                        width="19"
+                        height="19"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                      >
+                        <path d="M22 10l-10-5-10 5 10 5 10-5Z" />
+                        <path d="M6 12v5c3 2 9 2 12 0v-5" />
+                      </svg>
+                    }
+                  />
 
                 </div>
 
@@ -1469,14 +1173,16 @@ export default async function TutorDetailPage({
                       </p>
 
                       <div className="flex flex-wrap gap-2.5">
-                        {subjects.map((subject) => (
-                          <Tag
-                            key={subject}
-                            blue
-                          >
-                            {subject}
-                          </Tag>
-                        ))}
+                        {subjects.map(
+                          (subject) => (
+                            <Tag
+                              key={subject}
+                              blue
+                            >
+                              {subject}
+                            </Tag>
+                          )
+                        )}
                       </div>
 
                     </div>
@@ -1490,11 +1196,13 @@ export default async function TutorDetailPage({
                       </p>
 
                       <div className="flex flex-wrap gap-2.5">
-                        {classes.map((item) => (
-                          <Tag key={item}>
-                            {item}
-                          </Tag>
-                        ))}
+                        {classes.map(
+                          (item) => (
+                            <Tag key={item}>
+                              {item}
+                            </Tag>
+                          )
+                        )}
                       </div>
 
                     </div>
@@ -1508,11 +1216,13 @@ export default async function TutorDetailPage({
                       </p>
 
                       <div className="flex flex-wrap gap-2.5">
-                        {boards.map((board) => (
-                          <Tag key={board}>
-                            {board}
-                          </Tag>
-                        ))}
+                        {boards.map(
+                          (board) => (
+                            <Tag key={board}>
+                              {board}
+                            </Tag>
+                          )
+                        )}
                       </div>
 
                     </div>
@@ -1540,7 +1250,8 @@ export default async function TutorDetailPage({
                   EDUCATION
               ================================================= */}
 
-              {(qualification || college) && (
+              {(qualification ||
+                college) && (
                 <Section
                   title="Education & Qualifications"
                   eyebrow="Academic background"
@@ -1617,7 +1328,8 @@ export default async function TutorDetailPage({
                   TEACHING EXPERIENCE
               ================================================= */}
 
-              {(experience || experienceDetails) && (
+              {(experience ||
+                experienceDetails) && (
                 <Section
                   title="Teaching Experience"
                   eyebrow="Professional experience"
@@ -1652,7 +1364,8 @@ export default async function TutorDetailPage({
 
                       {experience && (
                         <p className="text-lg font-bold text-[#0D1118] mb-2">
-                          {experience} of teaching experience
+                          {experience} of teaching
+                          experience
                         </p>
                       )}
 
@@ -1663,45 +1376,6 @@ export default async function TutorDetailPage({
                       )}
 
                     </div>
-
-                  </div>
-
-                </Section>
-              )}
-
-              {/* =================================================
-                  SCHOOL TEACHING EXPERIENCE
-              ================================================= */}
-
-              {schoolExperience && (
-                <Section
-                  title="School Teaching Experience"
-                  eyebrow="School / coaching background"
-                >
-
-                  <div className="flex items-start gap-5">
-
-                    <div className="w-12 h-12 rounded-2xl bg-[#EBF4FF] flex items-center justify-center flex-shrink-0 text-[#0A6FF7]">
-
-                      <svg
-                        width="22"
-                        height="22"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                      >
-                        <path d="M3 21h18" />
-                        <path d="M5 21V9l7-5 7 5v12" />
-                        <path d="M9 21v-6h6v6" />
-                        <path d="M8 11h2M14 11h2" />
-                      </svg>
-
-                    </div>
-
-                    <p className="text-[#374151] leading-8">
-                      {schoolExperience}
-                    </p>
 
                   </div>
 
@@ -1722,15 +1396,51 @@ export default async function TutorDetailPage({
                     Has taught students from:
                   </p>
 
-                  <div className="flex flex-wrap gap-2.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
                     {schoolsTaught.map(
                       (school, index) => (
-                        <Tag key={`${school}-${index}`}>
-                          {school}
-                        </Tag>
+                        <div
+                          key={`${school}-${index}`}
+                          className="flex items-center gap-3 p-4 rounded-2xl bg-[#F8FAFC] border border-[#E5E7EB]"
+                        >
+
+                          <div className="w-10 h-10 rounded-xl bg-[#EBF4FF] text-[#0A6FF7] flex items-center justify-center flex-shrink-0">
+                            <SchoolIcon />
+                          </div>
+
+                          <span className="text-sm font-semibold text-[#0D1118] leading-5">
+                            {school}
+                          </span>
+
+                        </div>
                       )
                     )}
+
+                  </div>
+
+                </Section>
+              )}
+
+              {/* =================================================
+                  SCHOOL TEACHING EXPERIENCE
+              ================================================= */}
+
+              {schoolExperience && (
+                <Section
+                  title="School Teaching Experience"
+                  eyebrow="School background"
+                >
+
+                  <div className="flex items-start gap-5">
+
+                    <div className="w-12 h-12 rounded-2xl bg-[#EBF4FF] flex items-center justify-center flex-shrink-0 text-[#0A6FF7]">
+                      <SchoolIcon />
+                    </div>
+
+                    <p className="text-[#374151] leading-8">
+                      {schoolExperience}
+                    </p>
 
                   </div>
 
@@ -1786,8 +1496,8 @@ export default async function TutorDetailPage({
                   <div className="flex flex-wrap gap-2.5">
 
                     {languages.map(
-                      (language, index) => (
-                        <Tag key={`${language}-${index}`}>
+                      (language) => (
+                        <Tag key={language}>
                           {language}
                         </Tag>
                       )
@@ -1822,7 +1532,11 @@ export default async function TutorDetailPage({
                         strokeWidth="1.8"
                       >
                         <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0Z" />
-                        <circle cx="12" cy="10" r="3" />
+                        <circle
+                          cx="12"
+                          cy="10"
+                          r="3"
+                        />
                       </svg>
 
                     </div>
@@ -1851,8 +1565,8 @@ export default async function TutorDetailPage({
                       <div className="flex flex-wrap gap-2.5">
 
                         {areas.map(
-                          (area, index) => (
-                            <Tag key={`${area}-${index}`}>
+                          (area) => (
+                            <Tag key={area}>
                               {area}
                             </Tag>
                           )
@@ -1871,11 +1585,11 @@ export default async function TutorDetailPage({
                   AVAILABILITY
               ================================================= */}
 
-              {(
-                availability ||
+              {(availability ||
                 availabilityTime ||
-                availabilityDays.length > 0
-              ) && (
+                cleanArray(
+                  tutor.availabilityDays
+                ).length > 0) && (
                 <Section
                   title="Availability"
                   eyebrow="When the tutor may be available"
@@ -1911,7 +1625,9 @@ export default async function TutorDetailPage({
                       </div>
                     )}
 
-                    {availabilityDays.length > 0 && (
+                    {cleanArray(
+                      tutor.availabilityDays
+                    ).length > 0 && (
                       <div>
 
                         <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-3">
@@ -1920,9 +1636,11 @@ export default async function TutorDetailPage({
 
                         <div className="flex flex-wrap gap-2">
 
-                          {availabilityDays.map(
-                            (day, index) => (
-                              <Tag key={`${day}-${index}`}>
+                          {cleanArray(
+                            tutor.availabilityDays
+                          ).map(
+                            (day) => (
+                              <Tag key={day}>
                                 {day}
                               </Tag>
                             )
@@ -1951,7 +1669,10 @@ export default async function TutorDetailPage({
                   <div className="space-y-3">
 
                     {achievements.map(
-                      (achievement, index) => (
+                      (
+                        achievement,
+                        index
+                      ) => (
                         <div
                           key={`${achievement}-${index}`}
                           className="flex items-start gap-3"
@@ -1987,9 +1708,9 @@ export default async function TutorDetailPage({
                   <div className="flex flex-wrap gap-2.5">
 
                     {certifications.map(
-                      (certificate, index) => (
+                      (certificate) => (
                         <Tag
-                          key={`${certificate}-${index}`}
+                          key={certificate}
                         >
                           {certificate}
                         </Tag>
@@ -2002,7 +1723,83 @@ export default async function TutorDetailPage({
               )}
 
               {/* =================================================
-                  MOBILE CTA
+                  HOW IT WORKS
+              ================================================= */}
+
+              <section className="bg-white border border-[#E5E7EB] rounded-3xl p-6 sm:p-8">
+
+                <p className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.12em] text-[#0A6FF7] mb-2">
+                  TutorWave
+                </p>
+
+                <h2 className="text-xl sm:text-2xl font-bold text-[#0D1118] mb-7">
+                  How It Works
+                </h2>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+                  <div className="relative">
+
+                    <div className="w-11 h-11 rounded-xl bg-[#EBF4FF] text-[#0A6FF7] flex items-center justify-center font-bold mb-4">
+                      1
+                    </div>
+
+                    <h3 className="font-bold text-[#0D1118] mb-2">
+                      Share your requirement
+                    </h3>
+
+                    <p className="text-sm text-[#6B7280] leading-6">
+                      Tell us your child's
+                      class, subject,
+                      location and learning
+                      requirements.
+                    </p>
+
+                  </div>
+
+                  <div>
+
+                    <div className="w-11 h-11 rounded-xl bg-[#EBF4FF] text-[#0A6FF7] flex items-center justify-center font-bold mb-4">
+                      2
+                    </div>
+
+                    <h3 className="font-bold text-[#0D1118] mb-2">
+                      We confirm suitability
+                    </h3>
+
+                    <p className="text-sm text-[#6B7280] leading-6">
+                      Our team checks the
+                      requirement against
+                      the tutor's profile and
+                      availability.
+                    </p>
+
+                  </div>
+
+                  <div>
+
+                    <div className="w-11 h-11 rounded-xl bg-[#EBF4FF] text-[#0A6FF7] flex items-center justify-center font-bold mb-4">
+                      3
+                    </div>
+
+                    <h3 className="font-bold text-[#0D1118] mb-2">
+                      We help you proceed
+                    </h3>
+
+                    <p className="text-sm text-[#6B7280] leading-6">
+                      We help coordinate the
+                      next step so you can
+                      proceed with confidence.
+                    </p>
+
+                  </div>
+
+                </div>
+
+              </section>
+
+              {/* =================================================
+                  MOBILE REQUEST CTA
               ================================================= */}
 
               <div className="lg:hidden bg-white border border-[#E5E7EB] rounded-3xl p-6">
@@ -2016,8 +1813,10 @@ export default async function TutorDetailPage({
                 </h2>
 
                 <p className="text-sm text-[#6B7280] leading-6 mb-5">
-                  Tell us about your child's requirements
-                  and our team will help you proceed.
+                  Tell us about your
+                  child's requirements
+                  and our team will help
+                  you proceed.
                 </p>
 
                 <Link
@@ -2056,18 +1855,6 @@ export default async function TutorDetailPage({
 
                   <div className="space-y-4">
 
-                    {experience && (
-                      <div className="flex justify-between gap-4">
-                        <span className="text-sm text-[#6B7280]">
-                          Experience
-                        </span>
-
-                        <span className="text-sm font-semibold text-[#0D1118] text-right">
-                          {experience}
-                        </span>
-                      </div>
-                    )}
-
                     {subjects.length > 0 && (
                       <div className="flex justify-between gap-4">
                         <span className="text-sm text-[#6B7280]">
@@ -2100,6 +1887,18 @@ export default async function TutorDetailPage({
 
                         <span className="text-sm font-semibold text-[#0D1118] text-right">
                           {boards.join(', ')}
+                        </span>
+                      </div>
+                    )}
+
+                    {experience && (
+                      <div className="flex justify-between gap-4">
+                        <span className="text-sm text-[#6B7280]">
+                          Experience
+                        </span>
+
+                        <span className="text-sm font-semibold text-[#0D1118] text-right">
+                          {experience}
                         </span>
                       </div>
                     )}
@@ -2138,7 +1937,7 @@ export default async function TutorDetailPage({
 
                   <div className="flex items-center gap-3 mb-5">
 
-                    <div className="w-10 h-10 rounded-xl bg-[#E6F7F5] flex items-center justify-center text-[#0C8F81]">
+                    <div className="w-11 h-11 rounded-xl bg-[#E6F7F5] flex items-center justify-center text-[#0C8F81]">
                       <CheckIcon />
                     </div>
 
@@ -2159,49 +1958,52 @@ export default async function TutorDetailPage({
                   <div className="space-y-3">
 
                     <div className="flex items-start gap-3">
-                      <span className="text-[#0C8F81] mt-0.5">
-                        <CheckIcon />
-                      </span>
 
-                      <p className="text-sm text-[#374151] leading-6">
-                        Profile reviewed by TutorWave
+                      <div className="mt-0.5 text-[#0C8F81]">
+                        <CheckIcon />
+                      </div>
+
+                      <p className="text-sm text-[#4B5563]">
+                        Profile reviewed
                       </p>
+
                     </div>
 
-                    {qualification && (
-                      <div className="flex items-start gap-3">
-                        <span className="text-[#0C8F81] mt-0.5">
-                          <CheckIcon />
-                        </span>
+                    <div className="flex items-start gap-3">
 
-                        <p className="text-sm text-[#374151] leading-6">
-                          Qualification information provided
-                        </p>
+                      <div className="mt-0.5 text-[#0C8F81]">
+                        <CheckIcon />
                       </div>
-                    )}
 
-                    {photo && (
-                      <div className="flex items-start gap-3">
-                        <span className="text-[#0C8F81] mt-0.5">
-                          <CheckIcon />
-                        </span>
+                      <p className="text-sm text-[#4B5563]">
+                        Qualification information
+                        reviewed
+                      </p>
 
-                        <p className="text-sm text-[#374151] leading-6">
-                          Profile photo provided
-                        </p>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+
+                      <div className="mt-0.5 text-[#0C8F81]">
+                        <CheckIcon />
                       </div>
-                    )}
 
-                    {isVerified && (
-                      <div className="pt-3 mt-3 border-t border-[#E5E7EB]">
+                      <p className="text-sm text-[#4B5563]">
+                        Photo and profile
+                        information reviewed
+                      </p>
 
-                        <p className="text-sm font-bold text-[#0C8F81]">
-                          ✓ Verified Tutor Profile
-                        </p>
+                    </div>
 
-                        <p className="text-xs text-[#6B7280] mt-1 leading-5">
-                          This profile has been reviewed and
-                          verified by the TutorWave team.
+                    {tutor.isVerified && (
+                      <div className="flex items-start gap-3">
+
+                        <div className="mt-0.5 text-[#0C8F81]">
+                          <CheckIcon />
+                        </div>
+
+                        <p className="text-sm font-semibold text-[#0D1118]">
+                          Verified Tutor
                         </p>
 
                       </div>
@@ -2215,141 +2017,55 @@ export default async function TutorDetailPage({
                     BROWSE OTHER TUTORS
                 ================================================= */}
 
-                <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6">
+                <div className="bg-[#0D1118] rounded-3xl p-6">
 
-                  <p className="text-xs uppercase tracking-wider font-bold text-[#0A6FF7] mb-2">
+                  <p className="text-xs uppercase tracking-[0.12em] font-bold text-[#5DB8FF] mb-2">
                     Explore
                   </p>
 
-                  <h3 className="text-xl font-bold text-[#0D1118] mb-2">
-                    Browse Other Tutors
+                  <h3 className="text-xl font-bold text-white mb-2">
+                    More Tutor Options
                   </h3>
 
-                  <p className="text-sm text-[#6B7280] leading-6 mb-5">
-                    Explore more TutorWave profiles and
-                    compare tutors based on your child's
-                    requirements.
+                  <p className="text-sm text-white/60 leading-6 mb-5">
+                    Explore other tutors
+                    available through
+                    TutorWave.
                   </p>
 
                   <Link
                     href="/tutors"
-                    className="flex items-center justify-center gap-2 w-full bg-[#EBF4FF] text-[#0A6FF7] font-bold py-3.5 rounded-xl hover:bg-[#DCEBFF] transition-colors"
+                    className="flex items-center justify-center gap-2 w-full bg-white text-[#0D1118] font-bold py-3.5 rounded-xl hover:bg-[#F1F5F9] transition-colors"
                   >
-                    Browse Tutors
+                    Browse Other Tutors
                     <span>→</span>
                   </Link>
 
                 </div>
 
                 {/* =================================================
-                    HOW IT WORKS
+                    FEE INFORMATION
                 ================================================= */}
 
-                <div className="bg-[#0D1118] rounded-3xl p-6 text-white">
+                {feeRange && (
+                  <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6">
 
-                  <p className="text-xs uppercase tracking-[0.12em] font-bold text-[#5DB8FF] mb-2">
-                    TutorWave
-                  </p>
+                    <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-2">
+                      Fee Information
+                    </p>
 
-                  <h3 className="text-xl font-bold mb-5">
-                    How It Works
-                  </h3>
+                    <p className="text-lg font-bold text-[#0D1118]">
+                      {feeRange}
+                    </p>
 
-                  <div className="space-y-5">
-
-                    <div className="flex items-start gap-4">
-
-                      <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold flex-shrink-0">
-                        1
-                      </div>
-
-                      <div>
-                        <p className="font-semibold">
-                          Share your requirement
-                        </p>
-
-                        <p className="text-sm text-white/60 mt-1 leading-5">
-                          Tell us your child's class,
-                          subject and location.
-                        </p>
-                      </div>
-
-                    </div>
-
-                    <div className="flex items-start gap-4">
-
-                      <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold flex-shrink-0">
-                        2
-                      </div>
-
-                      <div>
-                        <p className="font-semibold">
-                          We confirm suitability
-                        </p>
-
-                        <p className="text-sm text-white/60 mt-1 leading-5">
-                          Our team reviews your requirement
-                          and tutor preferences.
-                        </p>
-                      </div>
-
-                    </div>
-
-                    <div className="flex items-start gap-4">
-
-                      <div className="w-8 h-8 rounded-full bg-[#0A6FF7] flex items-center justify-center text-sm font-bold flex-shrink-0">
-                        3
-                      </div>
-
-                      <div>
-                        <p className="font-semibold">
-                          We help you proceed
-                        </p>
-
-                        <p className="text-sm text-white/60 mt-1 leading-5">
-                          We help you take the next step
-                          with the selected tutor.
-                        </p>
-                      </div>
-
-                    </div>
+                    <p className="text-xs text-[#6B7280] mt-2 leading-5">
+                      Final fee may depend on
+                      class, subject, location
+                      and tuition requirements.
+                    </p>
 
                   </div>
-
-                </div>
-
-                {/* =================================================
-                    REQUEST CTA
-                ================================================= */}
-
-                <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 shadow-sm">
-
-                  <p className="text-xs uppercase tracking-[0.12em] font-bold text-[#0A6FF7] mb-2">
-                    TutorWave
-                  </p>
-
-                  <h2 className="text-2xl font-bold text-[#0D1118]">
-                    Interested in this tutor?
-                  </h2>
-
-                  <p className="text-sm text-[#6B7280] mt-3 leading-6">
-                    Share your tuition requirement and
-                    our team will help you proceed.
-                  </p>
-
-                  <Link
-                    href="/find-a-tutor"
-                    className="flex items-center justify-center gap-2 w-full bg-[#0A6FF7] text-white font-bold py-4 rounded-xl hover:bg-[#0858c8] transition-colors mt-6"
-                  >
-                    Request This Tutor
-                    <span>→</span>
-                  </Link>
-
-                  <p className="text-xs text-center text-[#6B7280] mt-3">
-                    No obligation to hire.
-                  </p>
-
-                </div>
+                )}
 
               </div>
 
@@ -2374,12 +2090,13 @@ export default async function TutorDetailPage({
           </p>
 
           <h2 className="text-2xl sm:text-3xl font-bold text-white">
-            Looking for the right tutor for your child?
+            Need help choosing a tutor?
           </h2>
 
           <p className="text-white/60 mt-3 max-w-2xl mx-auto leading-7">
-            Tell us your child's class, subject, location
-            and learning requirements. Our team will help
+            Tell us your child's class,
+            subject, location and learning
+            requirements. Our team will help
             you find a suitable tutor.
           </p>
 
@@ -2413,4 +2130,3 @@ export default async function TutorDetailPage({
     </main>
   );
 }
-
