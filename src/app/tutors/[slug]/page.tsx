@@ -37,7 +37,6 @@ type Tutor = {
   bio?: string;
 
   rating?: number;
-  totalPlacements?: number;
 
   isVerified?: boolean;
 
@@ -55,20 +54,32 @@ type Tutor = {
   studentsTaught?: number | string;
   totalStudents?: number | string;
 
-  schoolsTaught?: string[];
-  previousInstitutions?: string[];
-  institutions?: string[];
+  schoolsTaught?: string[] | string;
+  previousInstitutions?: string[] | string;
+  institutions?: string[] | string;
+
+  /* Possible school-name fields from different forms/CRM versions */
+  schoolNames?: string[] | string;
+  schools?: string[] | string;
+  teachingSchools?: string[] | string;
+  institutionsTaught?: string[] | string;
+  studentSchools?: string[] | string;
 
   teachingExperience?: string;
   experienceDetails?: string;
+
+  /* School teaching experience */
+  schoolExperience?: string;
+  schoolTeachingExperience?: string;
+  schoolTeachingExperienceDetails?: string;
+  schoolExperienceDetails?: string;
+  schoolTeaching?: string;
 
   teachingApproach?: string;
   teachingMethodology?: string;
 
   achievements?: string[];
   certifications?: string[];
-
-  schoolExperience?: string;
 
   [key: string]: any;
 };
@@ -184,6 +195,10 @@ async function findTutorBySlug(
   );
 }
 
+/* =========================================================
+   FORMATTING HELPERS
+========================================================= */
+
 function formatExperience(
   value?: number | string
 ) {
@@ -236,22 +251,162 @@ function initials(name?: string) {
     .join('');
 }
 
+/* =========================================================
+   ROBUST ARRAY PARSER
+
+   Handles:
+   - ["School A", "School B"]
+   - "School A, School B"
+   - "School A"
+   - JSON string arrays
+   - objects such as { schoolName: "ABC School" }
+========================================================= */
+
 function cleanArray(
   value: any
 ): string[] {
-  if (!Array.isArray(value)) {
+  if (
+    value === undefined ||
+    value === null ||
+    value === ''
+  ) {
     return [];
   }
 
-  return value
-    .filter(
-      (item) =>
-        item !== undefined &&
-        item !== null &&
-        String(item).trim() !== ''
-    )
-    .map((item) => String(item).trim());
+  /* Already an array */
+  if (Array.isArray(value)) {
+    const result: string[] = [];
+
+    value.forEach((item) => {
+      if (
+        item === undefined ||
+        item === null
+      ) {
+        return;
+      }
+
+      /* Object item */
+      if (
+        typeof item === 'object' &&
+        !Array.isArray(item)
+      ) {
+        const objectValue =
+          item.schoolName ??
+          item.school ??
+          item.institutionName ??
+          item.institution ??
+          item.name ??
+          item.title ??
+          item.label ??
+          item.value;
+
+        if (
+          objectValue !== undefined &&
+          objectValue !== null &&
+          String(objectValue).trim()
+        ) {
+          result.push(
+            String(objectValue).trim()
+          );
+        }
+
+        return;
+      }
+
+      const text = String(item).trim();
+
+      if (text) {
+        result.push(text);
+      }
+    });
+
+    return Array.from(
+      new Set(result)
+    );
+  }
+
+  /* Object */
+  if (
+    typeof value === 'object'
+  ) {
+    const objectValue =
+      value.schoolName ??
+      value.school ??
+      value.institutionName ??
+      value.institution ??
+      value.name ??
+      value.title ??
+      value.label ??
+      value.value;
+
+    if (
+      objectValue !== undefined &&
+      objectValue !== null
+    ) {
+      return cleanArray(objectValue);
+    }
+
+    return [];
+  }
+
+  /* String */
+  if (typeof value === 'string') {
+    const text = value.trim();
+
+    if (!text) {
+      return [];
+    }
+
+    /*
+     * Sometimes the API returns:
+     * ["DPS", "Ryan International"]
+     */
+    if (
+      text.startsWith('[') &&
+      text.endsWith(']')
+    ) {
+      try {
+        const parsed = JSON.parse(text);
+
+        if (Array.isArray(parsed)) {
+          return cleanArray(parsed);
+        }
+      } catch {
+        /* Continue with normal string handling */
+      }
+    }
+
+    /*
+     * Handle comma / newline / pipe separated values.
+     */
+    if (
+      text.includes(',') ||
+      text.includes('\n') ||
+      text.includes('|')
+    ) {
+      return Array.from(
+        new Set(
+          text
+            .split(/[,|\n]+/)
+            .map((item) =>
+              item.trim()
+            )
+            .filter(Boolean)
+        )
+      );
+    }
+
+    return [text];
+  }
+
+  return [];
 }
+
+/* =========================================================
+   FIRST ARRAY
+
+   Returns the first usable value.
+========================================================= */
 
 function firstArray(
   ...values: any[]
@@ -266,6 +421,10 @@ function firstArray(
 
   return [];
 }
+
+/* =========================================================
+   FIRST TEXT
+========================================================= */
 
 function firstText(
   ...values: any[]
@@ -386,8 +545,26 @@ function CheckIcon() {
       fill="none"
       stroke="currentColor"
       strokeWidth="2.5"
+      aria-hidden="true"
     >
       <path d="M5 12l4 4L19 6" />
+    </svg>
+  );
+}
+
+function ArrowIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      aria-hidden="true"
+    >
+      <path d="M5 12h14" />
+      <path d="M13 6l6 6-6 6" />
     </svg>
   );
 }
@@ -403,7 +580,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
 
-  const tutor = await findTutorBySlug(slug);
+  const tutor =
+    await findTutorBySlug(slug);
 
   if (!tutor) {
     return {
@@ -444,7 +622,8 @@ export default async function TutorDetailPage({
 }) {
   const { slug } = await params;
 
-  const tutor = await findTutorBySlug(slug);
+  const tutor =
+    await findTutorBySlug(slug);
 
   /* =======================================================
      NOT FOUND
@@ -467,7 +646,12 @@ export default async function TutorDetailPage({
                 stroke="#0A6FF7"
                 strokeWidth="1.8"
               >
-                <circle cx="12" cy="8" r="4" />
+                <circle
+                  cx="12"
+                  cy="8"
+                  r="4"
+                />
+
                 <path d="M4 21c0-4 3.5-7 8-7s8 3 8 7" />
               </svg>
             </div>
@@ -487,20 +671,10 @@ export default async function TutorDetailPage({
               href="/tutors"
               className="inline-flex items-center gap-2 bg-[#0A6FF7] text-white font-semibold px-6 py-3 rounded-xl hover:bg-[#0858c8] transition-colors"
             >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M19 12H5" />
-                <path d="M12 19l-7-7 7-7" />
-              </svg>
-
+              <ArrowIcon />
               Browse Tutors
             </Link>
+
           </div>
         </section>
 
@@ -532,19 +706,28 @@ export default async function TutorDetailPage({
   const areas =
     cleanArray(tutor.areas);
 
-  const languages = firstArray(
-    tutor.languages,
-    tutor.teachingLanguages
-  );
+  const languages =
+    firstArray(
+      tutor.languages,
+      tutor.teachingLanguages
+    );
 
   /*
-   * SCHOOL / INSTITUTION DATA
+   * IMPORTANT:
+   * School names can arrive from the form/CRM
+   * under different field names or formats.
    */
-  const schoolsTaught = firstArray(
-    tutor.schoolsTaught,
-    tutor.previousInstitutions,
-    tutor.institutions
-  );
+  const schoolsTaught =
+    firstArray(
+      tutor.schoolsTaught,
+      tutor.schoolNames,
+      tutor.schools,
+      tutor.teachingSchools,
+      tutor.studentSchools,
+      tutor.institutionsTaught,
+      tutor.previousInstitutions,
+      tutor.institutions
+    );
 
   const achievements =
     cleanArray(tutor.achievements);
@@ -556,7 +739,9 @@ export default async function TutorDetailPage({
     tutor.city || 'Delhi NCR';
 
   const experience =
-    formatExperience(tutor.experienceYears);
+    formatExperience(
+      tutor.experienceYears
+    );
 
   const mode =
     formatMode(tutor.mode);
@@ -567,10 +752,14 @@ export default async function TutorDetailPage({
     );
 
   const college =
-    firstText(tutor.college);
+    firstText(
+      tutor.college
+    );
 
   const specialization =
-    firstText(tutor.specialization);
+    firstText(
+      tutor.specialization
+    );
 
   const experienceDetails =
     firstText(
@@ -580,10 +769,16 @@ export default async function TutorDetailPage({
 
   /*
    * SCHOOL TEACHING EXPERIENCE
+   *
+   * Supports several possible CRM/form field names.
    */
   const schoolExperience =
     firstText(
-      tutor.schoolExperience
+      tutor.schoolExperience,
+      tutor.schoolTeachingExperience,
+      tutor.schoolTeachingExperienceDetails,
+      tutor.schoolExperienceDetails,
+      tutor.schoolTeaching
     );
 
   const teachingApproach =
@@ -593,10 +788,14 @@ export default async function TutorDetailPage({
     );
 
   const availability =
-    firstText(tutor.availability);
+    firstText(
+      tutor.availability
+    );
 
   const availabilityTime =
-    firstText(tutor.availabilityTime);
+    firstText(
+      tutor.availabilityTime
+    );
 
   const feeRange =
     firstText(
@@ -615,11 +814,6 @@ export default async function TutorDetailPage({
     typeof tutor.rating === 'number'
       ? tutor.rating
       : null;
-
-  const placements =
-    typeof tutor.totalPlacements === 'number'
-      ? tutor.totalPlacements
-      : 0;
 
   const bio =
     tutor.bio?.trim() ||
@@ -678,7 +872,7 @@ export default async function TutorDetailPage({
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-8 sm:py-10">
 
-          <div className="grid grid-cols-1 lg:grid-cols-[180px_1fr_auto] gap-7 lg:gap-10 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-[180px_minmax(0,1fr)_auto] gap-7 lg:gap-10 items-start">
 
             {/* PHOTO */}
 
@@ -734,6 +928,7 @@ export default async function TutorDetailPage({
 
                 {experience && (
                   <div className="inline-flex items-center gap-2 bg-[#F8FAFC] border border-[#E5E7EB] px-4 py-2.5 rounded-xl text-sm font-medium text-[#374151]">
+
                     <svg
                       width="16"
                       height="16"
@@ -742,14 +937,22 @@ export default async function TutorDetailPage({
                       stroke="#0A6FF7"
                       strokeWidth="2"
                     >
-                      <circle cx="12" cy="12" r="9" />
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="9"
+                      />
+
                       <path d="M12 7v5l3 2" />
                     </svg>
+
                     {experience}
+
                   </div>
                 )}
 
                 <div className="inline-flex items-center gap-2 bg-[#F8FAFC] border border-[#E5E7EB] px-4 py-2.5 rounded-xl text-sm font-medium text-[#374151]">
+
                   <svg
                     width="16"
                     height="16"
@@ -759,13 +962,20 @@ export default async function TutorDetailPage({
                     strokeWidth="2"
                   >
                     <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0Z" />
-                    <circle cx="12" cy="10" r="3" />
+                    <circle
+                      cx="12"
+                      cy="10"
+                      r="3"
+                    />
                   </svg>
+
                   {city}
+
                 </div>
 
                 {mode && (
                   <div className="inline-flex items-center gap-2 bg-[#F8FAFC] border border-[#E5E7EB] px-4 py-2.5 rounded-xl text-sm font-medium text-[#374151]">
+
                     <svg
                       width="16"
                       height="16"
@@ -781,53 +991,60 @@ export default async function TutorDetailPage({
                         height="16"
                         rx="2"
                       />
+
                       <path d="M7 8h10M7 12h10M7 16h6" />
                     </svg>
+
                     {mode}
+
                   </div>
                 )}
 
               </div>
 
-            </div>
+              {/* REQUEST BUTTON */}
 
-            {/* QUICK STATS */}
+              <div className="mt-7">
 
-            <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
+                <Link
+                  href="/find-a-tutor"
+                  className="inline-flex items-center justify-center gap-2 bg-[#0A6FF7] text-white font-bold px-6 py-3.5 rounded-xl hover:bg-[#0858c8] transition-colors"
+                >
+                  Request This Tutor
+                  <ArrowIcon />
+                </Link>
 
-              {rating !== null && (
-                <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl px-5 py-4 min-w-[145px]">
-
-                  <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-1">
-                    Rating
-                  </p>
-
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl font-bold text-[#0D1118]">
-                      {rating.toFixed(1)}
-                    </span>
-
-                    <span className="text-[#F59E0B]">
-                      ★
-                    </span>
-                  </div>
-
-                </div>
-              )}
-
-              <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl px-5 py-4 min-w-[145px]">
-
-                <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-1">
-                  Placements
+                <p className="text-xs text-[#9CA3AF] mt-2">
+                  No obligation to hire.
                 </p>
-
-                <span className="text-2xl font-bold text-[#0D1118]">
-                  {placements}
-                </span>
 
               </div>
 
             </div>
+
+            {/* RATING */}
+
+            {rating !== null && (
+              <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl px-5 py-4 min-w-[145px]">
+
+                <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-1">
+                  Rating
+                </p>
+
+                <div className="flex items-center gap-2">
+
+                  <span className="text-2xl font-bold text-[#0D1118]">
+                    {rating.toFixed(1)}
+                  </span>
+
+                  <span className="text-[#F59E0B]">
+                    ★
+                  </span>
+
+                </div>
+
+              </div>
+            )}
 
           </div>
 
@@ -852,7 +1069,7 @@ export default async function TutorDetailPage({
             <div className="space-y-6">
 
               {/* =================================================
-                  QUICK PROFILE
+                  TUTOR AT A GLANCE
               ================================================= */}
 
               <Section
@@ -875,7 +1092,12 @@ export default async function TutorDetailPage({
                           stroke="currentColor"
                           strokeWidth="1.8"
                         >
-                          <circle cx="12" cy="12" r="9" />
+                          <circle
+                            cx="12"
+                            cy="12"
+                            r="9"
+                          />
+
                           <path d="M12 7v5l3 2" />
                         </svg>
                       }
@@ -895,7 +1117,11 @@ export default async function TutorDetailPage({
                         strokeWidth="1.8"
                       >
                         <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0Z" />
-                        <circle cx="12" cy="10" r="3" />
+                        <circle
+                          cx="12"
+                          cy="10"
+                          r="3"
+                        />
                       </svg>
                     }
                   />
@@ -919,6 +1145,7 @@ export default async function TutorDetailPage({
                           height="16"
                           rx="2"
                         />
+
                         <path d="M7 8h10M7 12h10M7 16h6" />
                       </svg>
                     }
@@ -936,8 +1163,14 @@ export default async function TutorDetailPage({
                         stroke="currentColor"
                         strokeWidth="1.8"
                       >
-                        <circle cx="9" cy="8" r="3" />
+                        <circle
+                          cx="9"
+                          cy="8"
+                          r="3"
+                        />
+
                         <path d="M3 20c0-3.5 2.5-6 6-6s6 2.5 6 6" />
+
                         <path d="M16 11c2.5 0 5 1.8 5 5" />
                       </svg>
                     }
@@ -966,14 +1199,18 @@ export default async function TutorDetailPage({
                       </p>
 
                       <div className="flex flex-wrap gap-2.5">
-                        {subjects.map((subject) => (
-                          <Tag
-                            key={subject}
-                            blue
-                          >
-                            {subject}
-                          </Tag>
-                        ))}
+
+                        {subjects.map(
+                          (subject) => (
+                            <Tag
+                              key={subject}
+                              blue
+                            >
+                              {subject}
+                            </Tag>
+                          )
+                        )}
+
                       </div>
 
                     </div>
@@ -987,11 +1224,15 @@ export default async function TutorDetailPage({
                       </p>
 
                       <div className="flex flex-wrap gap-2.5">
-                        {classes.map((item) => (
-                          <Tag key={item}>
-                            {item}
-                          </Tag>
-                        ))}
+
+                        {classes.map(
+                          (item) => (
+                            <Tag key={item}>
+                              {item}
+                            </Tag>
+                          )
+                        )}
+
                       </div>
 
                     </div>
@@ -1005,11 +1246,15 @@ export default async function TutorDetailPage({
                       </p>
 
                       <div className="flex flex-wrap gap-2.5">
-                        {boards.map((board) => (
-                          <Tag key={board}>
-                            {board}
-                          </Tag>
-                        ))}
+
+                        {boards.map(
+                          (board) => (
+                            <Tag key={board}>
+                              {board}
+                            </Tag>
+                          )
+                        )}
+
                       </div>
 
                     </div>
@@ -1059,6 +1304,7 @@ export default async function TutorDetailPage({
                             strokeWidth="1.8"
                           >
                             <path d="M22 10l-10-5-10 5 10 5 10-5Z" />
+
                             <path d="M6 12v5c3 2 9 2 12 0v-5" />
                           </svg>
 
@@ -1089,6 +1335,7 @@ export default async function TutorDetailPage({
                             strokeWidth="1.8"
                           >
                             <path d="M4 4h16v16H4z" />
+
                             <path d="M8 8h8M8 12h8M8 16h5" />
                           </svg>
 
@@ -1139,7 +1386,9 @@ export default async function TutorDetailPage({
                           height="13"
                           rx="2"
                         />
+
                         <path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2" />
+
                         <path d="M3 12h18" />
                       </svg>
 
@@ -1189,8 +1438,11 @@ export default async function TutorDetailPage({
                         strokeWidth="1.8"
                       >
                         <path d="M3 21h18" />
+
                         <path d="M5 21V9l7-5 7 5v12" />
+
                         <path d="M9 21v-6h6v6" />
+
                         <path d="M8 11h2M14 11h2" />
                       </svg>
 
@@ -1221,11 +1473,15 @@ export default async function TutorDetailPage({
 
                   <div className="flex flex-wrap gap-2.5">
 
-                    {schoolsTaught.map((school) => (
-                      <Tag key={school}>
-                        {school}
-                      </Tag>
-                    ))}
+                    {schoolsTaught.map(
+                      (school, index) => (
+                        <Tag
+                          key={`${school}-${index}`}
+                        >
+                          {school}
+                        </Tag>
+                      )
+                    )}
 
                   </div>
 
@@ -1280,11 +1536,13 @@ export default async function TutorDetailPage({
 
                   <div className="flex flex-wrap gap-2.5">
 
-                    {languages.map((language) => (
-                      <Tag key={language}>
-                        {language}
-                      </Tag>
-                    ))}
+                    {languages.map(
+                      (language) => (
+                        <Tag key={language}>
+                          {language}
+                        </Tag>
+                      )
+                    )}
 
                   </div>
 
@@ -1315,7 +1573,12 @@ export default async function TutorDetailPage({
                         strokeWidth="1.8"
                       >
                         <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0Z" />
-                        <circle cx="12" cy="10" r="3" />
+
+                        <circle
+                          cx="12"
+                          cy="10"
+                          r="3"
+                        />
                       </svg>
 
                     </div>
@@ -1343,11 +1606,13 @@ export default async function TutorDetailPage({
 
                       <div className="flex flex-wrap gap-2.5">
 
-                        {areas.map((area) => (
-                          <Tag key={area}>
-                            {area}
-                          </Tag>
-                        ))}
+                        {areas.map(
+                          (area) => (
+                            <Tag key={area}>
+                              {area}
+                            </Tag>
+                          )
+                        )}
 
                       </div>
 
@@ -1364,7 +1629,7 @@ export default async function TutorDetailPage({
 
               {(availability ||
                 availabilityTime ||
-                tutor.availabilityDays) && (
+                cleanArray(tutor.availabilityDays).length > 0) && (
                 <Section
                   title="Availability"
                   eyebrow="When the tutor may be available"
@@ -1400,7 +1665,9 @@ export default async function TutorDetailPage({
                       </div>
                     )}
 
-                    {cleanArray(tutor.availabilityDays).length > 0 && (
+                    {cleanArray(
+                      tutor.availabilityDays
+                    ).length > 0 && (
                       <div>
 
                         <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-3">
@@ -1411,11 +1678,13 @@ export default async function TutorDetailPage({
 
                           {cleanArray(
                             tutor.availabilityDays
-                          ).map((day) => (
-                            <Tag key={day}>
-                              {day}
-                            </Tag>
-                          ))}
+                          ).map(
+                            (day) => (
+                              <Tag key={day}>
+                                {day}
+                              </Tag>
+                            )
+                          )}
 
                         </div>
 
@@ -1440,7 +1709,10 @@ export default async function TutorDetailPage({
                   <div className="space-y-3">
 
                     {achievements.map(
-                      (achievement, index) => (
+                      (
+                        achievement,
+                        index
+                      ) => (
                         <div
                           key={`${achievement}-${index}`}
                           className="flex items-start gap-3"
@@ -1503,8 +1775,8 @@ export default async function TutorDetailPage({
                 </h2>
 
                 <p className="text-sm text-[#6B7280] leading-6 mb-5">
-                  Tell us about your child's requirements
-                  and our team will help you proceed.
+                  Tell us your requirement and our team
+                  will help you proceed.
                 </p>
 
                 <Link
@@ -1512,7 +1784,7 @@ export default async function TutorDetailPage({
                   className="flex items-center justify-center gap-2 w-full bg-[#0A6FF7] text-white font-bold py-3.5 rounded-xl"
                 >
                   Request This Tutor
-                  <span>→</span>
+                  <ArrowIcon />
                 </Link>
 
               </div>
@@ -1545,6 +1817,7 @@ export default async function TutorDetailPage({
 
                     {subjects.length > 0 && (
                       <div className="flex justify-between gap-4">
+
                         <span className="text-sm text-[#6B7280]">
                           Subjects
                         </span>
@@ -1552,11 +1825,13 @@ export default async function TutorDetailPage({
                         <span className="text-sm font-semibold text-[#0D1118] text-right">
                           {subjects.length}
                         </span>
+
                       </div>
                     )}
 
                     {classes.length > 0 && (
                       <div className="flex justify-between gap-4">
+
                         <span className="text-sm text-[#6B7280]">
                           Classes
                         </span>
@@ -1564,11 +1839,13 @@ export default async function TutorDetailPage({
                         <span className="text-sm font-semibold text-[#0D1118] text-right">
                           {classes.length}
                         </span>
+
                       </div>
                     )}
 
                     {boards.length > 0 && (
                       <div className="flex justify-between gap-4">
+
                         <span className="text-sm text-[#6B7280]">
                           Boards
                         </span>
@@ -1576,11 +1853,13 @@ export default async function TutorDetailPage({
                         <span className="text-sm font-semibold text-[#0D1118] text-right">
                           {boards.join(', ')}
                         </span>
+
                       </div>
                     )}
 
                     {experience && (
                       <div className="flex justify-between gap-4">
+
                         <span className="text-sm text-[#6B7280]">
                           Experience
                         </span>
@@ -1588,10 +1867,12 @@ export default async function TutorDetailPage({
                         <span className="text-sm font-semibold text-[#0D1118] text-right">
                           {experience}
                         </span>
+
                       </div>
                     )}
 
                     <div className="flex justify-between gap-4">
+
                       <span className="text-sm text-[#6B7280]">
                         Location
                       </span>
@@ -1599,10 +1880,12 @@ export default async function TutorDetailPage({
                       <span className="text-sm font-semibold text-[#0D1118] text-right">
                         {city}
                       </span>
+
                     </div>
 
                     {mode && (
                       <div className="flex justify-between gap-4">
+
                         <span className="text-sm text-[#6B7280]">
                           Mode
                         </span>
@@ -1610,6 +1893,7 @@ export default async function TutorDetailPage({
                         <span className="text-sm font-semibold text-[#0D1118] text-right">
                           {mode}
                         </span>
+
                       </div>
                     )}
 
@@ -1710,7 +1994,7 @@ export default async function TutorDetailPage({
                   </p>
 
                   <h3 className="text-xl font-bold text-white mb-2">
-                    Looking for more options?
+                    More Tutor Options
                   </h3>
 
                   <p className="text-sm text-white/60 leading-6 mb-5">
@@ -1723,7 +2007,7 @@ export default async function TutorDetailPage({
                     className="flex items-center justify-center gap-2 w-full bg-white text-[#0D1118] font-bold py-3.5 rounded-xl hover:bg-[#F1F5F9] transition-colors"
                   >
                     Browse Other Tutors
-                    <span>→</span>
+                    <ArrowIcon />
                   </Link>
 
                 </div>
@@ -1791,7 +2075,7 @@ export default async function TutorDetailPage({
               className="inline-flex items-center justify-center gap-2 bg-[#0A6FF7] text-white font-bold px-7 py-3.5 rounded-xl hover:bg-[#0858c8] transition-colors"
             >
               Find a Tutor
-              <span>→</span>
+              <ArrowIcon />
             </Link>
 
             <Link
