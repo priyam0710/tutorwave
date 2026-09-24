@@ -1,1011 +1,1805 @@
-"use client";
+import React from 'react';
+import type { Metadata } from 'next';
+import Link from 'next/link';
 
-import React from "react";
-import Image from "next/image";
-import Link from "next/link";
-import {
-  ArrowRight,
-  ArrowLeft,
-  BadgeCheck,
-  BookOpen,
-  Briefcase,
-  CalendarDays,
-  CheckCircle2,
-  GraduationCap,
-  Languages,
-  MapPin,
-  MessageCircle,
-  Monitor,
-  School,
-  Star,
-  UserRound,
-  Users,
-  Video,
-  Clock3,
-  ShieldCheck,
-  Target,
-  Award,
-} from "lucide-react";
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import WhatsAppButton from '@/app/components/WhatsAppButton';
 
-/*
-|--------------------------------------------------------------------------
-| IMPORTANT
-|--------------------------------------------------------------------------
-| KEEP YOUR EXISTING:
-|
-| - API call
-| - route handling
-| - params / tutorId logic
-| - loading state
-| - error state
-| - conditional rendering
-| - tutor fetching logic
-|
-| This component structure only changes the UI.
-|
-| Your existing fetched `tutor` object should be passed/used below.
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   CONFIG
+========================================================= */
 
-export default function TutorProfilePage({ tutor }: { tutor: any }) {
-  /*
-   * -----------------------------------------------------------------------
-   * SAFE HELPERS
-   * -----------------------------------------------------------------------
-   * These prevent empty sections from appearing if a tutor has not supplied
-   * a particular field.
-   */
+const CRM_API_URL =
+  process.env.TUTORWAVE_CRM_URL ||
+  'https://tutorwave-crm-xi.vercel.app';
 
-  const hasValue = (value: any) => {
-    if (Array.isArray(value)) return value.length > 0;
-    if (typeof value === "string") return value.trim().length > 0;
-    if (typeof value === "number") return true;
-    if (typeof value === "boolean") return true;
-    return value !== null && value !== undefined;
-  };
+/* =========================================================
+   TYPES
+========================================================= */
 
-  const firstValue = (...values: any[]) => {
-    return values.find((value) => hasValue(value));
-  };
+type Tutor = {
+  id?: string;
+  fullName?: string;
+  profilePhoto?: string;
+  gender?: string;
 
-  const asArray = (value: any): string[] => {
-    if (!hasValue(value)) return [];
+  city?: string;
+  areas?: string[];
 
-    if (Array.isArray(value)) {
-      return value
-        .filter(Boolean)
-        .map((item) =>
-          typeof item === "string"
-            ? item
-            : item?.name || item?.label || item?.title || ""
-        )
-        .filter(Boolean);
+  subjects?: string[];
+  classes?: string[];
+  boards?: string[];
+
+  mode?: string;
+
+  highestQualification?: string;
+  college?: string;
+  specialization?: string;
+
+  experienceYears?: number | string;
+
+  bio?: string;
+
+  rating?: number;
+  totalPlacements?: number;
+
+  isVerified?: boolean;
+
+  languages?: string[];
+  teachingLanguages?: string[];
+
+  availability?: string;
+  availabilityDays?: string[];
+  availabilityTime?: string;
+
+  feeRange?: string;
+  hourlyRate?: string | number;
+  fees?: string;
+
+  studentsTaught?: number | string;
+  totalStudents?: number | string;
+
+  schoolsTaught?: string[];
+  previousInstitutions?: string[];
+  institutions?: string[];
+
+  teachingExperience?: string;
+  experienceDetails?: string;
+  schoolExperience?: string;
+
+  teachingApproach?: string;
+  teachingMethodology?: string;
+
+  achievements?: string[];
+  certifications?: string[];
+
+  [key: string]: any;
+};
+
+type ApiResponse = {
+  tutors?: Tutor[];
+  total?: number;
+  error?: string;
+};
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function safeDecode(value: string) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function normalize(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function cleanArray(value: any): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .filter(
+      (item) =>
+        item !== undefined &&
+        item !== null &&
+        String(item).trim() !== ''
+    )
+    .map((item) => String(item).trim());
+}
+
+function firstArray(...values: any[]): string[] {
+  for (const value of values) {
+    const result = cleanArray(value);
+
+    if (result.length > 0) {
+      return result;
+    }
+  }
+
+  return [];
+}
+
+function firstText(...values: any[]): string | null {
+  for (const value of values) {
+    if (
+      value !== undefined &&
+      value !== null &&
+      String(value).trim() !== ''
+    ) {
+      return String(value).trim();
+    }
+  }
+
+  return null;
+}
+
+function formatExperience(value?: number | string) {
+  if (
+    value === undefined ||
+    value === null ||
+    value === ''
+  ) {
+    return null;
+  }
+
+  const numericValue = Number(value);
+
+  if (!Number.isNaN(numericValue)) {
+    if (numericValue === 1) {
+      return '1 Year';
     }
 
-    if (typeof value === "string") {
-      return value
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean);
+    return `${numericValue}+ Years`;
+  }
+
+  const textValue = String(value).trim();
+
+  if (
+    textValue.toLowerCase().includes('year')
+  ) {
+    return textValue;
+  }
+
+  return `${textValue}+ Years`;
+}
+
+function formatMode(mode?: string) {
+  if (!mode) return null;
+
+  const value = mode.toLowerCase().trim();
+
+  if (value === 'both') {
+    return 'Home + Online';
+  }
+
+  if (value === 'online') {
+    return 'Online';
+  }
+
+  if (
+    value === 'offline' ||
+    value === 'home'
+  ) {
+    return 'Home Tuition';
+  }
+
+  return mode;
+}
+
+function initials(name?: string) {
+  if (!name) return 'TW';
+
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) =>
+      part.charAt(0).toUpperCase()
+    )
+    .join('');
+}
+
+function tutorMatchesSlug(
+  tutor: Tutor,
+  rawSlug: string
+) {
+  if (!tutor?.id || !tutor?.fullName) {
+    return false;
+  }
+
+  const slug = normalize(
+    safeDecode(rawSlug)
+  );
+
+  const nameSlug = normalize(
+    tutor.fullName
+  );
+
+  const id = String(tutor.id).toLowerCase();
+
+  const idWithoutHyphens =
+    id.replace(/-/g, '');
+
+  const idShort =
+    idWithoutHyphens.slice(0, 8);
+
+  const expectedSlug =
+    `${nameSlug}-${idShort}`;
+
+  if (slug === expectedSlug) {
+    return true;
+  }
+
+  if (slug.startsWith(`${nameSlug}-`)) {
+    const suffix =
+      slug.slice(nameSlug.length + 1);
+
+    if (
+      suffix === idShort ||
+      idWithoutHyphens.startsWith(suffix)
+    ) {
+      return true;
     }
+  }
+
+  if (slug === nameSlug) {
+    return true;
+  }
+
+  return false;
+}
+
+/* =========================================================
+   API
+========================================================= */
+
+async function getTutors(): Promise<Tutor[]> {
+  try {
+    const response = await fetch(
+      `${CRM_API_URL}/api/public/tutors`,
+      {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+        },
+        cache: 'no-store',
+      }
+    );
+
+    if (!response.ok) {
+      console.error(
+        'TutorWave CRM tutor API failed:',
+        response.status,
+        response.statusText
+      );
+
+      return [];
+    }
+
+    const data: ApiResponse =
+      await response.json();
+
+    return Array.isArray(data?.tutors)
+      ? data.tutors
+      : [];
+  } catch (error) {
+    console.error(
+      'Unable to fetch tutors from TutorWave CRM:',
+      error
+    );
 
     return [];
-  };
+  }
+}
 
-  /*
-   * -----------------------------------------------------------------------
-   * NORMALIZED DISPLAY DATA
-   * -----------------------------------------------------------------------
-   * These read common existing field names without changing your API.
-   */
+async function findTutorBySlug(
+  rawSlug: string
+): Promise<Tutor | null> {
+  const tutors = await getTutors();
 
-  const tutorName =
-    firstValue(
-      tutor?.name,
-      tutor?.fullName,
-      tutor?.tutorName,
-      tutor?.profile?.name
-    ) || "Tutor";
-
-  const photo =
-    firstValue(
-      tutor?.photo,
-      tutor?.photoUrl,
-      tutor?.profilePhoto,
-      tutor?.profileImage,
-      tutor?.image,
-      tutor?.imageUrl,
-      tutor?.avatar,
-      tutor?.profile?.photo
-    ) || "/placeholder-tutor.jpg";
-
-  const subjects = asArray(
-    firstValue(
-      tutor?.subjects,
-      tutor?.subject,
-      tutor?.teachingSubjects,
-      tutor?.profile?.subjects
-    )
+  return (
+    tutors.find((tutor) =>
+      tutorMatchesSlug(
+        tutor,
+        rawSlug
+      )
+    ) || null
   );
+}
 
-  const classes = asArray(
-    firstValue(
-      tutor?.classes,
-      tutor?.classLevels,
-      tutor?.teachingClasses,
-      tutor?.grades,
-      tutor?.profile?.classes
-    )
+/* =========================================================
+   SMALL UI COMPONENTS
+========================================================= */
+
+function CheckIcon({
+  size = 17,
+}: {
+  size?: number;
+}) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M5 12l4 4L19 6" />
+    </svg>
   );
+}
 
-  const boards = asArray(
-    firstValue(
-      tutor?.boards,
-      tutor?.board,
-      tutor?.teachingBoards,
-      tutor?.profile?.boards
-    )
+function ArrowIcon() {
+  return (
+    <svg
+      width="17"
+      height="17"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M5 12h14" />
+      <path d="M13 6l6 6-6 6" />
+    </svg>
   );
+}
 
-  const experience = firstValue(
-    tutor?.experience,
-    tutor?.teachingExperience,
-    tutor?.yearsExperience,
-    tutor?.profile?.experience
-  );
-
-  const qualification = firstValue(
-    tutor?.qualification,
-    tutor?.highestQualification,
-    tutor?.degree,
-    tutor?.profile?.qualification
-  );
-
-  const university = firstValue(
-    tutor?.university,
-    tutor?.college,
-    tutor?.collegeUniversity,
-    tutor?.institution,
-    tutor?.profile?.university
-  );
-
-  const location = firstValue(
-    tutor?.location,
-    tutor?.city,
-    tutor?.area,
-    tutor?.locality,
-    tutor?.profile?.location
-  );
-
-  const teachingMode = asArray(
-    firstValue(
-      tutor?.teachingMode,
-      tutor?.modes,
-      tutor?.mode,
-      tutor?.preferredMode
-    )
-  );
-
-  const bio = firstValue(
-    tutor?.bio,
-    tutor?.about,
-    tutor?.aboutTutor,
-    tutor?.description,
-    tutor?.profile?.bio
-  );
-
-  const age = firstValue(tutor?.age, tutor?.profile?.age);
-
-  const languages = asArray(
-    firstValue(
-      tutor?.languages,
-      tutor?.language,
-      tutor?.spokenLanguages,
-      tutor?.profile?.languages
-    )
-  );
-
-  const schoolExperience = firstValue(
-    tutor?.schoolExperience,
-    tutor?.schoolTeachingExperience,
-    tutor?.schoolExperienceYears
-  );
-
-  const schoolsTaught = asArray(
-    firstValue(
-      tutor?.schoolsTaught,
-      tutor?.schools,
-      tutor?.schoolNames,
-      tutor?.studentsTaughtFromSchools
-    )
-  );
-
-  const studentsTaught = firstValue(
-    tutor?.studentsTaught,
-    tutor?.totalStudents,
-    tutor?.studentsCount
-  );
-
-  const availability = firstValue(
-    tutor?.availability,
-    tutor?.availableTimings,
-    tutor?.preferredTiming,
-    tutor?.timings
-  );
-
-  const teachingApproach = asArray(
-    firstValue(
-      tutor?.teachingApproach,
-      tutor?.approach,
-      tutor?.teachingMethods
-    )
-  );
-
-  const isVerified =
-    tutor?.verified === true ||
-    tutor?.isVerified === true ||
-    tutor?.verificationStatus === "verified" ||
-    tutor?.status === "verified";
-
-  const rating = firstValue(tutor?.rating, tutor?.averageRating);
-
-  const placements = firstValue(
-    tutor?.placements,
-    tutor?.placementCount,
-    tutor?.successfulPlacements
-  );
-
-  /*
-   * -----------------------------------------------------------------------
-   * PARENT-FRIENDLY SUMMARY ITEMS
-   * -----------------------------------------------------------------------
-   */
-
-  const snapshotItems = [
-    {
-      icon: Clock3,
-      label: "Teaching Experience",
-      value: experience ? `${experience} years` : null,
-    },
-    {
-      icon: BookOpen,
-      label: "Subjects",
-      value: subjects.length
-        ? `${subjects.length} subject${subjects.length > 1 ? "s" : ""}`
-        : null,
-    },
-    {
-      icon: GraduationCap,
-      label: "Classes",
-      value: classes.length
-        ? `${classes.length} class level${classes.length > 1 ? "s" : ""}`
-        : null,
-    },
-    {
-      icon: MapPin,
-      label: "Location",
-      value: location,
-    },
-    {
-      icon: Monitor,
-      label: "Teaching Mode",
-      value: teachingMode.length ? teachingMode.join(" / ") : null,
-    },
-    {
-      icon: Award,
-      label: "Qualification",
-      value: qualification,
-    },
-  ].filter((item) => hasValue(item.value));
-
-  /*
-   * -----------------------------------------------------------------------
-   * REUSABLE UI COMPONENTS
-   * -----------------------------------------------------------------------
-   */
-
-  const Section = ({
-    eyebrow,
-    title,
-    icon: Icon,
-    children,
-  }: {
-    eyebrow?: string;
-    title: string;
-    icon?: any;
-    children: React.ReactNode;
-  }) => (
-    <section className="rounded-3xl border border-slate-200 bg-white p-6 md:p-8 shadow-sm">
-      <div className="mb-6">
-        {eyebrow && (
-          <div className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-blue-600">
-            {eyebrow}
-          </div>
-        )}
-
-        <div className="flex items-center gap-3">
-          {Icon && (
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-              <Icon size={20} />
-            </div>
-          )}
-
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-            {title}
-          </h2>
-        </div>
-      </div>
+function Section({
+  title,
+  children,
+  className = '',
+}: {
+  title: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <section
+      className={`bg-white border border-[#E5E7EB] rounded-3xl p-6 sm:p-8 ${className}`}
+    >
+      <h2 className="text-xl sm:text-2xl font-bold text-[#111827] tracking-tight mb-6">
+        {title}
+      </h2>
 
       {children}
     </section>
   );
+}
 
-  const Pills = ({
-    items,
-    color = "blue",
-  }: {
-    items: string[];
-    color?: "blue" | "slate";
-  }) => {
-    if (!items.length) return null;
+function Tag({
+  children,
+  blue = false,
+}: {
+  children: React.ReactNode;
+  blue?: boolean;
+}) {
+  return (
+    <span
+      className={`inline-flex items-center rounded-xl px-3.5 py-2 text-sm font-medium ${
+        blue
+          ? 'bg-[#EBF4FF] text-[#0A6FF7]'
+          : 'bg-[#F8FAFC] border border-[#E5E7EB] text-[#374151]'
+      }`}
+    >
+      {children}
+    </span>
+  );
+}
 
-    return (
-      <div className="flex flex-wrap gap-2">
-        {items.map((item, index) => (
-          <span
-            key={`${item}-${index}`}
-            className={
-              color === "blue"
-                ? "rounded-full bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700"
-                : "rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700"
-            }
-          >
-            {item}
-          </span>
-        ))}
-      </div>
-    );
-  };
-
-  const InfoRow = ({
-    icon: Icon,
-    label,
-    value,
-  }: {
-    icon: any;
-    label: string;
-    value: React.ReactNode;
-  }) => {
-    if (!hasValue(value)) return null;
-
-    return (
-      <div className="flex gap-4 border-b border-slate-100 py-5 last:border-0">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-          <Icon size={19} />
-        </div>
-
-        <div>
-          <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
-            {label}
-          </div>
-
-          <div className="text-[15px] font-medium leading-6 text-slate-900">
-            {value}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  /*
-   * -----------------------------------------------------------------------
-   * UI
-   * -----------------------------------------------------------------------
-   */
+function DetailItem({
+  label,
+  value,
+}: {
+  label: string;
+  value?: string | null;
+}) {
+  if (!value) return null;
 
   return (
-    <main className="min-h-screen bg-slate-50">
-      {/* ================================================================
-          BACK NAVIGATION
-      ================================================================= */}
+    <div className="py-4 border-b border-[#EEF0F3] last:border-b-0">
+      <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-1.5">
+        {label}
+      </p>
 
-      <div className="mx-auto max-w-7xl px-4 pt-6 md:px-6">
-        <Link
-          href="/tutors"
-          className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-blue-600"
-        >
-          <ArrowLeft size={17} />
-          Back to Tutors
-        </Link>
-      </div>
+      <p className="text-[15px] sm:text-base font-semibold text-[#111827]">
+        {value}
+      </p>
+    </div>
+  );
+}
 
-      {/* ================================================================
-          HERO
-      ================================================================= */}
+/* =========================================================
+   METADATA
+========================================================= */
 
-      <section className="mx-auto max-w-7xl px-4 py-6 md:px-6">
-        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-          <div className="p-6 md:p-8 lg:p-10">
-            <div className="flex flex-col gap-8 lg:flex-row lg:items-center">
-              {/* PHOTO */}
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
 
-              <div className="relative shrink-0">
-                <div className="relative h-44 w-44 overflow-hidden rounded-3xl border border-slate-200 bg-slate-100 md:h-52 md:w-52">
-                  <Image
-                    src={photo}
-                    alt={`${tutorName} - TutorWave Tutor`}
-                    fill
-                    className="object-cover"
-                    sizes="220px"
-                  />
-                </div>
+  const tutor =
+    await findTutorBySlug(slug);
 
-                {isVerified && (
-                  <div className="absolute -bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full bg-emerald-50 px-4 py-2 text-xs font-bold text-emerald-700 shadow-sm ring-1 ring-emerald-200">
-                    <BadgeCheck size={15} />
-                    Verified Tutor
-                  </div>
-                )}
-              </div>
+  if (!tutor) {
+    return {
+      title:
+        'Tutor Profile | TutorWave',
+      description:
+        'Explore verified tutors available through TutorWave.',
+    };
+  }
 
-              {/* MAIN INTRO */}
+  const name =
+    tutor.fullName || 'Tutor';
 
-              <div className="min-w-0 flex-1">
-                <div className="mb-3 flex flex-wrap items-center gap-3">
-                  <h1 className="text-4xl font-bold tracking-tight text-slate-950 md:text-5xl">
-                    {tutorName}
-                  </h1>
+  const subjects =
+    cleanArray(tutor.subjects);
 
-                  {isVerified && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-700">
-                      <CheckCircle2 size={16} />
-                      Verified Tutor
-                    </span>
-                  )}
-                </div>
+  const city =
+    tutor.city || 'Delhi NCR';
 
-                {subjects.length > 0 && (
-                  <p className="mb-5 text-lg text-slate-600">
-                    {subjects.slice(0, 5).join(" • ")}
-                  </p>
-                )}
+  const subjectText =
+    subjects.length > 0
+      ? subjects.join(', ')
+      : 'Multiple Subjects';
 
-                <div className="flex flex-wrap gap-3">
-                  {experience && (
-                    <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700">
-                      <Clock3 size={17} className="text-blue-600" />
-                      {experience} years experience
-                    </span>
-                  )}
+  return {
+    title: `${name} — ${subjectText} Tutor in ${city} | TutorWave`,
+    description:
+      tutor.bio ||
+      `${name} is a TutorWave tutor available for ${subjectText} in ${city}.`,
+  };
+}
 
-                  {location && (
-                    <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700">
-                      <MapPin size={17} className="text-blue-600" />
-                      {location}
-                    </span>
-                  )}
+/* =========================================================
+   PAGE
+========================================================= */
 
-                  {teachingMode.length > 0 && (
-                    <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700">
-                      <Monitor size={17} className="text-blue-600" />
-                      {teachingMode.join(" / ")}
-                    </span>
-                  )}
-                </div>
-              </div>
+export default async function TutorDetailPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
 
-              {/* QUICK CTA */}
+  const tutor =
+    await findTutorBySlug(slug);
 
-              <div className="w-full lg:w-64">
-                <div className="rounded-2xl bg-blue-50 p-5">
-                  <div className="mb-2 text-sm font-semibold text-blue-700">
-                    Looking for this kind of tutor?
-                  </div>
+  /* =======================================================
+     NOT FOUND
+  ======================================================= */
 
-                  <p className="mb-4 text-sm leading-5 text-slate-600">
-                    Tell TutorWave what your child needs and we can help you
-                    proceed with this tutor.
-                  </p>
+  if (!tutor) {
+    return (
+      <main className="min-h-screen bg-[#F7F9FC]">
+        <Header />
 
-                  <Link
-                    href={`/find-a-tutor?tutor=${encodeURIComponent(tutorName)}`}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-blue-700"
-                  >
-                    Request This Tutor
-                    <ArrowRight size={17} />
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+        <section className="min-h-[60vh] flex items-center justify-center px-4">
+          <div className="text-center max-w-lg">
 
-      {/* ================================================================
-          MAIN CONTENT
-      ================================================================= */}
+            <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-[#EBF4FF] flex items-center justify-center text-[#0A6FF7]">
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              >
+                <circle
+                  cx="12"
+                  cy="8"
+                  r="4"
+                />
 
-      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 pb-16 md:px-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="space-y-6">
-          {/* ============================================================
-              1. TUTOR AT A GLANCE
-          ============================================================= */}
-
-          {snapshotItems.length > 0 && (
-            <Section
-              eyebrow="Quick Overview"
-              title="Tutor at a Glance"
-              icon={UserRound}
-            >
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {snapshotItems.map((item, index) => {
-                  const Icon = item.icon;
-
-                  return (
-                    <div
-                      key={`${item.label}-${index}`}
-                      className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
-                    >
-                      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
-                        <Icon size={19} />
-                      </div>
-
-                      <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        {item.label}
-                      </div>
-
-                      <div className="text-base font-bold text-slate-900">
-                        {item.value}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </Section>
-          )}
-
-          {/* ============================================================
-              2. ABOUT THE TUTOR
-          ============================================================= */}
-
-          {hasValue(bio) && (
-            <Section
-              eyebrow="Tutor Introduction"
-              title={`About ${tutorName}`}
-              icon={UserRound}
-            >
-              <p className="max-w-4xl text-base leading-8 text-slate-600">
-                {bio}
-              </p>
-            </Section>
-          )}
-
-          {/* ============================================================
-              3. ACADEMIC EXPERTISE
-          ============================================================= */}
-
-          {(subjects.length > 0 ||
-            classes.length > 0 ||
-            boards.length > 0) && (
-            <Section
-              eyebrow="Academic Expertise"
-              title="What Can This Tutor Teach?"
-              icon={BookOpen}
-            >
-              <div className="space-y-7">
-                {subjects.length > 0 && (
-                  <div>
-                    <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-500">
-                      Subjects
-                    </h3>
-
-                    <Pills items={subjects} color="blue" />
-                  </div>
-                )}
-
-                {classes.length > 0 && (
-                  <div>
-                    <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-500">
-                      Classes
-                    </h3>
-
-                    <Pills items={classes} color="slate" />
-                  </div>
-                )}
-
-                {boards.length > 0 && (
-                  <div>
-                    <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-500">
-                      Boards
-                    </h3>
-
-                    <Pills items={boards} color="slate" />
-                  </div>
-                )}
-              </div>
-            </Section>
-          )}
-
-          {/* ============================================================
-              4. EDUCATION
-          ============================================================= */}
-
-          {(hasValue(qualification) || hasValue(university)) && (
-            <Section
-              eyebrow="Academic Background"
-              title="Education & Qualifications"
-              icon={GraduationCap}
-            >
-              <div className="grid gap-4 md:grid-cols-2">
-                {hasValue(qualification) && (
-                  <div className="rounded-2xl border border-slate-200 p-5">
-                    <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                      <GraduationCap size={20} />
-                    </div>
-
-                    <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      Highest Qualification
-                    </div>
-
-                    <div className="text-lg font-bold text-slate-900">
-                      {qualification}
-                    </div>
-                  </div>
-                )}
-
-                {hasValue(university) && (
-                  <div className="rounded-2xl border border-slate-200 p-5">
-                    <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                      <School size={20} />
-                    </div>
-
-                    <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      College / University
-                    </div>
-
-                    <div className="text-lg font-bold text-slate-900">
-                      {university}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </Section>
-          )}
-
-          {/* ============================================================
-              5. TEACHING EXPERIENCE
-          ============================================================= */}
-
-          {(hasValue(experience) ||
-            hasValue(schoolExperience) ||
-            schoolsTaught.length > 0 ||
-            hasValue(studentsTaught)) && (
-            <Section
-              eyebrow="Professional Experience"
-              title="Teaching Experience"
-              icon={Briefcase}
-            >
-              <div className="space-y-1">
-                {hasValue(experience) && (
-                  <InfoRow
-                    icon={Briefcase}
-                    label="Overall Teaching Experience"
-                    value={`${experience} years`}
-                  />
-                )}
-
-                {hasValue(schoolExperience) && (
-                  <InfoRow
-                    icon={School}
-                    label="School Teaching Experience"
-                    value={`${schoolExperience} years`}
-                  />
-                )}
-
-                {hasValue(studentsTaught) && (
-                  <InfoRow
-                    icon={Users}
-                    label="Students Taught"
-                    value={studentsTaught}
-                  />
-                )}
-              </div>
-
-              {schoolsTaught.length > 0 && (
-                <div className="mt-6 rounded-2xl bg-slate-50 p-5">
-                  <h3 className="mb-4 text-sm font-bold uppercase tracking-wide text-slate-500">
-                    Schools / Institutions Associated With
-                  </h3>
-
-                  <Pills items={schoolsTaught} color="slate" />
-                </div>
-              )}
-            </Section>
-          )}
-
-          {/* ============================================================
-              6. TEACHING APPROACH
-          ============================================================= */}
-
-          {teachingApproach.length > 0 && (
-            <Section
-              eyebrow="Learning Experience"
-              title="Teaching Approach"
-              icon={Target}
-            >
-              <div className="grid gap-3 md:grid-cols-2">
-                {teachingApproach.map((item, index) => (
-                  <div
-                    key={`${item}-${index}`}
-                    className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4"
-                  >
-                    <CheckCircle2
-                      size={20}
-                      className="mt-0.5 shrink-0 text-emerald-600"
-                    />
-
-                    <span className="text-sm font-medium leading-6 text-slate-700">
-                      {item}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </Section>
-          )}
-
-          {/* ============================================================
-              7. LANGUAGES
-          ============================================================= */}
-
-          {languages.length > 0 && (
-            <Section
-              eyebrow="Communication"
-              title="Languages"
-              icon={Languages}
-            >
-              <Pills items={languages} color="slate" />
-            </Section>
-          )}
-
-          {/* ============================================================
-              8. AVAILABILITY
-          ============================================================= */}
-
-          {hasValue(availability) && (
-            <Section
-              eyebrow="Scheduling"
-              title="Availability"
-              icon={CalendarDays}
-            >
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                <div className="flex gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
-                    <CalendarDays size={20} />
-                  </div>
-
-                  <div>
-                    <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      Preferred / Available Timing
-                    </div>
-
-                    <div className="text-base font-semibold leading-7 text-slate-900">
-                      {typeof availability === "string"
-                        ? availability
-                        : JSON.stringify(availability)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Section>
-          )}
-
-          {/* ============================================================
-              9. VERIFICATION
-          ============================================================= */}
-
-          <Section
-            eyebrow="TutorWave Trust"
-            title="Verification"
-            icon={ShieldCheck}
-          >
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
-              <div className="flex gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-emerald-600 shadow-sm">
-                  <BadgeCheck size={25} />
-                </div>
-
-                <div>
-                  <h3 className="mb-1 text-lg font-bold text-slate-900">
-                    {isVerified
-                      ? "TutorWave Verified Tutor"
-                      : "Tutor profile under review"}
-                  </h3>
-
-                  <p className="text-sm leading-6 text-slate-600">
-                    {isVerified
-                      ? "This tutor profile has been reviewed by the TutorWave team. Verification helps parents identify profiles that have gone through TutorWave's verification process."
-                      : "TutorWave is reviewing this tutor profile. Verification status will be updated once the required checks are completed."}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </Section>
-        </div>
-
-        {/* ================================================================
-            RIGHT SIDEBAR — PARENT DECISION PANEL
-        ================================================================= */}
-
-        <aside className="space-y-5 lg:sticky lg:top-24 lg:self-start">
-          {/* REQUEST CARD */}
-
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="mb-2 text-xs font-bold uppercase tracking-[0.15em] text-blue-600">
-              TutorWave Assistance
+                <path d="M4 21c0-4 3.5-7 8-7s8 3 8 7" />
+              </svg>
             </div>
 
-            <h2 className="mb-3 text-2xl font-bold text-slate-900">
-              Interested in {tutorName}?
-            </h2>
+            <h1 className="text-3xl font-bold text-[#111827] mb-3">
+              Tutor Profile Not Found
+            </h1>
 
-            <p className="mb-6 text-sm leading-6 text-slate-600">
-              Share your child's class, subject, location and learning
-              requirement. Our team can help you proceed with this tutor.
+            <p className="text-[#6B7280] leading-7 mb-8">
+              We couldn't find this tutor
+              profile in the TutorWave
+              tutor network. The profile may
+              have been removed, unpublished
+              or is still being verified.
             </p>
 
             <Link
-              href={`/find-a-tutor?tutor=${encodeURIComponent(tutorName)}`}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-4 text-sm font-bold text-white transition hover:bg-blue-700"
+              href="/tutors"
+              className="inline-flex items-center gap-2 bg-[#0A6FF7] text-white font-semibold px-6 py-3 rounded-xl hover:bg-[#0858C8] transition-colors"
             >
-              Request This Tutor
-              <ArrowRight size={18} />
-            </Link>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M19 12H5" />
+                <path d="M12 19l-7-7 7-7" />
+              </svg>
 
-            <Link
-              href="/find-a-tutor"
-              className="mt-3 flex w-full items-center justify-center rounded-xl bg-blue-50 px-5 py-4 text-sm font-bold text-blue-700 transition hover:bg-blue-100"
-            >
-              Find a Different Tutor
+              Browse Tutors
             </Link>
           </div>
+        </section>
 
-          {/* WHY TRUST */}
+        <Footer />
+        <WhatsAppButton />
+      </main>
+    );
+  }
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-6">
-            <h3 className="mb-5 text-lg font-bold text-slate-900">
-              Why Parents Use TutorWave
-            </h3>
+  /* =======================================================
+     NORMALIZED DATA
+  ======================================================= */
 
-            <div className="space-y-4">
-              {[
-                {
-                  icon: ShieldCheck,
-                  title: "Verified Tutor Profiles",
-                  text: "TutorWave reviews tutor profiles before presenting verified tutors.",
-                },
-                {
-                  icon: Target,
-                  title: "Requirement-Based Matching",
-                  text: "We consider the child's class, subject, location and learning requirement.",
-                },
-                {
-                  icon: MessageCircle,
-                  title: "Human Support",
-                  text: "Our team remains available to help parents through the tutor selection process.",
-                },
-              ].map((item, index) => {
-                const Icon = item.icon;
+  const name =
+    tutor.fullName || 'Tutor';
 
-                return (
-                  <div
-                    key={index}
-                    className="flex gap-3 border-b border-slate-100 pb-4 last:border-0 last:pb-0"
-                  >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                      <Icon size={18} />
+  const photo =
+    tutor.profilePhoto || '';
+
+  const subjects =
+    cleanArray(tutor.subjects);
+
+  const classes =
+    cleanArray(tutor.classes);
+
+  const boards =
+    cleanArray(tutor.boards);
+
+  const areas =
+    cleanArray(tutor.areas);
+
+  const languages =
+    firstArray(
+      tutor.languages,
+      tutor.teachingLanguages
+    );
+
+  const schools =
+    firstArray(
+      tutor.schoolsTaught,
+      tutor.previousInstitutions,
+      tutor.institutions
+    );
+
+  const experience =
+    formatExperience(
+      tutor.experienceYears
+    );
+
+  const mode =
+    formatMode(tutor.mode);
+
+  const qualification =
+    firstText(
+      tutor.highestQualification
+    );
+
+  const college =
+    firstText(tutor.college);
+
+  const specialization =
+    firstText(
+      tutor.specialization
+    );
+
+  const experienceDetails =
+    firstText(
+      tutor.teachingExperience,
+      tutor.experienceDetails,
+      tutor.schoolExperience
+    );
+
+  const teachingApproach =
+    firstText(
+      tutor.teachingApproach,
+      tutor.teachingMethodology
+    );
+
+  const availability =
+    firstText(
+      tutor.availability
+    );
+
+  const availabilityTime =
+    firstText(
+      tutor.availabilityTime
+    );
+
+  const availabilityDays =
+    cleanArray(
+      tutor.availabilityDays
+    );
+
+  const city =
+    tutor.city || 'Delhi NCR';
+
+  const bio =
+    tutor.bio?.trim() ||
+    `${name} is a TutorWave tutor available for personalised tuition support.`;
+
+  const hasEducation =
+    Boolean(
+      qualification ||
+      college ||
+      specialization
+    );
+
+  const hasExperience =
+    Boolean(
+      experience ||
+      experienceDetails ||
+      schools.length > 0
+    );
+
+  const hasAvailability =
+    Boolean(
+      availability ||
+      availabilityTime ||
+      availabilityDays.length > 0 ||
+      areas.length > 0
+    );
+
+  const hasAcademicExpertise =
+    subjects.length > 0 ||
+    classes.length > 0 ||
+    boards.length > 0;
+
+  /* =======================================================
+     RENDER
+  ======================================================= */
+
+  return (
+    <main className="min-h-screen bg-[#F7F9FC]">
+
+      <Header />
+
+      {/* ===================================================
+          BREADCRUMB
+      =================================================== */}
+
+      <div className="bg-white border-b border-[#E5E7EB]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+
+          <div className="flex items-center gap-2 text-sm text-[#6B7280]">
+
+            <Link
+              href="/"
+              className="hover:text-[#0A6FF7] transition-colors"
+            >
+              Home
+            </Link>
+
+            <span>/</span>
+
+            <Link
+              href="/tutors"
+              className="hover:text-[#0A6FF7] transition-colors"
+            >
+              Tutors
+            </Link>
+
+            <span>/</span>
+
+            <span className="text-[#111827] font-medium truncate">
+              {name}
+            </span>
+
+          </div>
+
+        </div>
+      </div>
+
+      {/* ===================================================
+          HERO
+      =================================================== */}
+
+      <section className="bg-white border-b border-[#E5E7EB]">
+
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+
+          <div className="flex flex-col lg:flex-row gap-7 lg:gap-10 items-start">
+
+            {/* PHOTO */}
+
+            <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-3xl overflow-hidden bg-[#EBF4FF] border border-[#E5E7EB] shadow-sm flex-shrink-0">
+
+              {photo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={photo}
+                  alt={`${name} - TutorWave Tutor`}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-[#0A6FF7]">
+                  {initials(name)}
+                </div>
+              )}
+
+            </div>
+
+            {/* INFORMATION */}
+
+            <div className="flex-1 min-w-0">
+
+              <div className="flex flex-wrap items-center gap-3 mb-2">
+
+                <h1 className="text-3xl sm:text-4xl font-bold text-[#111827] tracking-tight">
+                  {name}
+                </h1>
+
+                {tutor.isVerified && (
+                  <span className="inline-flex items-center gap-1.5 bg-[#E7F7F4] text-[#087F72] px-3 py-1.5 rounded-full text-xs font-bold">
+                    <CheckIcon size={15} />
+                    Verified
+                  </span>
+                )}
+
+              </div>
+
+              {experience && (
+                <p className="text-base sm:text-lg font-semibold text-[#4B5563] mb-3">
+                  {experience} Experience
+                </p>
+              )}
+
+              {subjects.length > 0 && (
+                <p className="text-base sm:text-lg text-[#5F6B7A] leading-7 mb-5">
+                  {subjects.join(' • ')}
+                </p>
+              )}
+
+              <div className="flex flex-wrap gap-2.5">
+
+                {city && (
+                  <span className="inline-flex items-center gap-2 bg-[#F8FAFC] border border-[#E5E7EB] px-3.5 py-2 rounded-xl text-sm font-medium text-[#374151]">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#0A6FF7"
+                      strokeWidth="2"
+                    >
+                      <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0Z" />
+                      <circle
+                        cx="12"
+                        cy="10"
+                        r="3"
+                      />
+                    </svg>
+
+                    {city}
+                  </span>
+                )}
+
+                {mode && (
+                  <span className="inline-flex items-center gap-2 bg-[#F8FAFC] border border-[#E5E7EB] px-3.5 py-2 rounded-xl text-sm font-medium text-[#374151]">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#0A6FF7"
+                      strokeWidth="2"
+                    >
+                      <rect
+                        x="3"
+                        y="4"
+                        width="18"
+                        height="16"
+                        rx="2"
+                      />
+
+                      <path d="M7 8h10M7 12h10M7 16h6" />
+                    </svg>
+
+                    {mode}
+                  </span>
+                )}
+
+              </div>
+
+            </div>
+
+            {/* CTA */}
+
+            <div className="w-full lg:w-auto lg:min-w-[210px]">
+
+              <Link
+                href="/find-a-tutor"
+                className="flex items-center justify-center gap-2 w-full bg-[#0A6FF7] text-white font-bold px-6 py-3.5 rounded-xl hover:bg-[#0858C8] transition-colors shadow-sm"
+              >
+                Request This Tutor
+                <ArrowIcon />
+              </Link>
+
+              <p className="text-xs text-center text-[#6B7280] mt-2.5">
+                No obligation to hire
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      {/* ===================================================
+          MAIN
+      =================================================== */}
+
+      <section className="py-7 sm:py-9">
+
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_290px] gap-6 lg:gap-8">
+
+            {/* =================================================
+                MAIN COLUMN
+            ================================================= */}
+
+            <div className="space-y-6">
+
+              {/* =================================================
+                  WHY CONSIDER
+              ================================================= */}
+
+              <Section title="Why Consider This Tutor">
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+
+                  {experience && (
+                    <div className="flex items-start gap-3">
+
+                      <div className="mt-0.5 text-[#0A6FF7]">
+                        <CheckIcon />
+                      </div>
+
+                      <p className="text-[#374151] font-medium">
+                        {experience} of teaching experience
+                      </p>
+
+                    </div>
+                  )}
+
+                  {boards.length > 0 && (
+                    <div className="flex items-start gap-3">
+
+                      <div className="mt-0.5 text-[#0A6FF7]">
+                        <CheckIcon />
+                      </div>
+
+                      <p className="text-[#374151] font-medium">
+                        {boards.join(' & ')} experience
+                      </p>
+
+                    </div>
+                  )}
+
+                  {subjects.length > 0 && (
+                    <div className="flex items-start gap-3">
+
+                      <div className="mt-0.5 text-[#0A6FF7]">
+                        <CheckIcon />
+                      </div>
+
+                      <p className="text-[#374151] font-medium">
+                        {subjects.join(', ')}
+                      </p>
+
+                    </div>
+                  )}
+
+                  {classes.length > 0 && (
+                    <div className="flex items-start gap-3">
+
+                      <div className="mt-0.5 text-[#0A6FF7]">
+                        <CheckIcon />
+                      </div>
+
+                      <p className="text-[#374151] font-medium">
+                        {classes.length === 1
+                          ? `${classes[0]} students`
+                          : `${classes[0]} – ${classes[classes.length - 1]} students`}
+                      </p>
+
+                    </div>
+                  )}
+
+                  {mode && (
+                    <div className="flex items-start gap-3">
+
+                      <div className="mt-0.5 text-[#0A6FF7]">
+                        <CheckIcon />
+                      </div>
+
+                      <p className="text-[#374151] font-medium">
+                        {mode}
+                        {city
+                          ? ` in ${city}`
+                          : ''}
+                      </p>
+
+                    </div>
+                  )}
+
+                  {specialization && (
+                    <div className="flex items-start gap-3">
+
+                      <div className="mt-0.5 text-[#0A6FF7]">
+                        <CheckIcon />
+                      </div>
+
+                      <p className="text-[#374151] font-medium">
+                        Specialised in{' '}
+                        {specialization}
+                      </p>
+
+                    </div>
+                  )}
+
+                </div>
+
+              </Section>
+
+              {/* =================================================
+                  TUTOR AT A GLANCE
+              ================================================= */}
+
+              <Section title="Tutor at a Glance">
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
+
+                  <DetailItem
+                    label="Experience"
+                    value={experience}
+                  />
+
+                  <DetailItem
+                    label="Qualification"
+                    value={qualification}
+                  />
+
+                  <DetailItem
+                    label="Classes"
+                    value={
+                      classes.length > 0
+                        ? classes.join(' • ')
+                        : null
+                    }
+                  />
+
+                  <DetailItem
+                    label="Boards"
+                    value={
+                      boards.length > 0
+                        ? boards.join(' • ')
+                        : null
+                    }
+                  />
+
+                  <DetailItem
+                    label="Mode"
+                    value={mode}
+                  />
+
+                  <DetailItem
+                    label="Location"
+                    value={city}
+                  />
+
+                </div>
+
+              </Section>
+
+              {/* =================================================
+                  ACADEMIC EXPERTISE
+              ================================================= */}
+
+              {hasAcademicExpertise && (
+                <Section title="Academic Expertise">
+
+                  <div className="space-y-7">
+
+                    {subjects.length > 0 && (
+                      <div>
+
+                        <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-3">
+                          Subjects
+                        </p>
+
+                        <div className="flex flex-wrap gap-2.5">
+
+                          {subjects.map(
+                            (subject) => (
+                              <Tag
+                                key={subject}
+                                blue
+                              >
+                                {subject}
+                              </Tag>
+                            )
+                          )}
+
+                        </div>
+
+                      </div>
+                    )}
+
+                    {classes.length > 0 && (
+                      <div>
+
+                        <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-3">
+                          Classes
+                        </p>
+
+                        <div className="flex flex-wrap gap-2.5">
+
+                          {classes.map(
+                            (item) => (
+                              <Tag key={item}>
+                                {item}
+                              </Tag>
+                            )
+                          )}
+
+                        </div>
+
+                      </div>
+                    )}
+
+                    {boards.length > 0 && (
+                      <div>
+
+                        <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-3">
+                          Boards
+                        </p>
+
+                        <div className="flex flex-wrap gap-2.5">
+
+                          {boards.map(
+                            (board) => (
+                              <Tag key={board}>
+                                {board}
+                              </Tag>
+                            )
+                          )}
+
+                        </div>
+
+                      </div>
+                    )}
+
+                  </div>
+
+                </Section>
+              )}
+
+              {/* =================================================
+                  EDUCATION
+              ================================================= */}
+
+              {hasEducation && (
+                <Section title="Education & Qualifications">
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                    {qualification && (
+                      <div className="rounded-2xl border border-[#E5E7EB] bg-[#FAFBFC] p-5">
+
+                        <div className="w-10 h-10 rounded-xl bg-[#EBF4FF] flex items-center justify-center text-[#0A6FF7] mb-4">
+
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                          >
+                            <path d="M22 10l-10-5-10 5 10 5 10-5Z" />
+                            <path d="M6 12v5c3 2 9 2 12 0v-5" />
+                          </svg>
+
+                        </div>
+
+                        <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-1.5">
+                          Qualification
+                        </p>
+
+                        <p className="font-bold text-[#111827]">
+                          {qualification}
+                        </p>
+
+                      </div>
+                    )}
+
+                    {college && (
+                      <div className="rounded-2xl border border-[#E5E7EB] bg-[#FAFBFC] p-5">
+
+                        <div className="w-10 h-10 rounded-xl bg-[#EBF4FF] flex items-center justify-center text-[#0A6FF7] mb-4">
+
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                          >
+                            <path d="M4 4h16v16H4z" />
+                            <path d="M8 8h8M8 12h8M8 16h5" />
+                          </svg>
+
+                        </div>
+
+                        <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-1.5">
+                          College / University
+                        </p>
+
+                        <p className="font-bold text-[#111827]">
+                          {college}
+                        </p>
+
+                      </div>
+                    )}
+
+                  </div>
+
+                  {specialization && (
+                    <div className="mt-4 rounded-2xl bg-[#F8FAFC] border border-[#E5E7EB] p-5">
+
+                      <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-2">
+                        Specialisation
+                      </p>
+
+                      <p className="text-[#374151] leading-7">
+                        {specialization}
+                      </p>
+
+                    </div>
+                  )}
+
+                </Section>
+              )}
+
+              {/* =================================================
+                  TEACHING EXPERIENCE
+              ================================================= */}
+
+              {hasExperience && (
+                <Section title="Teaching Experience">
+
+                  <div className="flex gap-4">
+
+                    <div className="w-11 h-11 rounded-xl bg-[#EBF4FF] flex items-center justify-center text-[#0A6FF7] flex-shrink-0">
+
+                      <svg
+                        width="21"
+                        height="21"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                      >
+                        <rect
+                          x="3"
+                          y="7"
+                          width="18"
+                          height="13"
+                          rx="2"
+                        />
+
+                        <path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2" />
+
+                        <path d="M3 12h18" />
+                      </svg>
+
+                    </div>
+
+                    <div className="min-w-0">
+
+                      {experience && (
+                        <p className="text-lg font-bold text-[#111827] mb-2">
+                          {experience} of teaching
+                        </p>
+                      )}
+
+                      {experienceDetails && (
+                        <p className="text-[#4B5563] leading-7">
+                          {experienceDetails}
+                        </p>
+                      )}
+
+                      {schools.length > 0 && (
+                        <div className="mt-5">
+
+                          <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-3">
+                            Teaching Exposure
+                          </p>
+
+                          <div className="flex flex-wrap gap-2.5">
+
+                            {schools.map(
+                              (school) => (
+                                <Tag key={school}>
+                                  {school}
+                                </Tag>
+                              )
+                            )}
+
+                          </div>
+
+                        </div>
+                      )}
+
+                    </div>
+
+                  </div>
+
+                </Section>
+              )}
+
+              {/* =================================================
+                  ABOUT
+              ================================================= */}
+
+              <Section title="About the Tutor">
+
+                <p className="text-[#4B5563] leading-8 text-[15px] sm:text-base">
+                  {bio}
+                </p>
+
+              </Section>
+
+              {/* =================================================
+                  TEACHING APPROACH
+              ================================================= */}
+
+              {teachingApproach && (
+                <Section title="Teaching Approach">
+
+                  <div className="rounded-2xl bg-[#F8FAFC] border border-[#E5E7EB] p-5 sm:p-6">
+
+                    <p className="text-[#374151] leading-8">
+                      {teachingApproach}
+                    </p>
+
+                  </div>
+
+                </Section>
+              )}
+
+              {/* =================================================
+                  LOCATION & AVAILABILITY
+              ================================================= */}
+
+              {hasAvailability && (
+                <Section title="Location & Availability">
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
+
+                    <DetailItem
+                      label="Location"
+                      value={city}
+                    />
+
+                    {mode && (
+                      <DetailItem
+                        label="Mode"
+                        value={mode}
+                      />
+                    )}
+
+                    {areas.length > 0 && (
+                      <div className="py-4 sm:col-span-2 border-b border-[#EEF0F3]">
+
+                        <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-3">
+                          Areas Served
+                        </p>
+
+                        <div className="flex flex-wrap gap-2.5">
+
+                          {areas.map(
+                            (area) => (
+                              <Tag key={area}>
+                                {area}
+                              </Tag>
+                            )
+                          )}
+
+                        </div>
+
+                      </div>
+                    )}
+
+                    {availability && (
+                      <DetailItem
+                        label="Availability"
+                        value={availability}
+                      />
+                    )}
+
+                    {availabilityTime && (
+                      <DetailItem
+                        label="Preferred Time"
+                        value={availabilityTime}
+                      />
+                    )}
+
+                    {availabilityDays.length > 0 && (
+                      <div className="py-4 sm:col-span-2">
+
+                        <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-3">
+                          Days
+                        </p>
+
+                        <div className="flex flex-wrap gap-2.5">
+
+                          {availabilityDays.map(
+                            (day) => (
+                              <Tag key={day}>
+                                {day}
+                              </Tag>
+                            )
+                          )}
+
+                        </div>
+
+                      </div>
+                    )}
+
+                  </div>
+
+                </Section>
+              )}
+
+              {/* =================================================
+                  LANGUAGES
+              ================================================= */}
+
+              {languages.length > 0 && (
+                <Section title="Languages">
+
+                  <div className="flex flex-wrap gap-2.5">
+
+                    {languages.map(
+                      (language) => (
+                        <Tag key={language}>
+                          {language}
+                        </Tag>
+                      )
+                    )}
+
+                  </div>
+
+                </Section>
+              )}
+
+              {/* =================================================
+                  VERIFICATION
+              ================================================= */}
+
+              <Section title="TutorWave Verification">
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                  <div className="flex items-start gap-3">
+
+                    <div className="w-9 h-9 rounded-lg bg-[#E7F7F4] text-[#087F72] flex items-center justify-center flex-shrink-0">
+                      <CheckIcon size={16} />
                     </div>
 
                     <div>
-                      <div className="text-sm font-bold text-slate-900">
-                        {item.title}
-                      </div>
+                      <p className="font-semibold text-[#111827]">
+                        Profile reviewed
+                      </p>
 
-                      <div className="mt-1 text-xs leading-5 text-slate-500">
-                        {item.text}
-                      </div>
+                      <p className="text-sm text-[#6B7280] mt-1">
+                        Tutor profile reviewed by TutorWave.
+                      </p>
                     </div>
+
                   </div>
-                );
-              })}
+
+                  <div className="flex items-start gap-3">
+
+                    <div className="w-9 h-9 rounded-lg bg-[#E7F7F4] text-[#087F72] flex items-center justify-center flex-shrink-0">
+                      <CheckIcon size={16} />
+                    </div>
+
+                    <div>
+                      <p className="font-semibold text-[#111827]">
+                        Qualification information
+                      </p>
+
+                      <p className="text-sm text-[#6B7280] mt-1">
+                        Academic information reviewed where available.
+                      </p>
+                    </div>
+
+                  </div>
+
+                  <div className="flex items-start gap-3">
+
+                    <div className="w-9 h-9 rounded-lg bg-[#E7F7F4] text-[#087F72] flex items-center justify-center flex-shrink-0">
+                      <CheckIcon size={16} />
+                    </div>
+
+                    <div>
+                      <p className="font-semibold text-[#111827]">
+                        Teaching information
+                      </p>
+
+                      <p className="text-sm text-[#6B7280] mt-1">
+                        Teaching profile reviewed by TutorWave.
+                      </p>
+                    </div>
+
+                  </div>
+
+                  <div className="flex items-start gap-3">
+
+                    <div className="w-9 h-9 rounded-lg bg-[#E7F7F4] text-[#087F72] flex items-center justify-center flex-shrink-0">
+                      <CheckIcon size={16} />
+                    </div>
+
+                    <div>
+                      <p className="font-semibold text-[#111827]">
+                        Profile photo
+                      </p>
+
+                      <p className="text-sm text-[#6B7280] mt-1">
+                        Profile information maintained in the TutorWave network.
+                      </p>
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </Section>
+
+              {/* =================================================
+                  MOBILE CTA
+              ================================================= */}
+
+              <div className="lg:hidden">
+
+                <div className="bg-[#0D1118] rounded-3xl p-6 sm:p-8">
+
+                  <p className="text-[#5DB8FF] text-xs uppercase tracking-[0.14em] font-bold mb-2">
+                    TutorWave
+                  </p>
+
+                  <h2 className="text-2xl font-bold text-white">
+                    Interested in this tutor?
+                  </h2>
+
+                  <p className="text-white/60 text-sm leading-6 mt-3">
+                    Tell us your child's requirements
+                    and we'll help you proceed.
+                  </p>
+
+                  <Link
+                    href="/find-a-tutor"
+                    className="flex items-center justify-center gap-2 w-full bg-[#0A6FF7] text-white font-bold py-3.5 rounded-xl mt-6 hover:bg-[#0858C8] transition-colors"
+                  >
+                    Request This Tutor
+                    <ArrowIcon />
+                  </Link>
+
+                  <p className="text-xs text-white/40 text-center mt-3">
+                    No obligation to hire.
+                  </p>
+
+                </div>
+
+              </div>
+
             </div>
+
+            {/* =================================================
+                SIDEBAR
+            ================================================= */}
+
+            <aside className="hidden lg:block">
+
+              <div className="sticky top-24 space-y-5">
+
+                {/* REQUEST */}
+
+                <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 shadow-sm">
+
+                  <p className="text-xs uppercase tracking-[0.12em] font-bold text-[#0A6FF7] mb-2">
+                    TutorWave
+                  </p>
+
+                  <h2 className="text-xl font-bold text-[#111827]">
+                    Interested in this tutor?
+                  </h2>
+
+                  <p className="text-sm text-[#6B7280] leading-6 mt-3">
+                    Tell us your child's class,
+                    subject and tuition
+                    requirements.
+                  </p>
+
+                  <Link
+                    href="/find-a-tutor"
+                    className="flex items-center justify-center gap-2 w-full bg-[#0A6FF7] text-white font-bold py-3.5 rounded-xl mt-5 hover:bg-[#0858C8] transition-colors"
+                  >
+                    Request This Tutor
+                    <ArrowIcon />
+                  </Link>
+
+                  <Link
+                    href="/tutors"
+                    className="flex items-center justify-center w-full bg-[#EBF4FF] text-[#0A6FF7] font-bold py-3.5 rounded-xl mt-3 hover:bg-[#DCEBFF] transition-colors"
+                  >
+                    Browse Other Tutors
+                  </Link>
+
+                  <p className="text-xs text-[#6B7280] text-center mt-4">
+                    No obligation to hire.
+                  </p>
+
+                </div>
+
+                {/* QUICK SUMMARY */}
+
+                <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6">
+
+                  <h3 className="font-bold text-[#111827] mb-4">
+                    Quick Details
+                  </h3>
+
+                  <div className="space-y-4">
+
+                    {experience && (
+                      <div className="flex justify-between gap-4">
+
+                        <span className="text-sm text-[#6B7280]">
+                          Experience
+                        </span>
+
+                        <span className="text-sm font-semibold text-[#111827] text-right">
+                          {experience}
+                        </span>
+
+                      </div>
+                    )}
+
+                    {qualification && (
+                      <div className="flex justify-between gap-4">
+
+                        <span className="text-sm text-[#6B7280]">
+                          Qualification
+                        </span>
+
+                        <span className="text-sm font-semibold text-[#111827] text-right">
+                          {qualification}
+                        </span>
+
+                      </div>
+                    )}
+
+                    {subjects.length > 0 && (
+                      <div className="flex justify-between gap-4">
+
+                        <span className="text-sm text-[#6B7280]">
+                          Subjects
+                        </span>
+
+                        <span className="text-sm font-semibold text-[#111827] text-right">
+                          {subjects.length}
+                        </span>
+
+                      </div>
+                    )}
+
+                    {city && (
+                      <div className="flex justify-between gap-4">
+
+                        <span className="text-sm text-[#6B7280]">
+                          Location
+                        </span>
+
+                        <span className="text-sm font-semibold text-[#111827] text-right">
+                          {city}
+                        </span>
+
+                      </div>
+                    )}
+
+                    {mode && (
+                      <div className="flex justify-between gap-4">
+
+                        <span className="text-sm text-[#6B7280]">
+                          Mode
+                        </span>
+
+                        <span className="text-sm font-semibold text-[#111827] text-right">
+                          {mode}
+                        </span>
+
+                      </div>
+                    )}
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </aside>
+
           </div>
 
-          {/* PROFILE SUMMARY */}
+        </div>
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-6">
-            <h3 className="mb-4 text-lg font-bold text-slate-900">
-              Profile Summary
-            </h3>
+      </section>
 
-            <div className="space-y-4">
-              {hasValue(age) && (
-                <div className="flex justify-between gap-4 text-sm">
-                  <span className="text-slate-500">Age</span>
-                  <span className="font-semibold text-slate-900">
-                    {age} years
-                  </span>
-                </div>
-              )}
+      {/* ===================================================
+          HOW IT WORKS
+      =================================================== */}
 
-              {hasValue(location) && (
-                <div className="flex justify-between gap-4 text-sm">
-                  <span className="text-slate-500">Location</span>
-                  <span className="text-right font-semibold text-slate-900">
-                    {location}
-                  </span>
-                </div>
-              )}
+      <section className="bg-white border-t border-[#E5E7EB] py-10 sm:py-12">
 
-              {hasValue(experience) && (
-                <div className="flex justify-between gap-4 text-sm">
-                  <span className="text-slate-500">Experience</span>
-                  <span className="font-semibold text-slate-900">
-                    {experience} years
-                  </span>
-                </div>
-              )}
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
 
-              {rating !== undefined && rating !== null && (
-                <div className="flex justify-between gap-4 text-sm">
-                  <span className="text-slate-500">Rating</span>
+          <div className="text-center mb-8">
 
-                  <span className="inline-flex items-center gap-1 font-semibold text-slate-900">
-                    {rating}
-                    <Star
-                      size={15}
-                      className="fill-current text-amber-500"
-                    />
-                  </span>
-                </div>
-              )}
-
-              {placements !== undefined && placements !== null && (
-                <div className="flex justify-between gap-4 text-sm">
-                  <span className="text-slate-500">Placements</span>
-                  <span className="font-semibold text-slate-900">
-                    {placements}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* MOBILE/SECONDARY CTA */}
-
-          <div className="rounded-3xl bg-slate-900 p-6 text-white">
-            <div className="mb-2 text-sm font-semibold text-blue-300">
-              Need help deciding?
-            </div>
-
-            <h3 className="mb-3 text-xl font-bold">
-              Not sure if this tutor is the right fit?
-            </h3>
-
-            <p className="mb-5 text-sm leading-6 text-slate-300">
-              Tell TutorWave about your child's requirements and our team can
-              help you explore suitable options.
+            <p className="text-xs uppercase tracking-[0.14em] font-bold text-[#0A6FF7] mb-2">
+              TutorWave
             </p>
+
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#111827]">
+              How It Works
+            </h2>
+
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+
+            <div className="text-center">
+
+              <div className="w-11 h-11 mx-auto rounded-full bg-[#EBF4FF] text-[#0A6FF7] flex items-center justify-center font-bold mb-4">
+                1
+              </div>
+
+              <h3 className="font-bold text-[#111827]">
+                Share your requirement
+              </h3>
+
+              <p className="text-sm text-[#6B7280] leading-6 mt-2">
+                Tell us your child's class,
+                subject, location and
+                learning requirements.
+              </p>
+
+            </div>
+
+            <div className="text-center">
+
+              <div className="w-11 h-11 mx-auto rounded-full bg-[#EBF4FF] text-[#0A6FF7] flex items-center justify-center font-bold mb-4">
+                2
+              </div>
+
+              <h3 className="font-bold text-[#111827]">
+                We confirm availability
+              </h3>
+
+              <p className="text-sm text-[#6B7280] leading-6 mt-2">
+                Our team checks the tutor's
+                availability and requirement
+                match.
+              </p>
+
+            </div>
+
+            <div className="text-center">
+
+              <div className="w-11 h-11 mx-auto rounded-full bg-[#EBF4FF] text-[#0A6FF7] flex items-center justify-center font-bold mb-4">
+                3
+              </div>
+
+              <h3 className="font-bold text-[#111827]">
+                We help you proceed
+              </h3>
+
+              <p className="text-sm text-[#6B7280] leading-6 mt-2">
+                We connect you with the tutor
+                and help you take the next step.
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      {/* ===================================================
+          FINAL CTA
+      =================================================== */}
+
+      <section className="bg-[#0D1118] py-12 sm:py-14">
+
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
+
+          <p className="text-[#5DB8FF] text-xs uppercase tracking-[0.15em] font-bold mb-3">
+            TutorWave
+          </p>
+
+          <h2 className="text-2xl sm:text-3xl font-bold text-white">
+            Looking for a tutor?
+          </h2>
+
+          <p className="text-white/60 leading-7 mt-3">
+            Tell us what your child needs and
+            our team will help you find a suitable
+            tutor.
+          </p>
+
+          <div className="flex flex-col sm:flex-row justify-center gap-3 mt-7">
 
             <Link
               href="/find-a-tutor"
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-5 py-3.5 text-sm font-bold text-slate-900 transition hover:bg-slate-100"
+              className="inline-flex items-center justify-center gap-2 bg-[#0A6FF7] text-white font-bold px-7 py-3.5 rounded-xl hover:bg-[#0858C8] transition-colors"
             >
-              Tell Us Your Requirement
-              <ArrowRight size={17} />
+              Find a Tutor
+              <ArrowIcon />
             </Link>
+
+            <Link
+              href="/tutors"
+              className="inline-flex items-center justify-center bg-white/10 text-white font-bold px-7 py-3.5 rounded-xl hover:bg-white/15 transition-colors"
+            >
+              Browse Tutors
+            </Link>
+
           </div>
-        </aside>
-      </div>
+
+        </div>
+
+      </section>
+
+      <Footer />
+
+      <WhatsAppButton />
+
     </main>
   );
 }
