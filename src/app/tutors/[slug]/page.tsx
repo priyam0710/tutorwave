@@ -1,137 +1,146 @@
+
 import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import WhatsAppButton from '@/app/components/WhatsAppButton';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+const CRM_API_URL =
+  process.env.TUTORWAVE_CRM_URL ||
+  'https://tutorwave-crm-xi.vercel.app';
+
 type Tutor = {
-  id: string;
+  id?: string;
   fullName?: string;
   profilePhoto?: string;
   gender?: string;
   city?: string;
   areas?: string[];
+
   subjects?: string[];
   classes?: string[];
   boards?: string[];
+
   mode?: string;
+
   highestQualification?: string;
   college?: string;
-  experienceYears?: number;
+
+  experienceYears?: number | string;
+
   bio?: string;
   specialization?: string;
+
   rating?: number;
   totalPlacements?: number;
+
   isVerified?: boolean;
+
+  [key: string]: any;
 };
 
-type PublicTutorsResponse = {
+type ApiResponse = {
   tutors?: Tutor[];
   total?: number;
+  error?: string;
 };
-
-/* =========================================================
-   CONFIG
-========================================================= */
-
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  'https://tutorwave.in';
-
-/*
- * We use the existing public API route.
- *
- * This means:
- * Website
- *   ↓
- * /api/public-tutors
- *   ↓
- * TutorWave CRM
- *   ↓
- * MongoDB
- *
- * No CRM route changes are required.
- */
-const PUBLIC_TUTORS_API =
-  `${SITE_URL.replace(/\/$/, '')}/api/public-tutors`;
-
 
 /* =========================================================
    HELPERS
 ========================================================= */
 
-function safeArray(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
+function safeDecode(value: string) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
 
+function normalize(value: string) {
   return value
-    .filter((item) => item !== null && item !== undefined)
-    .map((item) => String(item).trim())
-    .filter(Boolean);
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }
 
+/*
+  The tutor card URL is expected to look like:
 
-function formatMode(mode?: string): string {
-  const value = String(mode || '').toLowerCase();
+  /tutors/nawnit-8ebd57b9
 
-  if (value.includes('both')) {
-    return 'Home & Online';
+  The slug contains:
+
+  tutor name + first 8 characters of CRM tutor ID
+
+  This function checks both parts so the profile remains
+  connected to the real CRM record.
+*/
+function tutorMatchesSlug(tutor: Tutor, rawSlug: string) {
+  if (!tutor?.id || !tutor?.fullName) {
+    return false;
   }
 
-  if (value.includes('online')) {
-    return 'Online';
-  }
+  const slug = normalize(safeDecode(rawSlug));
 
-  if (
-    value.includes('offline') ||
-    value.includes('home')
-  ) {
-    return 'Home Tuition';
-  }
+  const nameSlug = normalize(tutor.fullName);
 
-  return mode || '';
-}
+  const id = String(tutor.id).toLowerCase();
 
+  const idShort = id.replace(/-/g, '').slice(0, 8);
 
-function formatExperience(years?: number): string {
-  if (
-    years === undefined ||
-    years === null ||
-    Number.isNaN(Number(years))
-  ) {
-    return '';
-  }
-
-  const numericYears = Number(years);
-
-  if (numericYears === 1) {
-    return '1 Year';
-  }
-
-  return `${numericYears} Years`;
-}
-
-
-function getTutorSlug(tutor: Tutor): string {
   /*
-   * The listing page currently uses the CRM tutor ID
-   * as the URL segment.
-   *
-   * Example:
-   * /tutors/nawnit-8ebd57b9
-   *
-   * Therefore the detail page accepts the URL value
-   * as an ID first.
-   */
+    Possible slug formats supported:
 
-  return tutor.id;
+    name-id
+    name-idshort
+    name
+  */
+
+  const expectedSlug = `${nameSlug}-${idShort}`;
+
+  if (slug === expectedSlug) {
+    return true;
+  }
+
+  /*
+    Also support a slug containing the first 8 characters
+    of the UUID without relying on the exact UUID formatting.
+  */
+
+  if (slug.startsWith(`${nameSlug}-`)) {
+    const suffix = slug.slice(nameSlug.length + 1);
+
+    if (
+      suffix === idShort ||
+      id.replace(/-/g, '').startsWith(suffix)
+    ) {
+      return true;
+    }
+  }
+
+  /*
+    Last fallback:
+    match exact tutor name if no ID suffix exists.
+  */
+
+  if (slug === nameSlug) {
+    return true;
+  }
+
+  return false;
 }
 
-
-async function getPublicTutors(): Promise<Tutor[]> {
+async function getTutors(): Promise<Tutor[]> {
   try {
     const response = await fetch(
-      PUBLIC_TUTORS_API,
+      `${CRM_API_URL}/api/public/tutors`,
       {
         method: 'GET',
         headers: {
@@ -143,22 +152,22 @@ async function getPublicTutors(): Promise<Tutor[]> {
 
     if (!response.ok) {
       console.error(
-        'Public tutors API returned:',
-        response.status
+        'TutorWave CRM tutor API failed:',
+        response.status,
+        response.statusText
       );
 
       return [];
     }
 
-    const data =
-      (await response.json()) as PublicTutorsResponse;
+    const data: ApiResponse = await response.json();
 
     return Array.isArray(data?.tutors)
       ? data.tutors
       : [];
   } catch (error) {
     console.error(
-      'Failed to fetch public tutors:',
+      'Unable to fetch tutors from TutorWave CRM:',
       error
     );
 
@@ -166,63 +175,78 @@ async function getPublicTutors(): Promise<Tutor[]> {
   }
 }
 
-
-async function findTutor(
+async function findTutorBySlug(
   rawSlug: string
 ): Promise<Tutor | null> {
+  const tutors = await getTutors();
 
-  const slug = decodeURIComponent(
-    rawSlug || ''
-  )
-    .trim()
-    .toLowerCase();
-
-  if (!slug) {
-    return null;
-  }
-
-  const tutors = await getPublicTutors();
-
-  /*
-   * Primary match:
-   * CRM tutor ID.
-   */
-  let tutor = tutors.find(
-    (item) =>
-      String(item.id || '')
-        .trim()
-        .toLowerCase() === slug
+  return (
+    tutors.find((tutor) =>
+      tutorMatchesSlug(tutor, rawSlug)
+    ) || null
   );
-
-  if (tutor) {
-    return tutor;
-  }
-
-  /*
-   * Fallback:
-   * In case an older link uses a slug based on
-   * the tutor's name.
-   *
-   * Example:
-   * Nawnit Gautam
-   * →
-   * nawnit-gautam
-   */
-  tutor = tutors.find((item) => {
-    const nameSlug = String(
-      item.fullName || ''
-    )
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-
-    return nameSlug === slug;
-  });
-
-  return tutor || null;
 }
 
+function formatArray(
+  value?: string[],
+  fallback = 'Not specified'
+) {
+  if (!Array.isArray(value) || value.length === 0) {
+    return fallback;
+  }
+
+  return value.join(', ');
+}
+
+function formatExperience(
+  value?: number | string
+) {
+  if (
+    value === undefined ||
+    value === null ||
+    value === ''
+  ) {
+    return 'Not specified';
+  }
+
+  return `${value} ${
+    String(value) === '1' ? 'year' : 'years'
+  }`;
+}
+
+function formatMode(mode?: string) {
+  if (!mode) return 'Not specified';
+
+  const value = mode.toLowerCase();
+
+  if (value === 'both') {
+    return 'Home & Online';
+  }
+
+  if (value === 'online') {
+    return 'Online';
+  }
+
+  if (
+    value === 'offline' ||
+    value === 'home'
+  ) {
+    return 'Home Tuition';
+  }
+
+  return mode;
+}
+
+function initials(name?: string) {
+  if (!name) return 'TW';
+
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('');
+}
 
 /* =========================================================
    METADATA
@@ -231,10 +255,11 @@ async function findTutor(
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
+  const { slug } = await params;
 
-  const tutor = await findTutor(params.slug);
+  const tutor = await findTutorBySlug(slug);
 
   if (!tutor) {
     return {
@@ -245,70 +270,25 @@ export async function generateMetadata({
   }
 
   const name =
-    tutor.fullName || 'Verified Tutor';
+    tutor.fullName || 'Tutor';
 
   const subjects =
-    safeArray(tutor.subjects);
+    Array.isArray(tutor.subjects) &&
+    tutor.subjects.length
+      ? tutor.subjects.join(', ')
+      : 'Multiple Subjects';
 
   const city =
     tutor.city || 'Delhi NCR';
 
-  const experience =
-    formatExperience(tutor.experienceYears);
-
-  const title =
-    `${name} — ${subjects.slice(0, 3).join(', ')} Tutor in ${city} | TutorWave`;
-
-  const description =
-    `${name} is a verified TutorWave tutor in ${city}${
-      subjects.length
-        ? ` teaching ${subjects.slice(0, 5).join(', ')}`
-        : ''
-    }${
-      experience
-        ? ` with ${experience} of teaching experience`
-        : ''
-    }.`;
-
   return {
-    title,
-    description,
+    title: `${name} — ${subjects} Tutor in ${city} | TutorWave`,
 
-    robots: {
-      index: true,
-      follow: true,
-    },
-
-    alternates: {
-      canonical:
-        `${SITE_URL}/tutors/${encodeURIComponent(
-          tutor.id
-        )}`,
-    },
-
-    openGraph: {
-      type: 'profile',
-      title,
-      description,
-      url:
-        `${SITE_URL}/tutors/${encodeURIComponent(
-          tutor.id
-        )}`,
-
-      images: tutor.profilePhoto
-        ? [
-            {
-              url: tutor.profilePhoto,
-              width: 1200,
-              height: 630,
-              alt: `${name} - TutorWave Tutor`,
-            },
-          ]
-        : [],
-    },
+    description:
+      tutor.bio ||
+      `${name} is a verified TutorWave tutor available for ${subjects} in ${city}.`,
   };
 }
-
 
 /* =========================================================
    PAGE
@@ -317,10 +297,11 @@ export async function generateMetadata({
 export default async function TutorDetailPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
+  const { slug } = await params;
 
-  const tutor = await findTutor(params.slug);
+  const tutor = await findTutorBySlug(slug);
 
   /* =======================================================
      NOT FOUND
@@ -329,15 +310,12 @@ export default async function TutorDetailPage({
   if (!tutor) {
     return (
       <main className="min-h-screen bg-white">
-
         <Header />
 
-        <section className="min-h-[55vh] flex items-center justify-center px-6">
-
-          <div className="max-w-xl text-center">
+        <section className="min-h-[55vh] flex items-center justify-center px-4">
+          <div className="text-center max-w-lg">
 
             <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-[#EBF4FF] flex items-center justify-center">
-
               <svg
                 width="28"
                 height="28"
@@ -346,34 +324,20 @@ export default async function TutorDetailPage({
                 stroke="#0A6FF7"
                 strokeWidth="1.8"
               >
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="9"
-                />
-
-                <path d="M12 8v4" />
-
-                <circle
-                  cx="12"
-                  cy="16"
-                  r="1"
-                  fill="#0A6FF7"
-                  stroke="none"
-                />
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 21c0-4 3.5-7 8-7s8 3 8 7" />
               </svg>
-
             </div>
 
-            <h1 className="text-3xl md:text-4xl font-bold text-[#0D1118] mb-4">
-              Tutor Profile Not Available
+            <h1 className="text-3xl font-bold text-[#0D1118] mb-3">
+              Tutor Profile Not Found
             </h1>
 
             <p className="text-[#6B7280] leading-relaxed mb-8">
-              We couldn't load this tutor profile from
-              TutorWave at the moment. The tutor may have
-              been removed, may not be verified yet, or the
-              profile link may be outdated.
+              We couldn't find this tutor profile in the
+              TutorWave tutor network. The profile may have
+              been removed, unpublished or is still being
+              verified.
             </p>
 
             <Link
@@ -386,27 +350,23 @@ export default async function TutorDetailPage({
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="2.5"
+                strokeWidth="2"
               >
                 <path d="M19 12H5" />
                 <path d="M12 19l-7-7 7-7" />
               </svg>
 
-              Back to Tutors
+              Browse Tutors
             </Link>
 
           </div>
-
         </section>
 
         <Footer />
-
         <WhatsAppButton />
-
       </main>
     );
   }
-
 
   /* =======================================================
      NORMALIZE DATA
@@ -415,124 +375,82 @@ export default async function TutorDetailPage({
   const name =
     tutor.fullName || 'Tutor';
 
+  const photo =
+    tutor.profilePhoto || '';
+
   const subjects =
-    safeArray(tutor.subjects);
+    Array.isArray(tutor.subjects)
+      ? tutor.subjects
+      : [];
 
   const classes =
-    safeArray(tutor.classes);
+    Array.isArray(tutor.classes)
+      ? tutor.classes
+      : [];
 
   const boards =
-    safeArray(tutor.boards);
+    Array.isArray(tutor.boards)
+      ? tutor.boards
+      : [];
 
   const areas =
-    safeArray(tutor.areas);
-
-  const qualification =
-    tutor.highestQualification ||
-    '';
-
-  const college =
-    tutor.college ||
-    '';
-
-  const specialization =
-    tutor.specialization ||
-    '';
-
-  const bio =
-    tutor.bio ||
-    '';
+    Array.isArray(tutor.areas)
+      ? tutor.areas
+      : [];
 
   const city =
-    tutor.city ||
-    '';
+    tutor.city || 'Delhi NCR';
 
   const experience =
-    formatExperience(
-      tutor.experienceYears
-    );
+    formatExperience(tutor.experienceYears);
 
   const mode =
     formatMode(tutor.mode);
 
+  const qualification =
+    tutor.highestQualification ||
+    'Not specified';
+
+  const college =
+    tutor.college ||
+    'Not specified';
+
   const rating =
-    Number(tutor.rating || 0);
+    typeof tutor.rating === 'number'
+      ? tutor.rating
+      : null;
 
   const placements =
-    Number(
-      tutor.totalPlacements || 0
-    );
+    typeof tutor.totalPlacements === 'number'
+      ? tutor.totalPlacements
+      : 0;
 
-  const profilePhoto =
-    tutor.profilePhoto || '';
+  const bio =
+    tutor.bio?.trim() ||
+    `${name} is a TutorWave tutor available for personalized tuition support.`;
 
-  const profileUrl =
-    `${SITE_URL}/tutors/${encodeURIComponent(
-      tutor.id
-    )}`;
-
-
-  /* =======================================================
-     STRUCTURED DATA
-  ======================================================= */
-
-  const structuredData = {
-    '@context': 'https://schema.org',
-
-    '@type': 'Person',
-
-    name,
-
-    image: profilePhoto || undefined,
-
-    description:
-      bio ||
-      `${name} is a verified tutor available through TutorWave.`,
-
-    jobTitle: 'Tutor',
-
-    address: {
-      '@type': 'PostalAddress',
-      addressLocality: city || 'Delhi NCR',
-      addressCountry: 'IN',
-    },
-
-    url: profileUrl,
-
-    knowsAbout: subjects,
-
-    worksFor: {
-      '@type': 'Organization',
-      name: 'TutorWave',
-      url: SITE_URL,
-    },
-  };
-
+  const specialization =
+    tutor.specialization?.trim() ||
+    '';
 
   /* =======================================================
-     PAGE UI
+     PAGE
   ======================================================= */
 
   return (
-    <main className="min-h-screen bg-white">
-
+    <main className="min-h-screen bg-[#F8FAFC]">
       <Header />
-
 
       {/* ===================================================
           HERO
       =================================================== */}
 
-      <section className="bg-[#F8FAFC] border-b border-[#E5E7EB]">
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-8 md:py-12">
+      <section className="bg-white border-b border-[#E5E7EB]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-8">
 
           {/* Breadcrumb */}
 
-          <nav
-            className="flex flex-wrap items-center gap-2 text-sm text-[#6B7280] mb-8"
-            aria-label="Breadcrumb"
-          >
+          <div className="flex items-center gap-2 text-sm text-[#6B7280] mb-8">
 
             <Link
               href="/"
@@ -552,205 +470,131 @@ export default async function TutorDetailPage({
 
             <span>/</span>
 
-            <span className="text-[#0D1118] font-medium">
+            <span className="text-[#0D1118] font-medium truncate">
               {name}
             </span>
 
-          </nav>
+          </div>
 
+          {/* Hero */}
 
-          {/* Main Hero */}
+          <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr_auto] gap-8 items-start">
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Photo */}
 
-            {/* Left */}
+            <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-3xl overflow-hidden bg-[#EBF4FF] border border-[#E5E7EB] flex-shrink-0">
 
-            <div className="lg:col-span-2">
+              {photo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={photo}
+                  alt={`${name} - TutorWave Tutor`}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-[#0A6FF7]">
+                  {initials(name)}
+                </div>
+              )}
 
-              <div className="flex flex-col sm:flex-row items-start gap-6">
+            </div>
 
-                {/* Profile Photo */}
+            {/* Main information */}
 
-                <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-2xl overflow-hidden bg-white border border-[#E5E7EB] shadow-sm flex-shrink-0">
+            <div className="min-w-0">
 
-                  {profilePhoto ? (
+              <div className="flex flex-wrap items-center gap-3 mb-3">
 
-                    <img
-                      src={profilePhoto}
-                      alt={`${name} - TutorWave verified tutor`}
-                      className="w-full h-full object-cover"
-                    />
+                <h1 className="text-3xl sm:text-4xl font-bold text-[#0D1118] tracking-tight">
+                  {name}
+                </h1>
 
-                  ) : (
+                {tutor.isVerified && (
+                  <span className="inline-flex items-center gap-1.5 bg-[#E6F7F5] text-[#0C8F81] px-3 py-1.5 rounded-full text-xs font-bold">
 
-                    <div className="w-full h-full flex items-center justify-center bg-[#EBF4FF] text-[#0A6FF7] text-4xl font-bold">
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.8"
+                    >
+                      <path d="M5 12l4 4L19 6" />
+                    </svg>
 
-                      {name
-                        .split(' ')
-                        .map((part) => part[0])
-                        .slice(0, 2)
-                        .join('')
-                        .toUpperCase()}
+                    Verified Tutor
 
-                    </div>
+                  </span>
+                )}
 
-                  )}
+              </div>
+
+              <p className="text-[#6B7280] text-base mb-5">
+                {subjects.length
+                  ? subjects.join(' • ')
+                  : 'Tutor'}
+              </p>
+
+              <div className="flex flex-wrap gap-3">
+
+                <div className="inline-flex items-center gap-2 bg-[#F8FAFC] border border-[#E5E7EB] px-3.5 py-2 rounded-xl text-sm text-[#374151]">
+
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#0A6FF7"
+                    strokeWidth="2"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 6v6l4 2" />
+                  </svg>
+
+                  {experience}
 
                 </div>
 
+                <div className="inline-flex items-center gap-2 bg-[#F8FAFC] border border-[#E5E7EB] px-3.5 py-2 rounded-xl text-sm text-[#374151]">
 
-                {/* Basic Information */}
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#0A6FF7"
+                    strokeWidth="2"
+                  >
+                    <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0Z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
 
-                <div className="min-w-0">
+                  {city}
 
-                  <div className="flex flex-wrap items-center gap-3 mb-3">
+                </div>
 
-                    <h1 className="text-3xl md:text-4xl font-bold text-[#0D1118]">
+                <div className="inline-flex items-center gap-2 bg-[#F8FAFC] border border-[#E5E7EB] px-3.5 py-2 rounded-xl text-sm text-[#374151]">
 
-                      {name}
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#0A6FF7"
+                    strokeWidth="2"
+                  >
+                    <rect
+                      x="3"
+                      y="4"
+                      width="18"
+                      height="16"
+                      rx="2"
+                    />
+                    <path d="M7 8h10M7 12h10M7 16h6" />
+                  </svg>
 
-                    </h1>
-
-
-                    {tutor.isVerified && (
-
-                      <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0C8F81] bg-[#E6F7F5] px-3 py-1.5 rounded-full">
-
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                        >
-                          <path d="M5 12l4 4L19 6" />
-                        </svg>
-
-                        Verified Tutor
-
-                      </span>
-
-                    )}
-
-                  </div>
-
-
-                  {/* Location */}
-
-                  {city && (
-
-                    <div className="flex items-center gap-2 text-[#6B7280] mb-2">
-
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0Z" />
-                        <circle
-                          cx="12"
-                          cy="10"
-                          r="3"
-                        />
-                      </svg>
-
-                      <span>
-                        {city}
-                      </span>
-
-                    </div>
-
-                  )}
-
-
-                  {/* Experience */}
-
-                  {experience && (
-
-                    <div className="flex items-center gap-2 text-[#6B7280] mb-2">
-
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <circle
-                          cx="12"
-                          cy="12"
-                          r="9"
-                        />
-                        <path d="M12 7v5l3 2" />
-                      </svg>
-
-                      <span>
-                        {experience} Teaching Experience
-                      </span>
-
-                    </div>
-
-                  )}
-
-
-                  {/* Mode */}
-
-                  {mode && (
-
-                    <div className="flex items-center gap-2 text-[#6B7280] mb-5">
-
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <rect
-                          x="3"
-                          y="4"
-                          width="18"
-                          height="14"
-                          rx="2"
-                        />
-                        <path d="M8 21h8M12 18v3" />
-                      </svg>
-
-                      <span>
-                        {mode}
-                      </span>
-
-                    </div>
-
-                  )}
-
-
-                  {/* Subjects */}
-
-                  {subjects.length > 0 && (
-
-                    <div className="flex flex-wrap gap-2">
-
-                      {subjects.map((subject) => (
-
-                        <span
-                          key={subject}
-                          className="px-3 py-1.5 bg-white border border-[#DCE6F2] text-[#0A6FF7] text-xs font-semibold rounded-full"
-                        >
-                          {subject}
-                        </span>
-
-                      ))}
-
-                    </div>
-
-                  )}
+                  {mode}
 
                 </div>
 
@@ -758,89 +602,43 @@ export default async function TutorDetailPage({
 
             </div>
 
+            {/* Rating / Placements */}
 
-            {/* Right Summary */}
+            <div className="flex lg:flex-col gap-3">
 
-            <div>
+              <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl px-5 py-4 min-w-[140px]">
 
-              <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 shadow-sm">
+                <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-1">
+                  Rating
+                </p>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="flex items-center gap-2">
 
-                  {/* Rating */}
+                  <span className="text-2xl font-bold text-[#0D1118]">
+                    {rating !== null
+                      ? rating.toFixed(1)
+                      : '—'}
+                  </span>
 
-                  <div className="rounded-xl bg-[#F8FAFC] p-4">
-
-                    <div className="text-xl font-bold text-[#0D1118]">
-
-                      {rating > 0
-                        ? rating.toFixed(1)
-                        : '—'}
-
-                    </div>
-
-                    <div className="text-xs text-[#6B7280] mt-1">
-                      Rating
-                    </div>
-
-                  </div>
-
-
-                  {/* Experience */}
-
-                  <div className="rounded-xl bg-[#F8FAFC] p-4">
-
-                    <div className="text-xl font-bold text-[#0D1118]">
-
-                      {tutor.experienceYears
-                        ? `${tutor.experienceYears}y`
-                        : '—'}
-
-                    </div>
-
-                    <div className="text-xs text-[#6B7280] mt-1">
-                      Experience
-                    </div>
-
-                  </div>
-
-
-                  {/* Placements */}
-
-                  <div className="rounded-xl bg-[#F8FAFC] p-4">
-
-                    <div className="text-xl font-bold text-[#0D1118]">
-
-                      {placements}
-
-                    </div>
-
-                    <div className="text-xs text-[#6B7280] mt-1">
-                      Placements
-                    </div>
-
-                  </div>
-
-
-                  {/* Verification */}
-
-                  <div className="rounded-xl bg-[#F8FAFC] p-4">
-
-                    <div className="text-xl font-bold text-[#0C8F81]">
-
-                      {tutor.isVerified
-                        ? '✓'
-                        : '—'}
-
-                    </div>
-
-                    <div className="text-xs text-[#6B7280] mt-1">
-                      Verified
-                    </div>
-
-                  </div>
+                  {rating !== null && (
+                    <span className="text-[#F59E0B]">
+                      ★
+                    </span>
+                  )}
 
                 </div>
+
+              </div>
+
+              <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl px-5 py-4 min-w-[140px]">
+
+                <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-1">
+                  Placements
+                </p>
+
+                <span className="text-2xl font-bold text-[#0D1118]">
+                  {placements}
+                </span>
 
               </div>
 
@@ -849,480 +647,407 @@ export default async function TutorDetailPage({
           </div>
 
         </div>
-
       </section>
 
-
       {/* ===================================================
-          DETAILS
+          MAIN CONTENT
       =================================================== */}
 
-      <section className="py-12 md:py-16">
-
+      <section className="py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8">
 
             {/* =================================================
-                MAIN INFORMATION
+                LEFT
             ================================================= */}
 
-            <div className="lg:col-span-2 space-y-8">
-
+            <div className="space-y-6">
 
               {/* ABOUT */}
 
-              {bio && (
+              <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 sm:p-8">
 
-                <section>
+                <h2 className="text-xl font-bold text-[#0D1118] mb-4">
+                  About {name}
+                </h2>
 
-                  <h2 className="text-xl md:text-2xl font-bold text-[#0D1118] mb-4">
-                    About {name}
-                  </h2>
+                <p className="text-[#4B5563] leading-7">
+                  {bio}
+                </p>
 
-                  <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl p-6">
-
-                    <p className="text-[#4B5563] leading-7 whitespace-pre-line">
-                      {bio}
-                    </p>
-
-                  </div>
-
-                </section>
-
-              )}
-
+              </div>
 
               {/* TEACHING PROFILE */}
 
-              <section>
+              <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 sm:p-8">
 
-                <h2 className="text-xl md:text-2xl font-bold text-[#0D1118] mb-5">
+                <h2 className="text-xl font-bold text-[#0D1118] mb-6">
                   Teaching Profile
                 </h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
 
                   {/* Subjects */}
 
-                  {subjects.length > 0 && (
+                  <div>
 
-                    <div className="border border-[#E5E7EB] rounded-2xl p-5">
+                    <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-3">
+                      Subjects
+                    </p>
 
-                      <div className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
-                        Subjects
-                      </div>
+                    <div className="flex flex-wrap gap-2">
 
-                      <div className="flex flex-wrap gap-2">
-
-                        {subjects.map((subject) => (
-
+                      {subjects.length ? (
+                        subjects.map((subject) => (
                           <span
                             key={subject}
-                            className="px-3 py-1.5 bg-[#EBF4FF] text-[#0A6FF7] rounded-lg text-sm font-medium"
+                            className="px-3 py-2 bg-[#EBF4FF] text-[#0A6FF7] rounded-lg text-sm font-semibold"
                           >
                             {subject}
                           </span>
-
-                        ))}
-
-                      </div>
-
-                    </div>
-
-                  )}
-
-
-                  {/* Classes */}
-
-                  {classes.length > 0 && (
-
-                    <div className="border border-[#E5E7EB] rounded-2xl p-5">
-
-                      <div className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
-                        Classes
-                      </div>
-
-                      <div className="flex flex-wrap gap-2">
-
-                        {classes.map((item) => (
-
-                          <span
-                            key={item}
-                            className="px-3 py-1.5 bg-[#F8FAFC] border border-[#E5E7EB] text-[#1F2937] rounded-lg text-sm font-medium"
-                          >
-                            {item}
-                          </span>
-
-                        ))}
-
-                      </div>
+                        ))
+                      ) : (
+                        <span className="text-sm text-[#6B7280]">
+                          Not specified
+                        </span>
+                      )}
 
                     </div>
-
-                  )}
-
-
-                  {/* Boards */}
-
-                  {boards.length > 0 && (
-
-                    <div className="border border-[#E5E7EB] rounded-2xl p-5">
-
-                      <div className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
-                        Boards
-                      </div>
-
-                      <div className="flex flex-wrap gap-2">
-
-                        {boards.map((board) => (
-
-                          <span
-                            key={board}
-                            className="px-3 py-1.5 bg-[#F8FAFC] border border-[#E5E7EB] text-[#1F2937] rounded-lg text-sm font-medium"
-                          >
-                            {board}
-                          </span>
-
-                        ))}
-
-                      </div>
-
-                    </div>
-
-                  )}
-
-
-                  {/* Mode */}
-
-                  {mode && (
-
-                    <div className="border border-[#E5E7EB] rounded-2xl p-5">
-
-                      <div className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
-                        Teaching Mode
-                      </div>
-
-                      <div className="text-base font-semibold text-[#0D1118]">
-                        {mode}
-                      </div>
-
-                    </div>
-
-                  )}
-
-                </div>
-
-              </section>
-
-
-              {/* QUALIFICATIONS */}
-
-              {(qualification || college) && (
-
-                <section>
-
-                  <h2 className="text-xl md:text-2xl font-bold text-[#0D1118] mb-5">
-                    Education & Qualifications
-                  </h2>
-
-                  <div className="border border-[#E5E7EB] rounded-2xl overflow-hidden">
-
-                    {qualification && (
-
-                      <div className="p-5 border-b border-[#E5E7EB]">
-
-                        <div className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-2">
-                          Highest Qualification
-                        </div>
-
-                        <div className="text-base font-semibold text-[#0D1118]">
-                          {qualification}
-                        </div>
-
-                      </div>
-
-                    )}
-
-
-                    {college && (
-
-                      <div className="p-5">
-
-                        <div className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-2">
-                          College / University
-                        </div>
-
-                        <div className="text-base font-semibold text-[#0D1118]">
-                          {college}
-                        </div>
-
-                      </div>
-
-                    )}
 
                   </div>
 
-                </section>
+                  {/* Classes */}
 
-              )}
+                  <div>
 
+                    <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-3">
+                      Classes
+                    </p>
 
-              {/* SPECIALIZATION */}
+                    <div className="flex flex-wrap gap-2">
 
-              {specialization && (
+                      {classes.length ? (
+                        classes.map((item) => (
+                          <span
+                            key={item}
+                            className="px-3 py-2 bg-[#F8FAFC] border border-[#E5E7EB] text-[#374151] rounded-lg text-sm font-medium"
+                          >
+                            {item}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-sm text-[#6B7280]">
+                          Not specified
+                        </span>
+                      )}
 
-                <section>
+                    </div>
 
-                  <h2 className="text-xl md:text-2xl font-bold text-[#0D1118] mb-4">
-                    Specialization
-                  </h2>
+                  </div>
 
-                  <div className="bg-[#EBF4FF] border border-[#D7E8FF] rounded-2xl p-6">
+                  {/* Boards */}
 
-                    <p className="text-[#1F4F85] leading-7">
-                      {specialization}
+                  <div>
+
+                    <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-3">
+                      Boards
+                    </p>
+
+                    <div className="flex flex-wrap gap-2">
+
+                      {boards.length ? (
+                        boards.map((board) => (
+                          <span
+                            key={board}
+                            className="px-3 py-2 bg-[#F8FAFC] border border-[#E5E7EB] text-[#374151] rounded-lg text-sm font-medium"
+                          >
+                            {board}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-sm text-[#6B7280]">
+                          Not specified
+                        </span>
+                      )}
+
+                    </div>
+
+                  </div>
+
+                  {/* Mode */}
+
+                  <div>
+
+                    <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-3">
+                      Teaching Mode
+                    </p>
+
+                    <p className="text-base font-semibold text-[#0D1118]">
+                      {mode}
                     </p>
 
                   </div>
 
-                </section>
+                </div>
 
-              )}
+              </div>
 
+              {/* QUALIFICATIONS */}
 
-              {/* LOCATION */}
+              <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 sm:p-8">
 
-              {(city || areas.length > 0) && (
+                <h2 className="text-xl font-bold text-[#0D1118] mb-6">
+                  Education & Qualifications
+                </h2>
 
-                <section>
+                <div className="space-y-5">
 
-                  <h2 className="text-xl md:text-2xl font-bold text-[#0D1118] mb-5">
-                    Location & Service Areas
-                  </h2>
+                  <div className="flex gap-4">
 
-                  <div className="border border-[#E5E7EB] rounded-2xl p-6">
-
-                    {city && (
-
-                      <div className="mb-5">
-
-                        <div className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-2">
-                          City
-                        </div>
-
-                        <div className="text-base font-semibold text-[#0D1118]">
-                          {city}
-                        </div>
-
-                      </div>
-
-                    )}
-
-
-                    {areas.length > 0 && (
-
-                      <div>
-
-                        <div className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
-                          Areas Covered
-                        </div>
-
-                        <div className="flex flex-wrap gap-2">
-
-                          {areas.map((area) => (
-
-                            <span
-                              key={area}
-                              className="px-3 py-1.5 bg-[#F8FAFC] border border-[#E5E7EB] text-[#374151] rounded-lg text-sm"
-                            >
-                              {area}
-                            </span>
-
-                          ))}
-
-                        </div>
-
-                      </div>
-
-                    )}
-
-                  </div>
-
-                </section>
-
-              )}
-
-            </div>
-
-
-            {/* =================================================
-                SIDEBAR
-            ================================================= */}
-
-            <aside>
-
-              <div className="lg:sticky lg:top-24">
-
-                <div className="bg-[#0D1118] rounded-2xl p-6 text-white">
-
-                  <div className="flex items-center gap-3 mb-5">
-
-                    <div className="w-10 h-10 rounded-xl bg-[#0A6FF7] flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-[#EBF4FF] flex items-center justify-center flex-shrink-0">
 
                       <svg
-                        width="20"
-                        height="20"
+                        width="19"
+                        height="19"
                         viewBox="0 0 24 24"
                         fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
+                        stroke="#0A6FF7"
+                        strokeWidth="1.8"
                       >
-                        <path d="M20 6L9 17l-5-5" />
+                        <path d="M22 10l-10-5-10 5 10 5 10-5Z" />
+                        <path d="M6 12v5c3 2 9 2 12 0v-5" />
                       </svg>
 
                     </div>
 
                     <div>
 
-                      <div className="font-bold">
-                        Verified Tutor
-                      </div>
+                      <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-1">
+                        Highest Qualification
+                      </p>
 
-                      <div className="text-xs text-[#9CA3AF]">
-                        Profile reviewed by TutorWave
-                      </div>
+                      <p className="text-base font-semibold text-[#0D1118]">
+                        {qualification}
+                      </p>
 
                     </div>
 
                   </div>
 
+                  <div className="flex gap-4">
 
-                  <h3 className="text-lg font-bold mb-2">
-                    Interested in {name}?
-                  </h3>
+                    <div className="w-10 h-10 rounded-xl bg-[#EBF4FF] flex items-center justify-center flex-shrink-0">
 
-                  <p className="text-sm text-[#9CA3AF] leading-6 mb-6">
-                    Submit your tuition requirement and
-                    our team can help you connect with a
-                    suitable tutor.
-                  </p>
+                      <svg
+                        width="19"
+                        height="19"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#0A6FF7"
+                        strokeWidth="1.8"
+                      >
+                        <path d="M4 4h16v16H4z" />
+                        <path d="M8 8h8M8 12h8M8 16h5" />
+                      </svg>
 
+                    </div>
 
-                  <Link
-                    href="/find-a-tutor"
-                    className="block w-full text-center bg-[#0A6FF7] text-white font-bold py-3 rounded-xl hover:bg-[#0858c8] transition-colors mb-3"
-                  >
-                    Request This Tutor
-                  </Link>
+                    <div>
 
+                      <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-1">
+                        College / University
+                      </p>
 
-                  <Link
-                    href="/find-a-tutor"
-                    className="block w-full text-center bg-white/10 text-white font-semibold py-3 rounded-xl hover:bg-white/15 transition-colors"
-                  >
-                    Submit Requirement
-                  </Link>
+                      <p className="text-base font-semibold text-[#0D1118]">
+                        {college}
+                      </p>
+
+                    </div>
+
+                  </div>
+
+                  {specialization && (
+                    <div className="flex gap-4">
+
+                      <div className="w-10 h-10 rounded-xl bg-[#EBF4FF] flex items-center justify-center flex-shrink-0">
+
+                        <svg
+                          width="19"
+                          height="19"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="#0A6FF7"
+                          strokeWidth="1.8"
+                        >
+                          <circle
+                            cx="12"
+                            cy="12"
+                            r="8"
+                          />
+                          <path d="M12 8v8M8 12h8" />
+                        </svg>
+
+                      </div>
+
+                      <div>
+
+                        <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-1">
+                          Specialization
+                        </p>
+
+                        <p className="text-base font-semibold text-[#0D1118]">
+                          {specialization}
+                        </p>
+
+                      </div>
+
+                    </div>
+                  )}
 
                 </div>
 
+              </div>
 
-                {/* Quick facts */}
+              {/* LOCATION */}
 
-                <div className="mt-5 border border-[#E5E7EB] rounded-2xl p-5">
+              <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 sm:p-8">
 
-                  <h3 className="font-bold text-[#0D1118] mb-4">
-                    Quick Information
-                  </h3>
+                <h2 className="text-xl font-bold text-[#0D1118] mb-6">
+                  Location & Availability
+                </h2>
 
-                  <div className="space-y-4">
+                <div className="space-y-5">
 
+                  <div>
 
-                    {experience && (
+                    <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-2">
+                      City
+                    </p>
 
-                      <div className="flex items-start justify-between gap-4">
+                    <p className="text-base font-semibold text-[#0D1118]">
+                      {city}
+                    </p>
 
-                        <span className="text-sm text-[#6B7280]">
-                          Experience
-                        </span>
+                  </div>
 
-                        <span className="text-sm font-semibold text-[#0D1118] text-right">
-                          {experience}
-                        </span>
+                  <div>
 
-                      </div>
+                    <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-2">
+                      Areas Served
+                    </p>
 
-                    )}
+                    {areas.length ? (
+                      <div className="flex flex-wrap gap-2">
 
-
-                    {mode && (
-
-                      <div className="flex items-start justify-between gap-4">
-
-                        <span className="text-sm text-[#6B7280]">
-                          Mode
-                        </span>
-
-                        <span className="text-sm font-semibold text-[#0D1118] text-right">
-                          {mode}
-                        </span>
-
-                      </div>
-
-                    )}
-
-
-                    {city && (
-
-                      <div className="flex items-start justify-between gap-4">
-
-                        <span className="text-sm text-[#6B7280]">
-                          Location
-                        </span>
-
-                        <span className="text-sm font-semibold text-[#0D1118] text-right">
-                          {city}
-                        </span>
+                        {areas.map((area) => (
+                          <span
+                            key={area}
+                            className="px-3 py-2 bg-[#F8FAFC] border border-[#E5E7EB] rounded-lg text-sm text-[#374151]"
+                          >
+                            {area}
+                          </span>
+                        ))}
 
                       </div>
-
+                    ) : (
+                      <p className="text-sm text-[#6B7280]">
+                        Area details available on request.
+                      </p>
                     )}
 
+                  </div>
 
-                    {subjects.length > 0 && (
+                </div>
 
-                      <div className="flex items-start justify-between gap-4">
+              </div>
 
-                        <span className="text-sm text-[#6B7280]">
-                          Subjects
-                        </span>
+            </div>
 
-                        <span className="text-sm font-semibold text-[#0D1118] text-right">
-                          {subjects.length}
-                        </span>
+            {/* =================================================
+                RIGHT SIDEBAR
+            ================================================= */}
 
-                      </div>
+            <aside>
 
-                    )}
+              <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 sticky top-24">
 
+                <div className="mb-6">
 
-                    {classes.length > 0 && (
+                  <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-2">
+                    TutorWave Profile
+                  </p>
 
-                      <div className="flex items-start justify-between gap-4">
+                  <h2 className="text-xl font-bold text-[#0D1118]">
+                    Interested in this tutor?
+                  </h2>
 
-                        <span className="text-sm text-[#6B7280]">
-                          Classes
-                        </span>
+                  <p className="text-sm text-[#6B7280] mt-2 leading-relaxed">
+                    Share your tuition requirement with us and
+                    our team will help you proceed with a suitable
+                    tutor.
+                  </p>
 
-                        <span className="text-sm font-semibold text-[#0D1118] text-right">
-                          {classes.length}
-                        </span>
+                </div>
 
-                      </div>
+                <Link
+                  href="/find-a-tutor"
+                  className="flex items-center justify-center gap-2 w-full bg-[#0A6FF7] text-white font-bold py-3.5 rounded-xl hover:bg-[#0858c8] transition-colors mb-3"
+                >
+                  Request This Tutor
 
-                    )}
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <path d="M5 12h14M12 5l7 7-7-7" />
+                  </svg>
+
+                </Link>
+
+                <Link
+                  href="/find-a-tutor"
+                  className="flex items-center justify-center w-full bg-[#EBF4FF] text-[#0A6FF7] font-bold py-3.5 rounded-xl hover:bg-[#DCEBFF] transition-colors"
+                >
+                  Find a Different Tutor
+                </Link>
+
+                <div className="border-t border-[#E5E7EB] mt-6 pt-6">
+
+                  <div className="flex items-start gap-3">
+
+                    <div className="w-9 h-9 rounded-lg bg-[#E6F7F5] flex items-center justify-center flex-shrink-0">
+
+                      <svg
+                        width="17"
+                        height="17"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#0C8F81"
+                        strokeWidth="2"
+                      >
+                        <path d="M12 3l7 4v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7l7-4Z" />
+                        <path d="M9 12l2 2 4-4" />
+                      </svg>
+
+                    </div>
+
+                    <div>
+
+                      <p className="text-sm font-bold text-[#0D1118]">
+                        Verified Tutor
+                      </p>
+
+                      <p className="text-xs text-[#6B7280] mt-0.5 leading-relaxed">
+                        This profile has been verified by the
+                        TutorWave team.
+                      </p>
+
+                    </div>
 
                   </div>
 
@@ -1335,64 +1060,7 @@ export default async function TutorDetailPage({
           </div>
 
         </div>
-
       </section>
-
-
-      {/* ===================================================
-          BOTTOM CTA
-      =================================================== */}
-
-      <section className="bg-[#F8FAFC] border-t border-[#E5E7EB] py-12">
-
-        <div className="max-w-4xl mx-auto px-4 text-center">
-
-          <h2 className="text-2xl md:text-3xl font-bold text-[#0D1118] mb-3">
-            Looking for the right tutor?
-          </h2>
-
-          <p className="text-[#6B7280] mb-6">
-            Tell us your requirements and TutorWave
-            can help you find a suitable verified tutor.
-          </p>
-
-          <Link
-            href="/find-a-tutor"
-            className="inline-flex items-center gap-2 bg-[#0A6FF7] text-white font-bold px-7 py-3.5 rounded-xl hover:bg-[#0858c8] transition-colors"
-          >
-            Find a Tutor
-
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-            >
-              <path d="M5 12h14M12 5l7 7-7 7" />
-            </svg>
-
-          </Link>
-
-        </div>
-
-      </section>
-
-
-      {/* ===================================================
-          STRUCTURED DATA
-      =================================================== */}
-
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(
-            structuredData
-          ),
-        }}
-      />
-
 
       <Footer />
 
