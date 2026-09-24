@@ -1,4 +1,3 @@
-
 import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
@@ -6,6 +5,10 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import WhatsAppButton from '@/app/components/WhatsAppButton';
+
+/* =========================================================
+   TYPES
+========================================================= */
 
 type PublicTutor = {
   id?: string;
@@ -25,7 +28,10 @@ type PublicTutor = {
   specialization?: string;
   rating?: number | string;
   totalPlacements?: number;
+  totalDemos?: number;
   isVerified?: boolean;
+  isActive?: boolean;
+  status?: string;
 };
 
 type PublicTutorResponse = {
@@ -44,12 +50,17 @@ const SITE_URL =
     : 'http://localhost:3000');
 
 /*
- * We intentionally use the existing public API.
+ * IMPORTANT:
+ * Keep using the existing public website API.
  *
- * Do NOT change the CRM route or public API for this page.
+ * No CRM route is changed here.
  */
 const PUBLIC_TUTORS_API = `${SITE_URL}/api/public-tutors`;
 
+/*
+ * Always render fresh CRM data.
+ */
+export const dynamic = 'force-dynamic';
 
 /* =========================================================
    HELPERS
@@ -94,7 +105,10 @@ function asArray(value: unknown): string[] {
   return [];
 }
 
-function displayValue(value: unknown, fallback = 'Not provided') {
+function displayValue(
+  value: unknown,
+  fallback = 'Not provided'
+): string {
   const text = String(value ?? '').trim();
 
   return text || fallback;
@@ -103,9 +117,21 @@ function displayValue(value: unknown, fallback = 'Not provided') {
 function formatMode(mode: unknown): string {
   const value = normalize(mode);
 
-  if (value === 'both') return 'Home & Online';
-  if (value === 'online') return 'Online';
-  if (value === 'offline' || value === 'home') return 'Home Tuition';
+  if (value === 'both') {
+    return 'Home & Online';
+  }
+
+  if (value === 'online') {
+    return 'Online';
+  }
+
+  if (
+    value === 'offline' ||
+    value === 'home' ||
+    value === 'home tuition'
+  ) {
+    return 'Home Tuition';
+  }
 
   if (String(mode ?? '').trim()) {
     return String(mode);
@@ -117,8 +143,10 @@ function formatMode(mode: unknown): string {
 function formatExperience(value: unknown): string {
   const number = Number(value);
 
-  if (!Number.isNaN(number) && number > 0) {
-    return `${number} ${number === 1 ? 'Year' : 'Years'}`;
+  if (!Number.isNaN(number) && number >= 0) {
+    return `${number} ${
+      number === 1 ? 'Year' : 'Years'
+    }`;
   }
 
   return 'Not specified';
@@ -134,114 +162,185 @@ function formatRating(value: unknown): string {
   return 'New';
 }
 
-function getPhotoUrl(tutor: PublicTutor): string {
-  const photo = String(tutor.profilePhoto ?? '').trim();
-
-  return photo;
+function getPhotoUrl(
+  tutor: PublicTutor
+): string {
+  return String(
+    tutor.profilePhoto ?? ''
+  ).trim();
 }
 
-function getTutorSlugCandidates(tutor: PublicTutor): string[] {
+/* =========================================================
+   SLUG HANDLING
+========================================================= */
+
+/*
+ * IMPORTANT FIX
+ *
+ * Your tutors listing page creates slugs like:
+ *
+ *     name-FIRST_8_CHARACTERS_OF_ID
+ *
+ * Example:
+ *
+ *     nawnit-8ebd57b9
+ *
+ * Therefore this detail page MUST check the first 8
+ * characters of the ID.
+ *
+ * We also support:
+ *
+ * - full ID
+ * - first 8 characters
+ * - last 8 characters
+ * - name only
+ *
+ * This makes the page backwards-compatible with any
+ * existing TutorWave profile URLs.
+ */
+
+function getTutorSlugCandidates(
+  tutor: PublicTutor
+): string[] {
   const id = normalize(tutor.id);
   const nameSlug = slugify(tutor.fullName);
 
   const candidates: string[] = [];
 
   if (id) {
+    /* Full CRM ID */
     candidates.push(id);
 
-    /*
-     * Your current public URLs use:
-     *
-     * /tutors/name-idSuffix
-     *
-     * Example:
-     * /tutors/nawnit-8ebd57b9
-     */
+    /* FIRST 8 CHARACTERS
+       This is what /tutors/page.tsx currently uses.
+    */
     if (id.length >= 8) {
-      candidates.push(`${nameSlug}-${id.slice(-8)}`);
+      candidates.push(
+        `${nameSlug}-${id.slice(0, 8)}`
+      );
     }
 
+    /* LAST 8 CHARACTERS
+       Backward compatibility.
+    */
+    if (id.length >= 8) {
+      candidates.push(
+        `${nameSlug}-${id.slice(-8)}`
+      );
+    }
+
+    /* First 7 / 6 / 5 characters */
     if (id.length >= 7) {
-      candidates.push(`${nameSlug}-${id.slice(-7)}`);
+      candidates.push(
+        `${nameSlug}-${id.slice(0, 7)}`
+      );
     }
 
     if (id.length >= 6) {
-      candidates.push(`${nameSlug}-${id.slice(-6)}`);
+      candidates.push(
+        `${nameSlug}-${id.slice(0, 6)}`
+      );
+    }
+
+    if (id.length >= 5) {
+      candidates.push(
+        `${nameSlug}-${id.slice(0, 5)}`
+      );
     }
   }
 
+  /* Name-only fallback */
   if (nameSlug) {
     candidates.push(nameSlug);
   }
 
-  return candidates.map(normalize);
+  return candidates
+    .map(normalize)
+    .filter(Boolean);
 }
 
 function tutorMatchesSlug(
   tutor: PublicTutor,
   rawSlug: string
 ): boolean {
-  const slug = normalize(safeDecode(rawSlug));
+  const slug = normalize(
+    safeDecode(rawSlug)
+  );
 
-  if (!slug) return false;
+  if (!slug) {
+    return false;
+  }
 
-  const candidates = getTutorSlugCandidates(tutor);
+  const candidates =
+    getTutorSlugCandidates(tutor);
 
+  /* Direct candidate match */
   if (candidates.includes(slug)) {
     return true;
   }
 
-  /*
-   * Extra protection for URLs such as:
-   * nawnit-8ebd57b9
-   *
-   * If the URL contains the final 8 characters of the CRM id,
-   * compare that suffix directly.
-   */
   const id = normalize(tutor.id);
 
+  /*
+   * Extra protection:
+   *
+   * If URL is:
+   *
+   * nawnit-8ebd57b9
+   *
+   * and ID begins with:
+   *
+   * 8ebd57b9...
+   *
+   * consider it a match.
+   */
   if (id && id.length >= 8) {
-    const idSuffix = id.slice(-8);
+    const firstEight = id.slice(0, 8);
+    const lastEight = id.slice(-8);
 
-    if (slug.endsWith(`-${idSuffix}`)) {
+    if (
+      slug.endsWith(`-${firstEight}`) ||
+      slug.endsWith(`-${lastEight}`)
+    ) {
       return true;
     }
   }
 
   /*
-   * Also allow exact tutor-name slugs.
+   * Name-only URL fallback.
    */
-  const nameSlug = slugify(tutor.fullName);
+  const nameSlug = slugify(
+    tutor.fullName
+  );
 
-  if (nameSlug && slug === nameSlug) {
+  if (
+    nameSlug &&
+    slug === nameSlug
+  ) {
     return true;
   }
 
   return false;
 }
 
-
 /* =========================================================
-   FETCH REAL CRM TUTORS
+   FETCH PUBLIC TUTORS
 ========================================================= */
 
-async function getPublicTutors(): Promise<PublicTutor[]> {
+async function getPublicTutors(): Promise<
+  PublicTutor[]
+> {
   try {
-    const response = await fetch(PUBLIC_TUTORS_API, {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json',
-      },
-
-      /*
-       * Important:
-       * Always fetch fresh CRM data.
-       *
-       * This means when a tutor is verified/updated in CRM,
-       * the public profile does not remain stuck on old data.
-       */
-      cache: 'no-store',
-    });
+    const response = await fetch(
+      PUBLIC_TUTORS_API,
+      {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+        },
+        cache: 'no-store',
+      }
+    );
 
     if (!response.ok) {
       console.error(
@@ -254,7 +353,10 @@ async function getPublicTutors(): Promise<PublicTutor[]> {
     const data =
       (await response.json()) as PublicTutorResponse;
 
-    if (!Array.isArray(data?.tutors)) {
+    if (
+      !data ||
+      !Array.isArray(data.tutors)
+    ) {
       return [];
     }
 
@@ -269,19 +371,22 @@ async function getPublicTutors(): Promise<PublicTutor[]> {
   }
 }
 
-
 async function getTutorBySlug(
   rawSlug: string
 ): Promise<PublicTutor | null> {
-  const tutors = await getPublicTutors();
+  const tutors =
+    await getPublicTutors();
 
-  const tutor = tutors.find((item) =>
-    tutorMatchesSlug(item, rawSlug)
+  const tutor = tutors.find(
+    (item) =>
+      tutorMatchesSlug(
+        item,
+        rawSlug
+      )
   );
 
   return tutor ?? null;
 }
-
 
 /* =========================================================
    METADATA
@@ -292,13 +397,15 @@ export async function generateMetadata({
 }: {
   params: { slug: string };
 }): Promise<Metadata> {
-  const tutor = await getTutorBySlug(params.slug);
+  const tutor =
+    await getTutorBySlug(params.slug);
 
   if (!tutor) {
     return {
-      title: 'Tutor Not Found | TutorWave',
+      title:
+        'Tutor Not Found | TutorWave',
       description:
-        'The tutor profile you are looking for does not exist.',
+        'The tutor profile you are looking for does not exist or is no longer publicly available.',
     };
   }
 
@@ -307,49 +414,60 @@ export async function generateMetadata({
     'Tutor'
   );
 
-  const subjects = asArray(tutor.subjects);
+  const subjects =
+    asArray(tutor.subjects);
 
-  const city = displayValue(
-    tutor.city,
-    'Delhi NCR'
-  );
+  const city =
+    displayValue(
+      tutor.city,
+      'Delhi NCR'
+    );
 
-  const experience = Number(tutor.experienceYears);
+  const experience =
+    Number(
+      tutor.experienceYears
+    );
 
   const subjectText =
     subjects.length > 0
-      ? subjects.slice(0, 3).join(', ')
+      ? subjects
+          .slice(0, 3)
+          .join(', ')
       : 'Home Tuition';
 
   const experienceText =
-    !Number.isNaN(experience) && experience > 0
+    !Number.isNaN(experience) &&
+    experience > 0
       ? `${experience} years of teaching experience`
       : 'experienced teaching professional';
 
-  const title = `${name} — ${subjectText} Tutor in ${city} | TutorWave`;
+  const title =
+    `${name} — ${subjectText} Tutor in ${city} | TutorWave`;
 
   const description =
-    `${name} is a verified TutorWave tutor in ${city}, ` +
-    `offering ${subjectText}. ` +
-    `${experienceText}.`;
+    `${name} is a TutorWave tutor in ${city}, offering ${subjectText}. ${experienceText}. Explore their teaching profile, qualifications and teaching expertise.`;
 
-  const slug = safeDecode(params.slug);
+  const slug =
+    safeDecode(params.slug);
 
-  const photo = getPhotoUrl(tutor);
+  const photo =
+    getPhotoUrl(tutor);
 
   return {
     title,
     description,
 
     alternates: {
-      canonical: `${SITE_URL}/tutors/${slug}`,
+      canonical:
+        `${SITE_URL}/tutors/${slug}`,
     },
 
     openGraph: {
       type: 'profile',
       title,
       description,
-      url: `${SITE_URL}/tutors/${slug}`,
+      url:
+        `${SITE_URL}/tutors/${slug}`,
 
       ...(photo
         ? {
@@ -358,7 +476,8 @@ export async function generateMetadata({
                 url: photo,
                 width: 1200,
                 height: 630,
-                alt: `${name} — TutorWave Tutor`,
+                alt:
+                  `${name} — TutorWave Tutor`,
               },
             ],
           }
@@ -367,10 +486,29 @@ export async function generateMetadata({
   };
 }
 
-
 /* =========================================================
-   SMALL UI COMPONENTS
+   UI COMPONENTS
 ========================================================= */
+
+function CheckIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      aria-hidden="true"
+    >
+      <path
+        d="M5 12l4 4L19 6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 function SectionTitle({
   eyebrow,
@@ -394,7 +532,6 @@ function SectionTitle({
   );
 }
 
-
 function TagList({
   items,
   emptyText = 'Not provided',
@@ -414,22 +551,25 @@ function TagList({
 
   return (
     <div className="flex flex-wrap gap-2">
-      {items.map((item, index) => (
-        <span
-          key={`${item}-${index}`}
-          className={`inline-flex items-center rounded-xl px-3 py-2 text-xs md:text-sm font-semibold ${
-            blue
-              ? 'bg-[#EBF4FF] text-[#0A6FF7]'
-              : 'bg-[#F8FAFC] text-[#273142] border border-[#E5E7EB]'
-          }`}
-        >
-          {item}
-        </span>
-      ))}
+      {items.map(
+        (item, index) => (
+          <span
+            key={`${item}-${index}`}
+            className={
+              `inline-flex items-center rounded-xl px-3 py-2 text-xs md:text-sm font-semibold ${
+                blue
+                  ? 'bg-[#EBF4FF] text-[#0A6FF7]'
+                  : 'bg-[#F8FAFC] text-[#273142] border border-[#E5E7EB]'
+              }`
+            }
+          >
+            {item}
+          </span>
+        )
+      )}
     </div>
   );
 }
-
 
 function DetailRow({
   label,
@@ -459,30 +599,8 @@ function DetailRow({
   );
 }
 
-
-function CheckIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      aria-hidden="true"
-    >
-      <path
-        d="M5 12l4 4L19 6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-
 /* =========================================================
-   MAIN PAGE
+   PAGE
 ========================================================= */
 
 export default async function TutorDetailPage({
@@ -490,13 +608,12 @@ export default async function TutorDetailPage({
 }: {
   params: { slug: string };
 }) {
-  const tutor = await getTutorBySlug(params.slug);
+  const tutor =
+    await getTutorBySlug(params.slug);
 
-  /*
-   * -------------------------------------------------------
-   * NOT FOUND
-   * -------------------------------------------------------
-   */
+  /* =======================================================
+     NOT FOUND
+  ======================================================= */
 
   if (!tutor) {
     return (
@@ -515,7 +632,11 @@ export default async function TutorDetailPage({
                 stroke="currentColor"
                 strokeWidth="1.7"
               >
-                <circle cx="12" cy="12" r="9" />
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="9"
+                />
                 <path d="M9 9l6 6M15 9l-6 6" />
               </svg>
             </div>
@@ -525,8 +646,7 @@ export default async function TutorDetailPage({
             </h1>
 
             <p className="text-[#6B7280] leading-relaxed mb-8">
-              The tutor profile you are looking for could not
-              be found or may no longer be publicly available.
+              The tutor profile you are looking for could not be found or may no longer be publicly available.
             </p>
 
             <Link
@@ -556,73 +676,99 @@ export default async function TutorDetailPage({
     );
   }
 
-
   /* =======================================================
-     NORMALIZE REAL CRM DATA
+     NORMALIZED DATA
   ======================================================= */
 
-  const name = displayValue(
-    tutor.fullName,
-    'Tutor'
-  );
+  const name =
+    displayValue(
+      tutor.fullName,
+      'Tutor'
+    );
 
-  const subjects = asArray(tutor.subjects);
-  const classes = asArray(tutor.classes);
-  const boards = asArray(tutor.boards);
-  const areas = asArray(tutor.areas);
+  const subjects =
+    asArray(tutor.subjects);
 
-  const city = displayValue(
-    tutor.city,
-    'Delhi NCR'
-  );
+  const classes =
+    asArray(tutor.classes);
 
-  const qualification = displayValue(
-    tutor.highestQualification
-  );
+  const boards =
+    asArray(tutor.boards);
 
-  const college = displayValue(
-    tutor.college
-  );
+  const areas =
+    asArray(tutor.areas);
 
-  const specialization = displayValue(
-    tutor.specialization
-  );
+  const city =
+    displayValue(
+      tutor.city,
+      'Delhi NCR'
+    );
 
-  const bio = displayValue(
-    tutor.bio,
-    'This tutor has not added a detailed introduction yet.'
-  );
+  const qualification =
+    displayValue(
+      tutor.highestQualification
+    );
 
-  const mode = formatMode(tutor.mode);
+  const college =
+    displayValue(
+      tutor.college
+    );
 
-  const experience = formatExperience(
-    tutor.experienceYears
-  );
+  const specialization =
+    displayValue(
+      tutor.specialization
+    );
 
-  const rating = formatRating(
-    tutor.rating
-  );
+  const bio =
+    displayValue(
+      tutor.bio,
+      'This tutor has not added a detailed introduction yet.'
+    );
+
+  const mode =
+    formatMode(tutor.mode);
+
+  const experience =
+    formatExperience(
+      tutor.experienceYears
+    );
+
+  const rating =
+    formatRating(tutor.rating);
 
   const placements =
-    Number(tutor.totalPlacements) || 0;
+    Number(
+      tutor.totalPlacements
+    ) || 0;
 
-  const photo = getPhotoUrl(tutor);
+  const demos =
+    Number(
+      tutor.totalDemos
+    ) || 0;
+
+  const photo =
+    getPhotoUrl(tutor);
 
   const isVerified =
     tutor.isVerified === true;
 
-  const slug = safeDecode(params.slug);
-
+  const slug =
+    safeDecode(params.slug);
 
   /* =======================================================
      STRUCTURED DATA
   ======================================================= */
 
   const structuredData = {
-    '@context': 'https://schema.org',
+    '@context':
+      'https://schema.org',
+
     '@type': 'Person',
+
     name,
-    url: `${SITE_URL}/tutors/${slug}`,
+
+    url:
+      `${SITE_URL}/tutors/${slug}`,
 
     ...(photo
       ? {
@@ -630,35 +776,33 @@ export default async function TutorDetailPage({
         }
       : {}),
 
-    ...(college && college !== 'Not provided'
+    ...(college &&
+    college !== 'Not provided'
       ? {
           alumniOf: {
-            '@type': 'CollegeOrUniversity',
+            '@type':
+              'CollegeOrUniversity',
             name: college,
           },
         }
       : {}),
 
-    ...(qualification !== 'Not provided'
-      ? {
-          description: bio,
-        }
-      : {}),
+    description: bio,
 
     jobTitle: 'Tutor',
 
     knowsAbout: subjects,
 
     address: {
-      '@type': 'PostalAddress',
+      '@type':
+        'PostalAddress',
       addressLocality: city,
       addressCountry: 'IN',
     },
   };
 
-
   /* =======================================================
-     PAGE
+     RENDER
   ======================================================= */
 
   return (
@@ -702,60 +846,78 @@ export default async function TutorDetailPage({
 
         </div>
 
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'BreadcrumbList',
-              itemListElement: [
-                {
-                  '@type': 'ListItem',
-                  position: 1,
-                  name: 'Home',
-                  item: SITE_URL,
-                },
-                {
-                  '@type': 'ListItem',
-                  position: 2,
-                  name: 'Tutors',
-                  item: `${SITE_URL}/tutors`,
-                },
-                {
-                  '@type': 'ListItem',
-                  position: 3,
-                  name,
-                  item: `${SITE_URL}/tutors/${slug}`,
-                },
-              ],
-            }),
-          }}
-        />
+        {/* Breadcrumb Schema */}
 
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(structuredData),
+            __html:
+              JSON.stringify({
+                '@context':
+                  'https://schema.org',
+                '@type':
+                  'BreadcrumbList',
+
+                itemListElement: [
+                  {
+                    '@type':
+                      'ListItem',
+                    position: 1,
+                    name: 'Home',
+                    item: SITE_URL,
+                  },
+                  {
+                    '@type':
+                      'ListItem',
+                    position: 2,
+                    name: 'Tutors',
+                    item:
+                      `${SITE_URL}/tutors`,
+                  },
+                  {
+                    '@type':
+                      'ListItem',
+                    position: 3,
+                    name,
+                    item:
+                      `${SITE_URL}/tutors/${slug}`,
+                  },
+                ],
+              }),
+          }}
+        />
+
+        {/* Person Schema */}
+
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html:
+              JSON.stringify(
+                structuredData
+              ),
           }}
         />
       </section>
-
 
       {/* ===================================================
           HERO
       =================================================== */}
 
       <section className="bg-white border-b border-[#E5E7EB]">
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-8 md:py-12">
 
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8 lg:gap-12">
 
             {/* LEFT */}
+
             <div>
 
               <div className="flex flex-col sm:flex-row items-start gap-6">
 
                 {/* PHOTO */}
+
                 <div className="relative flex-shrink-0">
 
                   <div className="w-32 h-32 md:w-40 md:h-40 rounded-3xl overflow-hidden bg-[#F3F7FF] border border-[#E5E7EB] shadow-sm">
@@ -769,7 +931,9 @@ export default async function TutorDetailPage({
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-[#0A6FF7] text-4xl font-bold">
-                        {name.charAt(0).toUpperCase()}
+                        {name
+                          .charAt(0)
+                          .toUpperCase()}
                       </div>
                     )}
 
@@ -791,8 +955,8 @@ export default async function TutorDetailPage({
 
                 </div>
 
-
                 {/* BASIC INFORMATION */}
+
                 <div className="min-w-0 flex-1 pt-1">
 
                   <div className="flex flex-wrap items-center gap-3 mb-2">
@@ -803,30 +967,26 @@ export default async function TutorDetailPage({
 
                     {isVerified && (
                       <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#0C8F81] bg-[#E6F7F5] px-2.5 py-1 rounded-full">
-
                         <CheckIcon />
-
                         Verified
                       </span>
                     )}
 
                   </div>
 
-
                   <p className="text-sm md:text-base text-[#6B7280] mb-5">
                     Professional Tutor
-                    {city !== 'Not provided'
+                    {city !==
+                    'Not provided'
                       ? ` · ${city}`
                       : ''}
                   </p>
-
 
                   {/* QUICK TAGS */}
 
                   <div className="flex flex-wrap gap-2">
 
                     <span className="inline-flex items-center gap-1.5 bg-[#EBF4FF] text-[#0A6FF7] px-3 py-2 rounded-xl text-xs font-semibold">
-
                       <svg
                         width="13"
                         height="13"
@@ -835,135 +995,59 @@ export default async function TutorDetailPage({
                         stroke="currentColor"
                         strokeWidth="2"
                       >
-                        <path d="M12 20V10" />
-                        <path d="M18 20V4" />
-                        <path d="M6 20v-6" />
-                      </svg>
-
-                      {experience} Experience
-                    </span>
-
-
-                    <span className="inline-flex items-center gap-1.5 bg-[#F8FAFC] border border-[#E5E7EB] text-[#374151] px-3 py-2 rounded-xl text-xs font-semibold">
-
-                      <svg
-                        width="13"
-                        height="13"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <path d="M3 21h18" />
-                        <path d="M5 21V7l7-4 7 4v14" />
-                        <path d="M9 21v-4h6v4" />
-                      </svg>
-
-                      {city}
-                    </span>
-
-
-                    <span className="inline-flex items-center gap-1.5 bg-[#F8FAFC] border border-[#E5E7EB] text-[#374151] px-3 py-2 rounded-xl text-xs font-semibold">
-
-                      <svg
-                        width="13"
-                        height="13"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <rect
-                          x="3"
-                          y="4"
-                          width="18"
-                          height="14"
-                          rx="2"
+                        <circle
+                          cx="12"
+                          cy="12"
+                          r="9"
                         />
-                        <path d="M8 21h8" />
-                        <path d="M12 18v3" />
+                        <path d="M12 7v5l3 2" />
                       </svg>
+                      {experience}
+                    </span>
 
+                    <span className="inline-flex items-center gap-1.5 bg-[#F8FAFC] border border-[#E5E7EB] text-[#374151] px-3 py-2 rounded-xl text-xs font-semibold">
+                      <svg
+                        width="13"
+                        height="13"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3Z" />
+                      </svg>
                       {mode}
                     </span>
 
-                  </div>
-
-                </div>
-
-              </div>
-
-
-              {/* =================================================
-                  QUICK STATS
-              ================================================= */}
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-8">
-
-                <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl p-4">
-
-                  <p className="text-[10px] uppercase tracking-wider font-bold text-[#9CA3AF] mb-2">
-                    Experience
-                  </p>
-
-                  <p className="text-lg font-bold text-[#0D1118]">
-                    {experience}
-                  </p>
-
-                </div>
-
-
-                <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl p-4">
-
-                  <p className="text-[10px] uppercase tracking-wider font-bold text-[#9CA3AF] mb-2">
-                    Rating
-                  </p>
-
-                  <div className="flex items-center gap-1.5">
-
-                    <svg
-                      width="15"
-                      height="15"
-                      viewBox="0 0 24 24"
-                      fill="#F5A623"
-                      stroke="none"
-                    >
-                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                    </svg>
-
-                    <p className="text-lg font-bold text-[#0D1118]">
-                      {rating}
-                    </p>
+                    <span className="inline-flex items-center gap-1.5 bg-[#FFF8E8] text-[#A36A00] px-3 py-2 rounded-xl text-xs font-semibold">
+                      ★ {rating}
+                    </span>
 
                   </div>
 
-                </div>
+                  {/* PLACEMENTS */}
 
+                  <div className="mt-5 flex flex-wrap gap-5 text-sm">
 
-                <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl p-4">
+                    <div>
+                      <span className="font-bold text-[#0D1118]">
+                        {placements}
+                      </span>
+                      <span className="text-[#6B7280] ml-1">
+                        Placements
+                      </span>
+                    </div>
 
-                  <p className="text-[10px] uppercase tracking-wider font-bold text-[#9CA3AF] mb-2">
-                    Placements
-                  </p>
+                    <div>
+                      <span className="font-bold text-[#0D1118]">
+                        {demos}
+                      </span>
+                      <span className="text-[#6B7280] ml-1">
+                        Demos
+                      </span>
+                    </div>
 
-                  <p className="text-lg font-bold text-[#0D1118]">
-                    {placements}
-                  </p>
-
-                </div>
-
-
-                <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl p-4">
-
-                  <p className="text-[10px] uppercase tracking-wider font-bold text-[#9CA3AF] mb-2">
-                    Status
-                  </p>
-
-                  <p className="text-lg font-bold text-[#0C8F81]">
-                    {isVerified
-                      ? 'Verified'
-                      : 'Profile'}
-                  </p>
+                  </div>
 
                 </div>
 
@@ -971,10 +1055,7 @@ export default async function TutorDetailPage({
 
             </div>
 
-
-            {/* =================================================
-                CTA SIDEBAR
-            ================================================= */}
+            {/* CTA SIDEBAR */}
 
             <aside>
 
@@ -989,11 +1070,8 @@ export default async function TutorDetailPage({
                 </h2>
 
                 <p className="text-sm text-[#6B7280] leading-relaxed mb-6">
-                  Share your requirement with TutorWave and
-                  our team can help you connect with a suitable
-                  tutor.
+                  Share your requirement with TutorWave and our team can help you connect with a suitable tutor.
                 </p>
-
 
                 <Link
                   href="/find-a-tutor"
@@ -1013,14 +1091,12 @@ export default async function TutorDetailPage({
                   </svg>
                 </Link>
 
-
                 <Link
                   href="/find-a-tutor"
                   className="flex items-center justify-center w-full mt-3 bg-[#EBF4FF] text-[#0A6FF7] font-bold py-3.5 rounded-xl hover:bg-[#DCEBFF] transition-colors"
                 >
                   Tell Us Your Requirement
                 </Link>
-
 
                 <div className="mt-5 pt-5 border-t border-[#EEF2F6]">
 
@@ -1031,9 +1107,7 @@ export default async function TutorDetailPage({
                     </div>
 
                     <p className="text-[11px] text-[#6B7280] leading-relaxed">
-                      Tutor profiles displayed publicly are
-                      reviewed through TutorWave's verification
-                      process before being listed.
+                      Tutor profiles displayed publicly are reviewed through TutorWave&apos;s verification process before being listed.
                     </p>
 
                   </div>
@@ -1047,12 +1121,12 @@ export default async function TutorDetailPage({
           </div>
 
         </div>
+
       </section>
 
-
-      {/* =====================================================
-          MAIN PROFILE CONTENT
-      ===================================================== */}
+      {/* ===================================================
+          MAIN CONTENT
+      =================================================== */}
 
       <section className="py-10 md:py-14">
 
@@ -1060,12 +1134,9 @@ export default async function TutorDetailPage({
 
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8 lg:gap-12">
 
-            {/* =================================================
-                LEFT CONTENT
-            ================================================= */}
+            {/* LEFT */}
 
             <div className="space-y-8">
-
 
               {/* ABOUT */}
 
@@ -1081,7 +1152,6 @@ export default async function TutorDetailPage({
                 </p>
 
               </section>
-
 
               {/* SUBJECTS */}
 
@@ -1100,7 +1170,6 @@ export default async function TutorDetailPage({
 
               </section>
 
-
               {/* CLASSES */}
 
               <section className="bg-white border border-[#E5E7EB] rounded-3xl p-6 md:p-8">
@@ -1116,7 +1185,6 @@ export default async function TutorDetailPage({
                 />
 
               </section>
-
 
               {/* BOARDS */}
 
@@ -1134,7 +1202,6 @@ export default async function TutorDetailPage({
 
               </section>
 
-
               {/* SPECIALIZATION */}
 
               <section className="bg-white border border-[#E5E7EB] rounded-3xl p-6 md:p-8">
@@ -1144,7 +1211,8 @@ export default async function TutorDetailPage({
                   title="Specialization"
                 />
 
-                {specialization !== 'Not provided' ? (
+                {specialization !==
+                'Not provided' ? (
                   <div className="rounded-2xl bg-[#F8FAFC] border border-[#EEF2F6] p-5">
 
                     <div className="flex items-start gap-3">
@@ -1179,8 +1247,7 @@ export default async function TutorDetailPage({
 
               </section>
 
-
-              {/* QUALIFICATION */}
+              {/* EDUCATION */}
 
               <section className="bg-white border border-[#E5E7EB] rounded-3xl p-6 md:p-8">
 
@@ -1203,7 +1270,6 @@ export default async function TutorDetailPage({
 
                   </div>
 
-
                   <div className="rounded-2xl bg-[#F8FAFC] border border-[#EEF2F6] p-5">
 
                     <p className="text-[10px] uppercase tracking-wider font-bold text-[#9CA3AF] mb-2">
@@ -1220,7 +1286,6 @@ export default async function TutorDetailPage({
 
               </section>
 
-
               {/* LOCATION */}
 
               <section className="bg-white border border-[#E5E7EB] rounded-3xl p-6 md:p-8">
@@ -1230,7 +1295,7 @@ export default async function TutorDetailPage({
                   title="Teaching Locations"
                 />
 
-                <div className="mb-5">
+                <div className="mb-6">
 
                   <div className="flex items-center gap-3">
 
@@ -1270,7 +1335,6 @@ export default async function TutorDetailPage({
 
                 </div>
 
-
                 <div>
 
                   <p className="text-[10px] uppercase tracking-wider font-bold text-[#9CA3AF] mb-3">
@@ -1285,7 +1349,6 @@ export default async function TutorDetailPage({
                 </div>
 
               </section>
-
 
               {/* TEACHING MODE */}
 
@@ -1326,6 +1389,56 @@ export default async function TutorDetailPage({
 
               </section>
 
+              {/* PERFORMANCE */}
+
+              <section className="bg-white border border-[#E5E7EB] rounded-3xl p-6 md:p-8">
+
+                <SectionTitle
+                  eyebrow="TutorWave"
+                  title="Profile Statistics"
+                />
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+                  <div className="rounded-2xl bg-[#F8FAFC] border border-[#EEF2F6] p-5">
+
+                    <p className="text-[10px] uppercase tracking-wider font-bold text-[#9CA3AF] mb-2">
+                      Experience
+                    </p>
+
+                    <p className="text-xl font-bold text-[#0D1118]">
+                      {experience}
+                    </p>
+
+                  </div>
+
+                  <div className="rounded-2xl bg-[#F8FAFC] border border-[#EEF2F6] p-5">
+
+                    <p className="text-[10px] uppercase tracking-wider font-bold text-[#9CA3AF] mb-2">
+                      Rating
+                    </p>
+
+                    <p className="text-xl font-bold text-[#0D1118]">
+                      {rating}
+                    </p>
+
+                  </div>
+
+                  <div className="rounded-2xl bg-[#F8FAFC] border border-[#EEF2F6] p-5">
+
+                    <p className="text-[10px] uppercase tracking-wider font-bold text-[#9CA3AF] mb-2">
+                      Placements
+                    </p>
+
+                    <p className="text-xl font-bold text-[#0D1118]">
+                      {placements}
+                    </p>
+
+                  </div>
+
+                </div>
+
+              </section>
 
               {/* VERIFICATION */}
 
@@ -1341,9 +1454,7 @@ export default async function TutorDetailPage({
                   <div className="flex items-start gap-4">
 
                     <div className="w-11 h-11 rounded-full bg-[#E6F7F5] text-[#0C8F81] flex items-center justify-center flex-shrink-0">
-
                       <CheckIcon />
-
                     </div>
 
                     <div>
@@ -1370,22 +1481,19 @@ export default async function TutorDetailPage({
 
             </div>
 
-
             {/* =================================================
                 RIGHT SIDEBAR
             ================================================= */}
 
             <aside className="space-y-5">
 
-
-              {/* QUICK PROFILE SUMMARY */}
+              {/* OVERVIEW */}
 
               <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 lg:sticky lg:top-24">
 
                 <h2 className="text-lg font-bold text-[#0D1118] mb-5">
                   Tutor Overview
                 </h2>
-
 
                 <DetailRow
                   label="Qualification"
@@ -1405,7 +1513,6 @@ export default async function TutorDetailPage({
                   }
                 />
 
-
                 <DetailRow
                   label="College"
                   value={college}
@@ -1424,7 +1531,6 @@ export default async function TutorDetailPage({
                     </svg>
                   }
                 />
-
 
                 <DetailRow
                   label="Experience"
@@ -1448,7 +1554,6 @@ export default async function TutorDetailPage({
                   }
                 />
 
-
                 <DetailRow
                   label="Location"
                   value={city}
@@ -1470,7 +1575,6 @@ export default async function TutorDetailPage({
                     </svg>
                   }
                 />
-
 
                 <DetailRow
                   label="Teaching Mode"
@@ -1495,7 +1599,6 @@ export default async function TutorDetailPage({
                     </svg>
                   }
                 />
-
 
                 <div className="pt-5">
 
@@ -1522,7 +1625,6 @@ export default async function TutorDetailPage({
 
               </div>
 
-
               {/* TRUST CARD */}
 
               <div className="bg-[#0D1118] rounded-3xl p-6 text-white">
@@ -1548,9 +1650,7 @@ export default async function TutorDetailPage({
                 </h3>
 
                 <p className="text-xs text-[#AAB2BF] leading-relaxed mb-5">
-                  TutorWave helps parents discover tutors based
-                  on subjects, classes, boards, location and
-                  teaching mode.
+                  TutorWave helps parents discover tutors based on subjects, classes, boards, location and teaching mode.
                 </p>
 
                 <Link
@@ -1582,10 +1682,9 @@ export default async function TutorDetailPage({
 
       </section>
 
-
-      {/* =====================================================
+      {/* ===================================================
           BOTTOM CTA
-      ===================================================== */}
+      =================================================== */}
 
       <section className="pb-14">
 
@@ -1604,8 +1703,7 @@ export default async function TutorDetailPage({
               </h2>
 
               <p className="text-sm text-[#9CA3AF] max-w-2xl leading-relaxed">
-                Tell us your requirements and our team will
-                help identify suitable tutor options.
+                Tell us your requirements and our team will help identify suitable tutor options.
               </p>
 
             </div>
@@ -1634,7 +1732,6 @@ export default async function TutorDetailPage({
         </div>
 
       </section>
-
 
       <Footer />
 
