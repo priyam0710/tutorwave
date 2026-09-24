@@ -1,4 +1,4 @@
-```tsx
+
 import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
@@ -2413,4 +2413,4 @@ export default async function TutorDetailPage({
     </main>
   );
 }
-```
+
