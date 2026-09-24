@@ -1755,47 +1755,6 @@ export default async function TutorDetailPage({
           FINAL CTA
       =================================================== */}
 
-      <section className="bg-[#0D1118] py-12 sm:py-14">
-
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
-
-          <p className="text-[#5DB8FF] text-xs uppercase tracking-[0.15em] font-bold mb-3">
-            TutorWave
-          </p>
-
-          <h2 className="text-2xl sm:text-3xl font-bold text-white">
-            Looking for a tutor?
-          </h2>
-
-          <p className="text-white/60 leading-7 mt-3">
-            Tell us what your child needs and
-            our team will help you find a suitable
-            tutor.
-          </p>
-
-          <div className="flex flex-col sm:flex-row justify-center gap-3 mt-7">
-
-            <Link
-              href="/find-a-tutor"
-              className="inline-flex items-center justify-center gap-2 bg-[#0A6FF7] text-white font-bold px-7 py-3.5 rounded-xl hover:bg-[#0858C8] transition-colors"
-            >
-              Find a Tutor
-              <ArrowIcon />
-            </Link>
-
-            <Link
-              href="/tutors"
-              className="inline-flex items-center justify-center bg-white/10 text-white font-bold px-7 py-3.5 rounded-xl hover:bg-white/15 transition-colors"
-            >
-              Browse Tutors
-            </Link>
-
-          </div>
-
-        </div>
-
-      </section>
-
       <Footer />
 
       <WhatsAppButton />
