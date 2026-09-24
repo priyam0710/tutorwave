@@ -842,10 +842,6 @@ export default async function TutorDetailPage({
                 <ArrowIcon />
               </Link>
 
-              <p className="text-xs text-center text-[#6B7280] mt-2.5">
-                No obligation to hire
-              </p>
-
             </div>
 
           </div>
