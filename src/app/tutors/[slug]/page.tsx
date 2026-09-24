@@ -43,6 +43,11 @@ type Tutor = {
   university?: string;
   institution?: string;
   specialization?: string;
+  qualificationStream?: string;
+  educationStream?: string;
+  fieldOfStudy?: string;
+  course?: string;
+  major?: string;
 
   experienceYears?: number | string;
   experience?: number | string;
@@ -80,10 +85,12 @@ type Tutor = {
   totalStudents?: number | string;
   studentsCount?: number | string;
 
-  /* School / teaching background */
+  /*
+   * School / teaching background
+   */
   schoolsTaught?: string[] | string;
   previousInstitutions?: string[] | string;
-  institutions?: string[] | string;
+  institutions?: string[];
   schoolNames?: string[] | string;
   studentsTaughtFromSchools?: string[] | string;
 
@@ -101,11 +108,17 @@ type Tutor = {
 
   achievements?: string[] | string;
   certifications?: string[] | string;
+  additionalQualification?: string;
+  additionalQualifications?: string[] | string;
 
-  /* Actual nested CRM structure */
+  /*
+   * Important:
+   * The registration form submits these inside `teaching`.
+   * Keeping this flexible allows the profile page to read
+   * the actual CRM structure without breaking.
+   */
   teaching?: {
     experience?: number | string;
-
     schoolExperience?: string;
     schoolTeachingExperience?: string;
     schoolExperienceYears?: number | string;
@@ -134,6 +147,12 @@ type Tutor = {
     stream?: string;
     specialization?: string;
     additionalQualification?: string;
+    additionalQualifications?: string[] | string;
+    qualificationStream?: string;
+    educationStream?: string;
+    fieldOfStudy?: string;
+    course?: string;
+    major?: string;
   };
 
   personal?: {
@@ -179,44 +198,29 @@ function normalize(value: string) {
     .replace(/^-+|-+$/g, '');
 }
 
-function tutorMatchesSlug(
-  tutor: Tutor,
-  rawSlug: string
-) {
+function tutorMatchesSlug(tutor: Tutor, rawSlug: string) {
   if (!tutor?.id || !tutor?.fullName) {
     return false;
   }
 
-  const slug = normalize(
-    safeDecode(rawSlug)
-  );
-
-  const nameSlug = normalize(
-    tutor.fullName
-  );
+  const slug = normalize(safeDecode(rawSlug));
+  const nameSlug = normalize(tutor.fullName);
 
   const id = String(tutor.id).toLowerCase();
+  const idShort = id.replace(/-/g, '').slice(0, 8);
 
-  const idShort = id
-    .replace(/-/g, '')
-    .slice(0, 8);
-
-  const expectedSlug =
-    `${nameSlug}-${idShort}`;
+  const expectedSlug = `${nameSlug}-${idShort}`;
 
   if (slug === expectedSlug) {
     return true;
   }
 
   if (slug.startsWith(`${nameSlug}-`)) {
-    const suffix =
-      slug.slice(nameSlug.length + 1);
+    const suffix = slug.slice(nameSlug.length + 1);
 
     if (
       suffix === idShort ||
-      id
-        .replace(/-/g, '')
-        .startsWith(suffix)
+      id.replace(/-/g, '').startsWith(suffix)
     ) {
       return true;
     }
@@ -252,8 +256,7 @@ async function getTutors(): Promise<Tutor[]> {
       return [];
     }
 
-    const data: ApiResponse =
-      await response.json();
+    const data: ApiResponse = await response.json();
 
     return Array.isArray(data?.tutors)
       ? data.tutors
@@ -275,10 +278,7 @@ async function findTutorBySlug(
 
   return (
     tutors.find((tutor) =>
-      tutorMatchesSlug(
-        tutor,
-        rawSlug
-      )
+      tutorMatchesSlug(tutor, rawSlug)
     ) || null
   );
 }
@@ -287,13 +287,23 @@ async function findTutorBySlug(
    ARRAY / TEXT NORMALIZATION
 ========================================================= */
 
-function cleanArray(
-  value: any
-): string[] {
-  if (
-    value === undefined ||
-    value === null
-  ) {
+/*
+ * Converts:
+ *
+ * ["CBSE", "ICSE"]
+ *
+ * OR
+ *
+ * "CBSE, ICSE"
+ *
+ * OR
+ *
+ * "CBSE • ICSE"
+ *
+ * into a clean array.
+ */
+function cleanArray(value: any): string[] {
+  if (value === undefined || value === null) {
     return [];
   }
 
@@ -306,9 +316,7 @@ function cleanArray(
           item !== null &&
           String(item).trim() !== ''
       )
-      .map((item) =>
-        String(item).trim()
-      )
+      .map((item) => String(item).trim())
       .filter(Boolean);
   }
 
@@ -321,23 +329,16 @@ function cleanArray(
 
     return text
       .split(/[,;|•\n]+/)
-      .map((item) =>
-        item.trim()
-      )
+      .map((item) => item.trim())
       .filter(Boolean);
   }
 
-  return [
-    String(value).trim(),
-  ].filter(Boolean);
+  return [String(value).trim()].filter(Boolean);
 }
 
-function firstArray(
-  ...values: any[]
-): string[] {
+function firstArray(...values: any[]): string[] {
   for (const value of values) {
-    const result =
-      cleanArray(value);
+    const result = cleanArray(value);
 
     if (result.length > 0) {
       return result;
@@ -347,9 +348,7 @@ function firstArray(
   return [];
 }
 
-function firstText(
-  ...values: any[]
-): string | null {
+function firstText(...values: any[]): string | null {
   for (const value of values) {
     if (
       value !== undefined &&
@@ -363,9 +362,7 @@ function firstText(
   return null;
 }
 
-function formatExperience(
-  value?: number | string | null
-) {
+function formatExperience(value?: number | string | null) {
   if (
     value === undefined ||
     value === null ||
@@ -374,53 +371,44 @@ function formatExperience(
     return null;
   }
 
-  const text =
-    String(value).trim();
+  const text = String(value).trim();
 
+  /*
+   * If the CRM already contains text such as
+   * "10+ years", don't append another "years".
+   */
   if (
-    /year|years|month|months/i.test(
-      text
-    )
+    /year|years|month|months/i.test(text)
   ) {
     return text;
   }
 
   return `${text} ${
-    text === '1'
-      ? 'year'
-      : 'years'
+    text === '1' ? 'year' : 'years'
   }`;
 }
 
 function formatMode(
   mode?: string | string[] | null
 ) {
-  const values =
-    cleanArray(mode);
+  const values = cleanArray(mode);
 
   if (values.length === 0) {
     return null;
   }
 
-  const normalized =
-    values.map((value) =>
-      value
-        .toLowerCase()
-        .trim()
-    );
+  const normalized = values.map((value) =>
+    value.toLowerCase().trim()
+  );
 
   const hasHome =
     normalized.includes('home') ||
     normalized.includes('offline') ||
-    normalized.includes(
-      'home tuition'
-    );
+    normalized.includes('home tuition');
 
   const hasOnline =
     normalized.includes('online') ||
-    normalized.includes(
-      'online tuition'
-    );
+    normalized.includes('online tuition');
 
   if (hasHome && hasOnline) {
     return 'Home & Online';
@@ -437,9 +425,7 @@ function formatMode(
   return values.join(' • ');
 }
 
-function initials(
-  name?: string
-) {
+function initials(name?: string) {
   if (!name) return 'TW';
 
   return name
@@ -447,9 +433,7 @@ function initials(
     .filter(Boolean)
     .slice(0, 2)
     .map((part) =>
-      part
-        .charAt(0)
-        .toUpperCase()
+      part.charAt(0).toUpperCase()
     )
     .join('');
 }
@@ -484,7 +468,7 @@ function Section({
   return (
     <section className="bg-white border border-[#E5E7EB] rounded-3xl p-6 sm:p-8">
       {eyebrow && (
-        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#0A6FF7] mb-2">
+        <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#0A6FF7] mb-2">
           {eyebrow}
         </p>
       )}
@@ -535,12 +519,12 @@ function InfoRow({
         {icon}
       </div>
 
-      <div className="min-w-0">
-        <p className="text-[11px] font-bold uppercase tracking-wider text-[#6B7280] mb-1">
+      <div>
+        <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-1">
           {label}
         </p>
 
-        <p className="text-base font-semibold text-[#0D1118] break-words">
+        <p className="text-base font-semibold text-[#0D1118]">
           {value}
         </p>
       </div>
@@ -572,20 +556,15 @@ function CheckIcon() {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{
-    slug: string;
-  }>;
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { slug } =
-    await params;
+  const { slug } = await params;
 
-  const tutor =
-    await findTutorBySlug(slug);
+  const tutor = await findTutorBySlug(slug);
 
   if (!tutor) {
     return {
-      title:
-        'Tutor Profile | TutorWave',
+      title: 'Tutor Profile | TutorWave',
       description:
         'Explore verified tutors available through TutorWave.',
     };
@@ -596,13 +575,12 @@ export async function generateMetadata({
     tutor.personal?.fullName ||
     'Tutor';
 
-  const subjects =
-    firstArray(
-      tutor.subjects,
-      tutor.teaching?.primarySubjects,
-      tutor.teaching?.secondarySubjects,
-      tutor.teaching?.seniorSecondarySubjects
-    );
+  const subjects = firstArray(
+    tutor.subjects,
+    tutor.teaching?.primarySubjects,
+    tutor.teaching?.secondarySubjects,
+    tutor.teaching?.seniorSecondarySubjects
+  );
 
   const city =
     firstText(
@@ -613,13 +591,11 @@ export async function generateMetadata({
     ) || 'Delhi NCR';
 
   return {
-    title:
-      `${name} — ${
-        subjects.length
-          ? subjects.join(', ')
-          : 'Home Tuition'
-      } Tutor in ${city} | TutorWave`,
-
+    title: `${name} — ${
+      subjects.length
+        ? subjects.join(', ')
+        : 'Home Tuition'
+    } Tutor in ${city} | TutorWave`,
     description:
       tutor.bio ||
       tutor.about ||
@@ -634,15 +610,11 @@ export async function generateMetadata({
 export default async function TutorDetailPage({
   params,
 }: {
-  params: Promise<{
-    slug: string;
-  }>;
+  params: Promise<{ slug: string }>;
 }) {
-  const { slug } =
-    await params;
+  const { slug } = await params;
 
-  const tutor =
-    await findTutorBySlug(slug);
+  const tutor = await findTutorBySlug(slug);
 
   /* =======================================================
      NOT FOUND
@@ -665,11 +637,7 @@ export default async function TutorDetailPage({
                 stroke="#0A6FF7"
                 strokeWidth="1.8"
               >
-                <circle
-                  cx="12"
-                  cy="8"
-                  r="4"
-                />
+                <circle cx="12" cy="8" r="4" />
                 <path d="M4 21c0-4 3.5-7 8-7s8 3 8 7" />
               </svg>
             </div>
@@ -679,7 +647,10 @@ export default async function TutorDetailPage({
             </h1>
 
             <p className="text-[#6B7280] leading-relaxed mb-8">
-              We couldn't find this tutor profile in the TutorWave tutor network. The profile may have been removed, unpublished or is still being verified.
+              We couldn't find this tutor profile in the
+              TutorWave tutor network. The profile may have
+              been removed, unpublished or is still being
+              verified.
             </p>
 
             <Link
@@ -723,28 +694,37 @@ export default async function TutorDetailPage({
     tutor.personal?.profilePhoto ||
     '';
 
-  const subjects =
-    firstArray(
-      tutor.subjects,
-      tutor.teaching?.primarySubjects,
-      tutor.teaching?.secondarySubjects,
-      tutor.teaching?.seniorSecondarySubjects
-    );
+  /*
+   * Subjects
+   */
+  const subjects = firstArray(
+    tutor.subjects,
+    tutor.teaching?.primarySubjects,
+    tutor.teaching?.secondarySubjects,
+    tutor.teaching?.seniorSecondarySubjects
+  );
 
-  const classes =
-    firstArray(
-      tutor.classes,
-      tutor.teaching?.primaryClasses,
-      tutor.teaching?.secondaryClasses,
-      tutor.teaching?.seniorSecondaryClasses
-    );
+  /*
+   * Classes
+   */
+  const classes = firstArray(
+    tutor.classes,
+    tutor.teaching?.primaryClasses,
+    tutor.teaching?.secondaryClasses,
+    tutor.teaching?.seniorSecondaryClasses
+  );
 
-  const boards =
-    firstArray(
-      tutor.boards,
-      tutor.teaching?.boards
-    );
+  /*
+   * Boards
+   */
+  const boards = firstArray(
+    tutor.boards,
+    tutor.teaching?.boards
+  );
 
+  /*
+   * Location
+   */
   const city =
     firstText(
       tutor.city,
@@ -755,39 +735,54 @@ export default async function TutorDetailPage({
       tutor.personal?.location
     ) || 'Delhi NCR';
 
-  const areas =
-    firstArray(
-      tutor.areas,
-      tutor.preferences?.offlineAreas
-    );
+  /*
+   * Areas
+   */
+  const areas = firstArray(
+    tutor.areas,
+    tutor.preferences?.offlineAreas
+  );
 
-  const languages =
-    firstArray(
-      tutor.languages,
-      tutor.teachingLanguages,
-      tutor.language,
-      tutor.spokenLanguages
-    );
+  /*
+   * Languages
+   */
+  const languages = firstArray(
+    tutor.languages,
+    tutor.teachingLanguages,
+    tutor.language,
+    tutor.spokenLanguages
+  );
 
+  /*
+   * Experience
+   *
+   * IMPORTANT:
+   * The registration form stores experience inside:
+   *
+   * teaching.experience
+   */
   const rawExperience =
     tutor.experienceYears ??
     tutor.experience ??
     tutor.teaching?.experience;
 
   const experience =
-    formatExperience(
-      rawExperience
-    );
+    formatExperience(rawExperience);
 
-  const mode =
-    formatMode(
-      tutor.mode ??
-      tutor.teachingMode ??
-      tutor.modes ??
-      tutor.preferredMode ??
-      tutor.preferences?.teachingMode
-    );
+  /*
+   * Teaching mode
+   */
+  const mode = formatMode(
+    tutor.mode ??
+    tutor.teachingMode ??
+    tutor.modes ??
+    tutor.preferredMode ??
+    tutor.preferences?.teachingMode
+  );
 
+  /*
+   * Qualification
+   */
   const qualification =
     firstText(
       tutor.highestQualification,
@@ -796,6 +791,9 @@ export default async function TutorDetailPage({
       tutor.education?.highestQualification
     );
 
+  /*
+   * College / university
+   */
   const college =
     firstText(
       tutor.college,
@@ -806,21 +804,69 @@ export default async function TutorDetailPage({
       tutor.education?.university
     );
 
+  /*
+   * Specialisation
+   */
   const specialization =
     firstText(
       tutor.specialization,
       tutor.education?.specialization
     );
 
+  /*
+   * Qualification / stream
+   *
+   * The registration form stores the actual degree/field
+   * in education.stream. We keep the fallback fields here
+   * so older CRM records continue to display correctly.
+   */
+  const qualificationStream =
+    firstText(
+      tutor.education?.stream,
+      tutor.qualificationStream,
+      tutor.educationStream,
+      tutor.fieldOfStudy,
+      tutor.course,
+      tutor.major,
+      tutor.education?.qualificationStream,
+      tutor.education?.educationStream,
+      tutor.education?.fieldOfStudy,
+      tutor.education?.course,
+      tutor.education?.major
+    );
+
+  /*
+   * Additional qualifications can contain multiple entries
+   * separated by commas, semicolons, pipes or line breaks.
+   */
+  const additionalQualifications =
+    firstArray(
+      tutor.additionalQualifications,
+      tutor.additionalQualification,
+      tutor.education?.additionalQualifications,
+      tutor.education?.additionalQualification
+    );
+
+  /*
+   * Teaching experience details
+   */
   const experienceDetails =
     firstText(
       tutor.teachingExperience,
       tutor.experienceDetails
     );
 
-  /* =======================================================
-     SCHOOL TEACHING EXPERIENCE
-  ======================================================= */
+  /*
+   * =======================================================
+   * SCHOOL TEACHING EXPERIENCE
+   *
+   * The registration form submits:
+   *
+   * teaching.schoolExperience
+   *
+   * so we explicitly read that field.
+   * =======================================================
+   */
 
   const schoolExperience =
     firstText(
@@ -832,21 +878,38 @@ export default async function TutorDetailPage({
       tutor.teaching?.schoolExperienceYears
     );
 
-  /* =======================================================
-     STUDENTS TAUGHT FROM / SCHOOL NAMES
-  ======================================================= */
+  /*
+   * =======================================================
+   * STUDENTS TAUGHT FROM / SCHOOL NAMES
+   *
+   * The registration form submits:
+   *
+   * teaching.studentsTaughtFrom
+   *
+   * This is the important fix.
+   * =======================================================
+   */
 
-  const schoolsTaught =
-    firstArray(
-      tutor.schoolsTaught,
-      tutor.schoolNames,
-      tutor.studentsTaughtFromSchools,
-      tutor.previousInstitutions,
-      tutor.institutions,
-      tutor.teaching?.studentsTaughtFrom,
-      tutor.teaching?.studentsTaughtFromSchools
-    );
+  const schoolsTaught = firstArray(
+    /*
+     * Direct CRM fields
+     */
+    tutor.schoolsTaught,
+    tutor.schoolNames,
+    tutor.studentsTaughtFromSchools,
+    tutor.previousInstitutions,
+    tutor.institutions,
 
+    /*
+     * Nested CRM fields
+     */
+    tutor.teaching?.studentsTaughtFrom,
+    tutor.teaching?.studentsTaughtFromSchools
+  );
+
+  /*
+   * Students taught count
+   */
   const studentsTaught =
     formatNumber(
       tutor.studentsTaught ??
@@ -854,6 +917,9 @@ export default async function TutorDetailPage({
       tutor.studentsCount
     );
 
+  /*
+   * About
+   */
   const bio =
     firstText(
       tutor.bio,
@@ -863,6 +929,9 @@ export default async function TutorDetailPage({
     ) ||
     `${name} is a TutorWave tutor available for personalized tuition support.`;
 
+  /*
+   * Teaching approach
+   */
   const teachingApproach =
     firstText(
       tutor.teachingApproach,
@@ -871,6 +940,9 @@ export default async function TutorDetailPage({
       tutor.teachingMethods
     );
 
+  /*
+   * Availability
+   */
   const availability =
     firstText(
       tutor.availability,
@@ -881,15 +953,14 @@ export default async function TutorDetailPage({
     );
 
   const availabilityTime =
-    firstText(
-      tutor.availabilityTime
-    );
+    firstText(tutor.availabilityTime);
 
   const availabilityDays =
-    firstArray(
-      tutor.availabilityDays
-    );
+    firstArray(tutor.availabilityDays);
 
+  /*
+   * Fees
+   */
   const feeRange =
     firstText(
       tutor.feeRange,
@@ -897,18 +968,23 @@ export default async function TutorDetailPage({
       tutor.hourlyRate
     );
 
+  /*
+   * Verification
+   */
   const isVerified =
     tutor.isVerified === true ||
     tutor.verified === true ||
-    String(
-      tutor.verificationStatus || ''
-    ).toLowerCase() ===
-      'verified' ||
-    String(
-      tutor.status || ''
-    ).toLowerCase() ===
-      'verified';
+    String(tutor.verificationStatus || '')
+      .toLowerCase() === 'verified' ||
+    String(tutor.status || '')
+      .toLowerCase() === 'verified';
 
+  /*
+   * Rating
+   *
+   * Kept only if the CRM actually has a rating.
+   * No placements.
+   */
   const ratingValue =
     tutor.rating ??
     tutor.averageRating;
@@ -920,15 +996,17 @@ export default async function TutorDetailPage({
       ? Number(ratingValue)
       : null;
 
+  /*
+   * Achievements
+   */
   const achievements =
-    cleanArray(
-      tutor.achievements
-    );
+    cleanArray(tutor.achievements);
 
+  /*
+   * Certifications
+   */
   const certifications =
-    cleanArray(
-      tutor.certifications
-    );
+    cleanArray(tutor.certifications);
 
   /* =======================================================
      RETURN
@@ -983,7 +1061,7 @@ export default async function TutorDetailPage({
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-8 sm:py-10">
 
-          <div className="grid grid-cols-1 lg:grid-cols-[180px_minmax(0,1fr)_180px] gap-7 lg:gap-10 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-[180px_1fr_auto] gap-7 lg:gap-10 items-start">
 
             {/* PHOTO */}
 
@@ -1017,7 +1095,7 @@ export default async function TutorDetailPage({
                 {isVerified && (
                   <span className="inline-flex items-center gap-1.5 bg-[#E6F7F5] text-[#0C8F81] px-3 py-1.5 rounded-full text-xs font-bold">
                     <CheckIcon />
-                    Verified
+                    Verified Tutor
                   </span>
                 )}
 
@@ -1037,7 +1115,7 @@ export default async function TutorDetailPage({
 
               <div className="flex flex-wrap gap-3">
 
-                {city && (
+                {experience && (
                   <div className="inline-flex items-center gap-2 bg-[#F8FAFC] border border-[#E5E7EB] px-4 py-2.5 rounded-xl text-sm font-medium text-[#374151]">
 
                     <svg
@@ -1048,18 +1126,32 @@ export default async function TutorDetailPage({
                       stroke="#0A6FF7"
                       strokeWidth="2"
                     >
-                      <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0Z" />
-                      <circle
-                        cx="12"
-                        cy="10"
-                        r="3"
-                      />
+                      <circle cx="12" cy="12" r="9" />
+                      <path d="M12 7v5l3 2" />
                     </svg>
 
-                    {city}
+                    {experience}
 
                   </div>
                 )}
+
+                <div className="inline-flex items-center gap-2 bg-[#F8FAFC] border border-[#E5E7EB] px-4 py-2.5 rounded-xl text-sm font-medium text-[#374151]">
+
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#0A6FF7"
+                    strokeWidth="2"
+                  >
+                    <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0Z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
+
+                  {city}
+
+                </div>
 
                 {mode && (
                   <div className="inline-flex items-center gap-2 bg-[#F8FAFC] border border-[#E5E7EB] px-4 py-2.5 rounded-xl text-sm font-medium text-[#374151]">
@@ -1091,21 +1183,46 @@ export default async function TutorDetailPage({
 
             </div>
 
-            {/* HERO CTA */}
+            {/* QUICK STATS */}
 
-            <div className="w-full">
+            <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
 
-              <Link
-                href="/find-a-tutor"
-                className="flex items-center justify-center gap-2 w-full bg-[#0A6FF7] text-white font-bold px-5 py-4 rounded-xl hover:bg-[#0858c8] transition-colors shadow-sm"
-              >
-                Request This Tutor
-                <span>→</span>
-              </Link>
+              {rating !== null &&
+                !Number.isNaN(rating) && (
+                  <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl px-5 py-4 min-w-[145px]">
 
-              <p className="text-xs text-center text-[#6B7280] mt-3 leading-5">
-                Share your requirement. TutorWave will help you proceed.
-              </p>
+                    <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-1">
+                      Rating
+                    </p>
+
+                    <div className="flex items-center gap-2">
+
+                      <span className="text-2xl font-bold text-[#0D1118]">
+                        {rating.toFixed(1)}
+                      </span>
+
+                      <span className="text-[#F59E0B]">
+                        ★
+                      </span>
+
+                    </div>
+
+                  </div>
+                )}
+
+              <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl px-5 py-4 min-w-[145px]">
+
+                <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-1">
+                  Profile
+                </p>
+
+                <span className="text-base font-bold text-[#0D1118]">
+                  {isVerified
+                    ? 'Verified'
+                    : 'TutorWave Tutor'}
+                </span>
+
+              </div>
 
             </div>
 
@@ -1123,7 +1240,7 @@ export default async function TutorDetailPage({
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
 
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-7 lg:gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_350px] gap-7 lg:gap-8">
 
             {/* =================================================
                 LEFT COLUMN
@@ -1132,19 +1249,106 @@ export default async function TutorDetailPage({
             <div className="space-y-6">
 
               {/* =================================================
+                  WHY THIS TUTOR MAY BE A GOOD FIT
+              ================================================= */}
+
+              <Section
+                title="Why This Tutor May Be a Good Fit"
+                eyebrow="Profile highlights"
+              >
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                  {experience && (
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 text-[#0A6FF7]">
+                        <CheckIcon />
+                      </div>
+
+                      <p className="text-[#374151] leading-7">
+                        {experience} teaching experience
+                      </p>
+                    </div>
+                  )}
+
+                  {boards.length > 0 && (
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 text-[#0A6FF7]">
+                        <CheckIcon />
+                      </div>
+
+                      <p className="text-[#374151] leading-7">
+                        {boards.join(' & ')}
+                      </p>
+                    </div>
+                  )}
+
+                  {subjects.length > 0 && (
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 text-[#0A6FF7]">
+                        <CheckIcon />
+                      </div>
+
+                      <p className="text-[#374151] leading-7">
+                        {subjects.join(', ')}
+                      </p>
+                    </div>
+                  )}
+
+                  {classes.length > 0 && (
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 text-[#0A6FF7]">
+                        <CheckIcon />
+                      </div>
+
+                      <p className="text-[#374151] leading-7">
+                        Classes: {classes.join(', ')}
+                      </p>
+                    </div>
+                  )}
+
+                  {mode && (
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 text-[#0A6FF7]">
+                        <CheckIcon />
+                      </div>
+
+                      <p className="text-[#374151] leading-7">
+                        {mode}
+                      </p>
+                    </div>
+                  )}
+
+                  {city && (
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 text-[#0A6FF7]">
+                        <CheckIcon />
+                      </div>
+
+                      <p className="text-[#374151] leading-7">
+                        Teaching in {city}
+                      </p>
+                    </div>
+                  )}
+
+                </div>
+
+              </Section>
+
+              {/* =================================================
                   TUTOR AT A GLANCE
               ================================================= */}
 
               <Section
                 title="Tutor at a Glance"
-                eyebrow="Quick profile"
+                eyebrow="Quick overview"
               >
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
 
                   {experience && (
                     <InfoRow
-                      label="Experience"
+                      label="Teaching Experience"
                       value={experience}
                       icon={
                         <svg
@@ -1155,11 +1359,7 @@ export default async function TutorDetailPage({
                           stroke="currentColor"
                           strokeWidth="1.8"
                         >
-                          <circle
-                            cx="12"
-                            cy="12"
-                            r="9"
-                          />
+                          <circle cx="12" cy="12" r="9" />
                           <path d="M12 7v5l3 2" />
                         </svg>
                       }
@@ -1168,7 +1368,15 @@ export default async function TutorDetailPage({
 
                   <InfoRow
                     label="Qualification"
-                    value={qualification}
+                    value={
+                      qualification
+                        ? qualificationStream
+                          ? `${qualification} • ${qualificationStream}`
+                          : qualification
+                        : qualificationStream
+                          ? qualificationStream
+                          : null
+                    }
                     icon={
                       <svg
                         width="19"
@@ -1231,7 +1439,7 @@ export default async function TutorDetailPage({
                   />
 
                   <InfoRow
-                    label="Mode"
+                    label="Teaching Mode"
                     value={mode}
                     icon={
                       <svg
@@ -1267,11 +1475,7 @@ export default async function TutorDetailPage({
                         strokeWidth="1.8"
                       >
                         <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0Z" />
-                        <circle
-                          cx="12"
-                          cy="10"
-                          r="3"
-                        />
+                        <circle cx="12" cy="10" r="3" />
                       </svg>
                     }
                   />
@@ -1289,11 +1493,7 @@ export default async function TutorDetailPage({
                           stroke="currentColor"
                           strokeWidth="1.8"
                         >
-                          <circle
-                            cx="9"
-                            cy="8"
-                            r="3"
-                          />
+                          <circle cx="9" cy="8" r="3" />
                           <path d="M3 20c0-3.5 2.5-6 6-6s6 2.5 6 6" />
                           <path d="M16 11c2.5 0 5 1.8 5 5" />
                         </svg>
@@ -1314,29 +1514,24 @@ export default async function TutorDetailPage({
                 eyebrow="Subjects, classes & boards"
               >
 
-                <div className="space-y-6">
+                <div className="space-y-7">
 
                   {subjects.length > 0 && (
                     <div>
 
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-[#6B7280] mb-3">
+                      <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
                         Subjects
                       </p>
 
                       <div className="flex flex-wrap gap-2.5">
-                        {subjects.map(
-                          (
-                            subject,
-                            index
-                          ) => (
-                            <Tag
-                              key={`${subject}-${index}`}
-                              blue
-                            >
-                              {subject}
-                            </Tag>
-                          )
-                        )}
+                        {subjects.map((subject) => (
+                          <Tag
+                            key={subject}
+                            blue
+                          >
+                            {subject}
+                          </Tag>
+                        ))}
                       </div>
 
                     </div>
@@ -1345,23 +1540,16 @@ export default async function TutorDetailPage({
                   {classes.length > 0 && (
                     <div>
 
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-[#6B7280] mb-3">
+                      <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
                         Classes
                       </p>
 
                       <div className="flex flex-wrap gap-2.5">
-                        {classes.map(
-                          (
-                            item,
-                            index
-                          ) => (
-                            <Tag
-                              key={`${item}-${index}`}
-                            >
-                              {item}
-                            </Tag>
-                          )
-                        )}
+                        {classes.map((item) => (
+                          <Tag key={item}>
+                            {item}
+                          </Tag>
+                        ))}
                       </div>
 
                     </div>
@@ -1370,23 +1558,16 @@ export default async function TutorDetailPage({
                   {boards.length > 0 && (
                     <div>
 
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-[#6B7280] mb-3">
+                      <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
                         Boards
                       </p>
 
                       <div className="flex flex-wrap gap-2.5">
-                        {boards.map(
-                          (
-                            board,
-                            index
-                          ) => (
-                            <Tag
-                              key={`${board}-${index}`}
-                            >
-                              {board}
-                            </Tag>
-                          )
-                        )}
+                        {boards.map((board) => (
+                          <Tag key={board}>
+                            {board}
+                          </Tag>
+                        ))}
                       </div>
 
                     </div>
@@ -1395,7 +1576,7 @@ export default async function TutorDetailPage({
                   {specialization && (
                     <div>
 
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-[#6B7280] mb-3">
+                      <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
                         Specialisation
                       </p>
 
@@ -1414,8 +1595,7 @@ export default async function TutorDetailPage({
                   EDUCATION
               ================================================= */}
 
-              {(qualification ||
-                college) && (
+              {(qualification || qualificationStream || college || additionalQualifications.length > 0) && (
                 <Section
                   title="Education & Qualifications"
                   eyebrow="Academic background"
@@ -1442,13 +1622,21 @@ export default async function TutorDetailPage({
 
                         </div>
 
-                        <p className="text-[11px] uppercase tracking-wider font-bold text-[#6B7280] mb-2">
+                        <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-2">
                           Highest Qualification
                         </p>
 
-                        <p className="font-semibold text-[#0D1118]">
-                          {qualification}
-                        </p>
+                        {qualification && (
+                          <p className="font-semibold text-[#0D1118]">
+                            {qualification}
+                          </p>
+                        )}
+
+                        {qualificationStream && (
+                          <p className="text-sm font-medium text-[#4B5563] mt-1 leading-6">
+                            {qualificationStream}
+                          </p>
+                        )}
 
                       </div>
                     )}
@@ -1472,13 +1660,48 @@ export default async function TutorDetailPage({
 
                         </div>
 
-                        <p className="text-[11px] uppercase tracking-wider font-bold text-[#6B7280] mb-2">
+                        <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-2">
                           College / University
                         </p>
 
                         <p className="font-semibold text-[#0D1118]">
                           {college}
                         </p>
+
+                      </div>
+                    )}
+
+                    {additionalQualifications.length > 0 && (
+                      <div className="border border-[#E5E7EB] rounded-2xl p-5 sm:col-span-2">
+
+                        <div className="w-11 h-11 rounded-xl bg-[#EBF4FF] flex items-center justify-center text-[#0A6FF7] mb-4">
+
+                          <svg
+                            width="21"
+                            height="21"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                          >
+                            <path d="M12 3v18" />
+                            <path d="M5 8h14" />
+                            <path d="M6 21h12" />
+                          </svg>
+
+                        </div>
+
+                        <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-3">
+                          Additional Qualifications
+                        </p>
+
+                        <div className="flex flex-wrap gap-2.5">
+                          {additionalQualifications.map((item, index) => (
+                            <Tag key={`${item}-${index}`}>
+                              {item}
+                            </Tag>
+                          ))}
+                        </div>
 
                       </div>
                     )}
@@ -1492,14 +1715,13 @@ export default async function TutorDetailPage({
                   TEACHING EXPERIENCE
               ================================================= */}
 
-              {(experience ||
-                experienceDetails) && (
+              {(experience || experienceDetails) && (
                 <Section
                   title="Teaching Experience"
-                  eyebrow="Professional background"
+                  eyebrow="Professional experience"
                 >
 
-                  <div className="flex items-start gap-5">
+                  <div className="flex gap-5">
 
                     <div className="w-12 h-12 rounded-2xl bg-[#EBF4FF] flex items-center justify-center flex-shrink-0 text-[#0A6FF7]">
 
@@ -1546,87 +1768,66 @@ export default async function TutorDetailPage({
               )}
 
               {/* =================================================
-                  SCHOOL BACKGROUND
+                  SCHOOL TEACHING EXPERIENCE
               ================================================= */}
 
-              {(schoolExperience ||
-                schoolsTaught.length >
-                  0) && (
+              {schoolExperience && (
                 <Section
-                  title="School Background"
-                  eyebrow="School teaching exposure"
+                  title="School Teaching Experience"
+                  eyebrow="School / coaching background"
                 >
 
-                  <div className="space-y-7">
+                  <div className="flex items-start gap-5">
 
-                    {schoolExperience && (
-                      <div>
+                    <div className="w-12 h-12 rounded-2xl bg-[#EBF4FF] flex items-center justify-center flex-shrink-0 text-[#0A6FF7]">
 
-                        <div className="flex items-start gap-4">
+                      <svg
+                        width="22"
+                        height="22"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                      >
+                        <path d="M3 21h18" />
+                        <path d="M5 21V9l7-5 7 5v12" />
+                        <path d="M9 21v-6h6v6" />
+                        <path d="M8 11h2M14 11h2" />
+                      </svg>
 
-                          <div className="w-11 h-11 rounded-xl bg-[#EBF4FF] flex items-center justify-center flex-shrink-0 text-[#0A6FF7]">
+                    </div>
 
-                            <svg
-                              width="21"
-                              height="21"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="1.8"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M3 21h18" />
-                              <path d="M5 21V9l7-5 7 5v12" />
-                              <path d="M9 21v-6h6v6" />
-                              <path d="M8 11h2M14 11h2" />
-                            </svg>
+                    <p className="text-[#374151] leading-8">
+                      {schoolExperience}
+                    </p>
 
-                          </div>
+                  </div>
 
-                          <div>
+                </Section>
+              )}
 
-                            <p className="text-[11px] uppercase tracking-wider font-bold text-[#6B7280] mb-1">
-                              School Teaching Experience
-                            </p>
+              {/* =================================================
+                  STUDENTS TAUGHT FROM
+              ================================================= */}
 
-                            <p className="text-base font-semibold text-[#0D1118]">
-                              {schoolExperience}
-                            </p>
+              {schoolsTaught.length > 0 && (
+                <Section
+                  title="Students Taught From"
+                  eyebrow="School exposure"
+                >
 
-                          </div>
+                  <p className="text-[#6B7280] mb-5 leading-7">
+                    Has taught students from:
+                  </p>
 
-                        </div>
+                  <div className="flex flex-wrap gap-2.5">
 
-                      </div>
-                    )}
-
-                    {schoolsTaught.length >
-                      0 && (
-                      <div>
-
-                        <p className="text-[11px] uppercase tracking-wider font-bold text-[#6B7280] mb-3">
-                          Students Taught From
-                        </p>
-
-                        <div className="flex flex-wrap gap-2.5">
-
-                          {schoolsTaught.map(
-                            (
-                              school,
-                              index
-                            ) => (
-                              <Tag
-                                key={`${school}-${index}`}
-                              >
-                                {school}
-                              </Tag>
-                            )
-                          )}
-
-                        </div>
-
-                      </div>
+                    {schoolsTaught.map(
+                      (school, index) => (
+                        <Tag key={`${school}-${index}`}>
+                          {school}
+                        </Tag>
+                      )
                     )}
 
                   </div>
@@ -1656,7 +1857,7 @@ export default async function TutorDetailPage({
               {teachingApproach && (
                 <Section
                   title="Teaching Approach"
-                  eyebrow="Teaching style"
+                  eyebrow="How the tutor teaches"
                 >
 
                   <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl p-5">
@@ -1674,8 +1875,7 @@ export default async function TutorDetailPage({
                   LANGUAGES
               ================================================= */}
 
-              {languages.length >
-                0 && (
+              {languages.length > 0 && (
                 <Section
                   title="Languages"
                   eyebrow="Communication"
@@ -1684,13 +1884,8 @@ export default async function TutorDetailPage({
                   <div className="flex flex-wrap gap-2.5">
 
                     {languages.map(
-                      (
-                        language,
-                        index
-                      ) => (
-                        <Tag
-                          key={`${language}-${index}`}
-                        >
+                      (language, index) => (
+                        <Tag key={`${language}-${index}`}>
                           {language}
                         </Tag>
                       )
@@ -1725,18 +1920,14 @@ export default async function TutorDetailPage({
                         strokeWidth="1.8"
                       >
                         <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0Z" />
-                        <circle
-                          cx="12"
-                          cy="10"
-                          r="3"
-                        />
+                        <circle cx="12" cy="10" r="3" />
                       </svg>
 
                     </div>
 
                     <div>
 
-                      <p className="text-[11px] uppercase tracking-wider font-bold text-[#6B7280]">
+                      <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280]">
                         City
                       </p>
 
@@ -1748,24 +1939,18 @@ export default async function TutorDetailPage({
 
                   </div>
 
-                  {areas.length >
-                    0 && (
+                  {areas.length > 0 && (
                     <div>
 
-                      <p className="text-[11px] uppercase tracking-wider font-bold text-[#6B7280] mb-3">
+                      <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-3">
                         Areas Served
                       </p>
 
                       <div className="flex flex-wrap gap-2.5">
 
                         {areas.map(
-                          (
-                            area,
-                            index
-                          ) => (
-                            <Tag
-                              key={`${area}-${index}`}
-                            >
+                          (area, index) => (
+                            <Tag key={`${area}-${index}`}>
                               {area}
                             </Tag>
                           )
@@ -1787,20 +1972,19 @@ export default async function TutorDetailPage({
               {(
                 availability ||
                 availabilityTime ||
-                availabilityDays.length >
-                  0
+                availabilityDays.length > 0
               ) && (
                 <Section
                   title="Availability"
-                  eyebrow="Current availability"
+                  eyebrow="When the tutor may be available"
                 >
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className="space-y-5">
 
                     {availability && (
-                      <div className="border border-[#E5E7EB] rounded-2xl p-5">
+                      <div>
 
-                        <p className="text-[11px] uppercase tracking-wider font-bold text-[#6B7280] mb-2">
+                        <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-2">
                           Availability
                         </p>
 
@@ -1812,9 +1996,9 @@ export default async function TutorDetailPage({
                     )}
 
                     {availabilityTime && (
-                      <div className="border border-[#E5E7EB] rounded-2xl p-5">
+                      <div>
 
-                        <p className="text-[11px] uppercase tracking-wider font-bold text-[#6B7280] mb-2">
+                        <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-2">
                           Preferred Time
                         </p>
 
@@ -1825,35 +2009,29 @@ export default async function TutorDetailPage({
                       </div>
                     )}
 
-                  </div>
+                    {availabilityDays.length > 0 && (
+                      <div>
 
-                  {availabilityDays.length >
-                    0 && (
-                    <div className="mt-5">
+                        <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-3">
+                          Days
+                        </p>
 
-                      <p className="text-[11px] uppercase tracking-wider font-bold text-[#6B7280] mb-3">
-                        Days
-                      </p>
+                        <div className="flex flex-wrap gap-2">
 
-                      <div className="flex flex-wrap gap-2">
+                          {availabilityDays.map(
+                            (day, index) => (
+                              <Tag key={`${day}-${index}`}>
+                                {day}
+                              </Tag>
+                            )
+                          )}
 
-                        {availabilityDays.map(
-                          (
-                            day,
-                            index
-                          ) => (
-                            <Tag
-                              key={`${day}-${index}`}
-                            >
-                              {day}
-                            </Tag>
-                          )
-                        )}
+                        </div>
 
                       </div>
+                    )}
 
-                    </div>
-                  )}
+                  </div>
 
                 </Section>
               )}
@@ -1862,8 +2040,7 @@ export default async function TutorDetailPage({
                   ACHIEVEMENTS
               ================================================= */}
 
-              {achievements.length >
-                0 && (
+              {achievements.length > 0 && (
                 <Section
                   title="Achievements"
                   eyebrow="Additional highlights"
@@ -1872,10 +2049,7 @@ export default async function TutorDetailPage({
                   <div className="space-y-3">
 
                     {achievements.map(
-                      (
-                        achievement,
-                        index
-                      ) => (
+                      (achievement, index) => (
                         <div
                           key={`${achievement}-${index}`}
                           className="flex items-start gap-3"
@@ -1902,8 +2076,7 @@ export default async function TutorDetailPage({
                   CERTIFICATIONS
               ================================================= */}
 
-              {certifications.length >
-                0 && (
+              {certifications.length > 0 && (
                 <Section
                   title="Certifications"
                   eyebrow="Additional qualifications"
@@ -1912,10 +2085,7 @@ export default async function TutorDetailPage({
                   <div className="flex flex-wrap gap-2.5">
 
                     {certifications.map(
-                      (
-                        certificate,
-                        index
-                      ) => (
+                      (certificate, index) => (
                         <Tag
                           key={`${certificate}-${index}`}
                         >
@@ -1930,12 +2100,12 @@ export default async function TutorDetailPage({
               )}
 
               {/* =================================================
-                  MOBILE REQUEST CTA
+                  MOBILE CTA
               ================================================= */}
 
               <div className="lg:hidden bg-white border border-[#E5E7EB] rounded-3xl p-6">
 
-                <p className="text-[11px] uppercase tracking-[0.12em] font-bold text-[#0A6FF7] mb-2">
+                <p className="text-xs uppercase tracking-wider font-bold text-[#0A6FF7] mb-2">
                   TutorWave
                 </p>
 
@@ -1944,7 +2114,8 @@ export default async function TutorDetailPage({
                 </h2>
 
                 <p className="text-sm text-[#6B7280] leading-6 mb-5">
-                  Share your tuition requirement and our team will help you proceed.
+                  Tell us about your child's requirements
+                  and our team will help you proceed.
                 </p>
 
                 <Link
@@ -1955,118 +2126,7 @@ export default async function TutorDetailPage({
                   <span>→</span>
                 </Link>
 
-                <p className="text-xs text-center text-[#6B7280] mt-3">
-                  No obligation to hire.
-                </p>
-
               </div>
-
-              {/* =================================================
-                  HOW IT WORKS — BELOW MAIN PROFILE
-              ================================================= */}
-
-              <section className="bg-[#0D1118] rounded-3xl p-6 sm:p-7 text-white">
-
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
-
-                  <div>
-
-                    <p className="text-[11px] uppercase tracking-[0.14em] font-bold text-[#5DB8FF] mb-2">
-                      TutorWave
-                    </p>
-
-                    <h2 className="text-xl sm:text-2xl font-bold">
-                      How It Works
-                    </h2>
-
-                    <p className="text-sm text-white/55 mt-1">
-                      A simple process to help you move forward.
-                    </p>
-
-                  </div>
-
-                  <div className="hidden sm:block w-10 h-10 rounded-xl bg-white/10 items-center justify-center">
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#5DB8FF"
-                      strokeWidth="1.8"
-                      className="mx-auto mt-2.5"
-                    >
-                      <path d="M5 12h14" />
-                      <path d="M13 6l6 6-6 6" />
-                    </svg>
-                  </div>
-
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6">
-
-                  <div className="bg-white/[0.06] border border-white/10 rounded-2xl p-4">
-
-                    <div className="flex items-center gap-3 mb-3">
-
-                      <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold">
-                        1
-                      </div>
-
-                      <p className="font-semibold text-sm">
-                        Share requirement
-                      </p>
-
-                    </div>
-
-                    <p className="text-xs text-white/55 leading-5">
-                      Tell us your child's class, subject and location.
-                    </p>
-
-                  </div>
-
-                  <div className="bg-white/[0.06] border border-white/10 rounded-2xl p-4">
-
-                    <div className="flex items-center gap-3 mb-3">
-
-                      <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold">
-                        2
-                      </div>
-
-                      <p className="font-semibold text-sm">
-                        We confirm
-                      </p>
-
-                    </div>
-
-                    <p className="text-xs text-white/55 leading-5">
-                      Our team reviews your requirement and tutor preferences.
-                    </p>
-
-                  </div>
-
-                  <div className="bg-[#0A6FF7] rounded-2xl p-4">
-
-                    <div className="flex items-center gap-3 mb-3">
-
-                      <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center text-sm font-bold">
-                        3
-                      </div>
-
-                      <p className="font-semibold text-sm">
-                        Move forward
-                      </p>
-
-                    </div>
-
-                    <p className="text-xs text-white/75 leading-5">
-                      We help you take the next step with the selected tutor.
-                    </p>
-
-                  </div>
-
-                </div>
-
-              </section>
 
             </div>
 
@@ -2078,11 +2138,13 @@ export default async function TutorDetailPage({
 
               <div className="sticky top-24 space-y-5">
 
-                {/* PROFILE SUMMARY */}
+                {/* =================================================
+                    PROFILE SUMMARY
+                ================================================= */}
 
                 <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6">
 
-                  <p className="text-[11px] uppercase tracking-[0.12em] font-bold text-[#0A6FF7] mb-2">
+                  <p className="text-xs uppercase tracking-[0.12em] font-bold text-[#0A6FF7] mb-2">
                     TutorWave
                   </p>
 
@@ -2094,7 +2156,6 @@ export default async function TutorDetailPage({
 
                     {experience && (
                       <div className="flex justify-between gap-4">
-
                         <span className="text-sm text-[#6B7280]">
                           Experience
                         </span>
@@ -2102,14 +2163,25 @@ export default async function TutorDetailPage({
                         <span className="text-sm font-semibold text-[#0D1118] text-right">
                           {experience}
                         </span>
-
                       </div>
                     )}
 
-                    {subjects.length >
-                      0 && (
+                    {(qualification || qualificationStream) && (
                       <div className="flex justify-between gap-4">
+                        <span className="text-sm text-[#6B7280]">
+                          Qualification
+                        </span>
 
+                        <span className="text-sm font-semibold text-[#0D1118] text-right">
+                          {qualification && qualificationStream
+                            ? `${qualification} • ${qualificationStream}`
+                            : qualification || qualificationStream}
+                        </span>
+                      </div>
+                    )}
+
+                    {subjects.length > 0 && (
+                      <div className="flex justify-between gap-4">
                         <span className="text-sm text-[#6B7280]">
                           Subjects
                         </span>
@@ -2117,14 +2189,11 @@ export default async function TutorDetailPage({
                         <span className="text-sm font-semibold text-[#0D1118] text-right">
                           {subjects.length}
                         </span>
-
                       </div>
                     )}
 
-                    {classes.length >
-                      0 && (
+                    {classes.length > 0 && (
                       <div className="flex justify-between gap-4">
-
                         <span className="text-sm text-[#6B7280]">
                           Classes
                         </span>
@@ -2132,14 +2201,11 @@ export default async function TutorDetailPage({
                         <span className="text-sm font-semibold text-[#0D1118] text-right">
                           {classes.length}
                         </span>
-
                       </div>
                     )}
 
-                    {boards.length >
-                      0 && (
+                    {boards.length > 0 && (
                       <div className="flex justify-between gap-4">
-
                         <span className="text-sm text-[#6B7280]">
                           Boards
                         </span>
@@ -2147,12 +2213,10 @@ export default async function TutorDetailPage({
                         <span className="text-sm font-semibold text-[#0D1118] text-right">
                           {boards.join(', ')}
                         </span>
-
                       </div>
                     )}
 
                     <div className="flex justify-between gap-4">
-
                       <span className="text-sm text-[#6B7280]">
                         Location
                       </span>
@@ -2160,12 +2224,10 @@ export default async function TutorDetailPage({
                       <span className="text-sm font-semibold text-[#0D1118] text-right">
                         {city}
                       </span>
-
                     </div>
 
                     {mode && (
                       <div className="flex justify-between gap-4">
-
                         <span className="text-sm text-[#6B7280]">
                           Mode
                         </span>
@@ -2173,7 +2235,6 @@ export default async function TutorDetailPage({
                         <span className="text-sm font-semibold text-[#0D1118] text-right">
                           {mode}
                         </span>
-
                       </div>
                     )}
 
@@ -2181,7 +2242,9 @@ export default async function TutorDetailPage({
 
                 </div>
 
-                {/* TUTORWAVE VERIFICATION */}
+                {/* =================================================
+                    TUTORWAVE VERIFICATION
+                ================================================= */}
 
                 <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6">
 
@@ -2193,7 +2256,7 @@ export default async function TutorDetailPage({
 
                     <div>
 
-                      <p className="text-[11px] uppercase tracking-wider font-bold text-[#6B7280]">
+                      <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280]">
                         TutorWave
                       </p>
 
@@ -2208,7 +2271,6 @@ export default async function TutorDetailPage({
                   <div className="space-y-3">
 
                     <div className="flex items-start gap-3">
-
                       <span className="text-[#0C8F81] mt-0.5">
                         <CheckIcon />
                       </span>
@@ -2216,12 +2278,10 @@ export default async function TutorDetailPage({
                       <p className="text-sm text-[#374151] leading-6">
                         Profile reviewed by TutorWave
                       </p>
-
                     </div>
 
                     {qualification && (
                       <div className="flex items-start gap-3">
-
                         <span className="text-[#0C8F81] mt-0.5">
                           <CheckIcon />
                         </span>
@@ -2229,13 +2289,11 @@ export default async function TutorDetailPage({
                         <p className="text-sm text-[#374151] leading-6">
                           Qualification information provided
                         </p>
-
                       </div>
                     )}
 
                     {photo && (
                       <div className="flex items-start gap-3">
-
                         <span className="text-[#0C8F81] mt-0.5">
                           <CheckIcon />
                         </span>
@@ -2243,7 +2301,6 @@ export default async function TutorDetailPage({
                         <p className="text-sm text-[#374151] leading-6">
                           Profile photo provided
                         </p>
-
                       </div>
                     )}
 
@@ -2255,7 +2312,8 @@ export default async function TutorDetailPage({
                         </p>
 
                         <p className="text-xs text-[#6B7280] mt-1 leading-5">
-                          This profile has been reviewed and verified by the TutorWave team.
+                          This profile has been reviewed and
+                          verified by the TutorWave team.
                         </p>
 
                       </div>
@@ -2265,11 +2323,13 @@ export default async function TutorDetailPage({
 
                 </div>
 
-                {/* BROWSE OTHER TUTORS */}
+                {/* =================================================
+                    BROWSE OTHER TUTORS
+                ================================================= */}
 
                 <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6">
 
-                  <p className="text-[11px] uppercase tracking-wider font-bold text-[#0A6FF7] mb-2">
+                  <p className="text-xs uppercase tracking-wider font-bold text-[#0A6FF7] mb-2">
                     Explore
                   </p>
 
@@ -2278,7 +2338,9 @@ export default async function TutorDetailPage({
                   </h3>
 
                   <p className="text-sm text-[#6B7280] leading-6 mb-5">
-                    Explore more TutorWave profiles based on your child's requirements.
+                    Explore more TutorWave profiles and
+                    compare tutors based on your child's
+                    requirements.
                   </p>
 
                   <Link
@@ -2288,6 +2350,116 @@ export default async function TutorDetailPage({
                     Browse Tutors
                     <span>→</span>
                   </Link>
+
+                </div>
+
+                {/* =================================================
+                    HOW IT WORKS
+                ================================================= */}
+
+                <div className="bg-[#0D1118] rounded-3xl p-6 text-white">
+
+                  <p className="text-xs uppercase tracking-[0.12em] font-bold text-[#5DB8FF] mb-2">
+                    TutorWave
+                  </p>
+
+                  <h3 className="text-xl font-bold mb-5">
+                    How It Works
+                  </h3>
+
+                  <div className="space-y-5">
+
+                    <div className="flex items-start gap-4">
+
+                      <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold flex-shrink-0">
+                        1
+                      </div>
+
+                      <div>
+                        <p className="font-semibold">
+                          Share your requirement
+                        </p>
+
+                        <p className="text-sm text-white/60 mt-1 leading-5">
+                          Tell us your child's class,
+                          subject and location.
+                        </p>
+                      </div>
+
+                    </div>
+
+                    <div className="flex items-start gap-4">
+
+                      <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold flex-shrink-0">
+                        2
+                      </div>
+
+                      <div>
+                        <p className="font-semibold">
+                          We confirm suitability
+                        </p>
+
+                        <p className="text-sm text-white/60 mt-1 leading-5">
+                          Our team reviews your requirement
+                          and tutor preferences.
+                        </p>
+                      </div>
+
+                    </div>
+
+                    <div className="flex items-start gap-4">
+
+                      <div className="w-8 h-8 rounded-full bg-[#0A6FF7] flex items-center justify-center text-sm font-bold flex-shrink-0">
+                        3
+                      </div>
+
+                      <div>
+                        <p className="font-semibold">
+                          We help you proceed
+                        </p>
+
+                        <p className="text-sm text-white/60 mt-1 leading-5">
+                          We help you take the next step
+                          with the selected tutor.
+                        </p>
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+                {/* =================================================
+                    REQUEST CTA
+                ================================================= */}
+
+                <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 shadow-sm">
+
+                  <p className="text-xs uppercase tracking-[0.12em] font-bold text-[#0A6FF7] mb-2">
+                    TutorWave
+                  </p>
+
+                  <h2 className="text-2xl font-bold text-[#0D1118]">
+                    Interested in this tutor?
+                  </h2>
+
+                  <p className="text-sm text-[#6B7280] mt-3 leading-6">
+                    Share your tuition requirement and
+                    our team will help you proceed.
+                  </p>
+
+                  <Link
+                    href="/find-a-tutor"
+                    className="flex items-center justify-center gap-2 w-full bg-[#0A6FF7] text-white font-bold py-4 rounded-xl hover:bg-[#0858c8] transition-colors mt-6"
+                  >
+                    Request This Tutor
+                    <span>→</span>
+                  </Link>
+
+                  <p className="text-xs text-center text-[#6B7280] mt-3">
+                    No obligation to hire.
+                  </p>
 
                 </div>
 
@@ -2314,11 +2486,13 @@ export default async function TutorDetailPage({
           </p>
 
           <h2 className="text-2xl sm:text-3xl font-bold text-white">
-            Need help choosing a tutor?
+            Looking for the right tutor for your child?
           </h2>
 
           <p className="text-white/60 mt-3 max-w-2xl mx-auto leading-7">
-            Share your child's class, subject, location and learning requirements. Our team can help you explore suitable tutor options.
+            Tell us your child's class, subject, location
+            and learning requirements. Our team will help
+            you find a suitable tutor.
           </p>
 
           <div className="flex flex-col sm:flex-row justify-center gap-3 mt-7">
