@@ -1,17 +1,12 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import WhatsAppButton from '@/app/components/WhatsAppButton';
 
-/* =========================================================
-   TYPES
-========================================================= */
-
-type PublicTutor = {
-  id?: string;
+type Tutor = {
+  id: string;
   fullName?: string;
   profilePhoto?: string;
   gender?: string;
@@ -23,19 +18,16 @@ type PublicTutor = {
   mode?: string;
   highestQualification?: string;
   college?: string;
-  experienceYears?: number | string;
+  experienceYears?: number;
   bio?: string;
   specialization?: string;
-  rating?: number | string;
+  rating?: number;
   totalPlacements?: number;
-  totalDemos?: number;
   isVerified?: boolean;
-  isActive?: boolean;
-  status?: string;
 };
 
-type PublicTutorResponse = {
-  tutors?: PublicTutor[];
+type PublicTutorsResponse = {
+  tutors?: Tutor[];
   total?: number;
 };
 
@@ -45,291 +37,98 @@ type PublicTutorResponse = {
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ||
-  (process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : 'http://localhost:3000');
+  'https://tutorwave.in';
 
 /*
- * IMPORTANT:
- * Keep using the existing public website API.
+ * We use the existing public API route.
  *
- * No CRM route is changed here.
+ * This means:
+ * Website
+ *   ↓
+ * /api/public-tutors
+ *   ↓
+ * TutorWave CRM
+ *   ↓
+ * MongoDB
+ *
+ * No CRM route changes are required.
  */
-const PUBLIC_TUTORS_API = `${SITE_URL}/api/public-tutors`;
+const PUBLIC_TUTORS_API =
+  `${SITE_URL.replace(/\/$/, '')}/api/public-tutors`;
 
-/*
- * Always render fresh CRM data.
- */
-export const dynamic = 'force-dynamic';
 
 /* =========================================================
    HELPERS
 ========================================================= */
 
-function safeDecode(value: string) {
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return value;
-  }
+function safeArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .filter((item) => item !== null && item !== undefined)
+    .map((item) => String(item).trim())
+    .filter(Boolean);
 }
 
-function normalize(value: unknown): string {
-  return String(value ?? '')
-    .trim()
-    .toLowerCase();
-}
 
-function slugify(value: unknown): string {
-  return String(value ?? '')
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
+function formatMode(mode?: string): string {
+  const value = String(mode || '').toLowerCase();
 
-function asArray(value: unknown): string[] {
-  if (Array.isArray(value)) {
-    return value
-      .map((item) => String(item ?? '').trim())
-      .filter(Boolean);
-  }
-
-  if (typeof value === 'string' && value.trim()) {
-    return value
-      .split(',')
-      .map((item) => item.trim())
-      .filter(Boolean);
-  }
-
-  return [];
-}
-
-function displayValue(
-  value: unknown,
-  fallback = 'Not provided'
-): string {
-  const text = String(value ?? '').trim();
-
-  return text || fallback;
-}
-
-function formatMode(mode: unknown): string {
-  const value = normalize(mode);
-
-  if (value === 'both') {
+  if (value.includes('both')) {
     return 'Home & Online';
   }
 
-  if (value === 'online') {
+  if (value.includes('online')) {
     return 'Online';
   }
 
   if (
-    value === 'offline' ||
-    value === 'home' ||
-    value === 'home tuition'
+    value.includes('offline') ||
+    value.includes('home')
   ) {
     return 'Home Tuition';
   }
 
-  if (String(mode ?? '').trim()) {
-    return String(mode);
-  }
-
-  return 'Not specified';
+  return mode || '';
 }
 
-function formatExperience(value: unknown): string {
-  const number = Number(value);
 
-  if (!Number.isNaN(number) && number >= 0) {
-    return `${number} ${
-      number === 1 ? 'Year' : 'Years'
-    }`;
-  }
-
-  return 'Not specified';
-}
-
-function formatRating(value: unknown): string {
-  const number = Number(value);
-
-  if (!Number.isNaN(number) && number > 0) {
-    return number.toFixed(1);
-  }
-
-  return 'New';
-}
-
-function getPhotoUrl(
-  tutor: PublicTutor
-): string {
-  return String(
-    tutor.profilePhoto ?? ''
-  ).trim();
-}
-
-/* =========================================================
-   SLUG HANDLING
-========================================================= */
-
-/*
- * IMPORTANT FIX
- *
- * Your tutors listing page creates slugs like:
- *
- *     name-FIRST_8_CHARACTERS_OF_ID
- *
- * Example:
- *
- *     nawnit-8ebd57b9
- *
- * Therefore this detail page MUST check the first 8
- * characters of the ID.
- *
- * We also support:
- *
- * - full ID
- * - first 8 characters
- * - last 8 characters
- * - name only
- *
- * This makes the page backwards-compatible with any
- * existing TutorWave profile URLs.
- */
-
-function getTutorSlugCandidates(
-  tutor: PublicTutor
-): string[] {
-  const id = normalize(tutor.id);
-  const nameSlug = slugify(tutor.fullName);
-
-  const candidates: string[] = [];
-
-  if (id) {
-    /* Full CRM ID */
-    candidates.push(id);
-
-    /* FIRST 8 CHARACTERS
-       This is what /tutors/page.tsx currently uses.
-    */
-    if (id.length >= 8) {
-      candidates.push(
-        `${nameSlug}-${id.slice(0, 8)}`
-      );
-    }
-
-    /* LAST 8 CHARACTERS
-       Backward compatibility.
-    */
-    if (id.length >= 8) {
-      candidates.push(
-        `${nameSlug}-${id.slice(-8)}`
-      );
-    }
-
-    /* First 7 / 6 / 5 characters */
-    if (id.length >= 7) {
-      candidates.push(
-        `${nameSlug}-${id.slice(0, 7)}`
-      );
-    }
-
-    if (id.length >= 6) {
-      candidates.push(
-        `${nameSlug}-${id.slice(0, 6)}`
-      );
-    }
-
-    if (id.length >= 5) {
-      candidates.push(
-        `${nameSlug}-${id.slice(0, 5)}`
-      );
-    }
-  }
-
-  /* Name-only fallback */
-  if (nameSlug) {
-    candidates.push(nameSlug);
-  }
-
-  return candidates
-    .map(normalize)
-    .filter(Boolean);
-}
-
-function tutorMatchesSlug(
-  tutor: PublicTutor,
-  rawSlug: string
-): boolean {
-  const slug = normalize(
-    safeDecode(rawSlug)
-  );
-
-  if (!slug) {
-    return false;
-  }
-
-  const candidates =
-    getTutorSlugCandidates(tutor);
-
-  /* Direct candidate match */
-  if (candidates.includes(slug)) {
-    return true;
-  }
-
-  const id = normalize(tutor.id);
-
-  /*
-   * Extra protection:
-   *
-   * If URL is:
-   *
-   * nawnit-8ebd57b9
-   *
-   * and ID begins with:
-   *
-   * 8ebd57b9...
-   *
-   * consider it a match.
-   */
-  if (id && id.length >= 8) {
-    const firstEight = id.slice(0, 8);
-    const lastEight = id.slice(-8);
-
-    if (
-      slug.endsWith(`-${firstEight}`) ||
-      slug.endsWith(`-${lastEight}`)
-    ) {
-      return true;
-    }
-  }
-
-  /*
-   * Name-only URL fallback.
-   */
-  const nameSlug = slugify(
-    tutor.fullName
-  );
-
+function formatExperience(years?: number): string {
   if (
-    nameSlug &&
-    slug === nameSlug
+    years === undefined ||
+    years === null ||
+    Number.isNaN(Number(years))
   ) {
-    return true;
+    return '';
   }
 
-  return false;
+  const numericYears = Number(years);
+
+  if (numericYears === 1) {
+    return '1 Year';
+  }
+
+  return `${numericYears} Years`;
 }
 
-/* =========================================================
-   FETCH PUBLIC TUTORS
-========================================================= */
 
-async function getPublicTutors(): Promise<
-  PublicTutor[]
-> {
+function getTutorSlug(tutor: Tutor): string {
+  /*
+   * The listing page currently uses the CRM tutor ID
+   * as the URL segment.
+   *
+   * Example:
+   * /tutors/nawnit-8ebd57b9
+   *
+   * Therefore the detail page accepts the URL value
+   * as an ID first.
+   */
+
+  return tutor.id;
+}
+
+
+async function getPublicTutors(): Promise<Tutor[]> {
   try {
     const response = await fetch(
       PUBLIC_TUTORS_API,
@@ -344,23 +143,19 @@ async function getPublicTutors(): Promise<
 
     if (!response.ok) {
       console.error(
-        `TutorWave public tutor API returned ${response.status}`
+        'Public tutors API returned:',
+        response.status
       );
 
       return [];
     }
 
     const data =
-      (await response.json()) as PublicTutorResponse;
+      (await response.json()) as PublicTutorsResponse;
 
-    if (
-      !data ||
-      !Array.isArray(data.tutors)
-    ) {
-      return [];
-    }
-
-    return data.tutors;
+    return Array.isArray(data?.tutors)
+      ? data.tutors
+      : [];
   } catch (error) {
     console.error(
       'Failed to fetch public tutors:',
@@ -371,22 +166,63 @@ async function getPublicTutors(): Promise<
   }
 }
 
-async function getTutorBySlug(
-  rawSlug: string
-): Promise<PublicTutor | null> {
-  const tutors =
-    await getPublicTutors();
 
-  const tutor = tutors.find(
+async function findTutor(
+  rawSlug: string
+): Promise<Tutor | null> {
+
+  const slug = decodeURIComponent(
+    rawSlug || ''
+  )
+    .trim()
+    .toLowerCase();
+
+  if (!slug) {
+    return null;
+  }
+
+  const tutors = await getPublicTutors();
+
+  /*
+   * Primary match:
+   * CRM tutor ID.
+   */
+  let tutor = tutors.find(
     (item) =>
-      tutorMatchesSlug(
-        item,
-        rawSlug
-      )
+      String(item.id || '')
+        .trim()
+        .toLowerCase() === slug
   );
 
-  return tutor ?? null;
+  if (tutor) {
+    return tutor;
+  }
+
+  /*
+   * Fallback:
+   * In case an older link uses a slug based on
+   * the tutor's name.
+   *
+   * Example:
+   * Nawnit Gautam
+   * →
+   * nawnit-gautam
+   */
+  tutor = tutors.find((item) => {
+    const nameSlug = String(
+      item.fullName || ''
+    )
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
+    return nameSlug === slug;
+  });
+
+  return tutor || null;
 }
+
 
 /* =========================================================
    METADATA
@@ -397,69 +233,57 @@ export async function generateMetadata({
 }: {
   params: { slug: string };
 }): Promise<Metadata> {
-  const tutor =
-    await getTutorBySlug(params.slug);
+
+  const tutor = await findTutor(params.slug);
 
   if (!tutor) {
     return {
-      title:
-        'Tutor Not Found | TutorWave',
+      title: 'Tutor Profile | TutorWave',
       description:
-        'The tutor profile you are looking for does not exist or is no longer publicly available.',
+        'Explore verified tutors available through TutorWave.',
     };
   }
 
-  const name = displayValue(
-    tutor.fullName,
-    'Tutor'
-  );
+  const name =
+    tutor.fullName || 'Verified Tutor';
 
   const subjects =
-    asArray(tutor.subjects);
+    safeArray(tutor.subjects);
 
   const city =
-    displayValue(
-      tutor.city,
-      'Delhi NCR'
-    );
+    tutor.city || 'Delhi NCR';
 
   const experience =
-    Number(
-      tutor.experienceYears
-    );
-
-  const subjectText =
-    subjects.length > 0
-      ? subjects
-          .slice(0, 3)
-          .join(', ')
-      : 'Home Tuition';
-
-  const experienceText =
-    !Number.isNaN(experience) &&
-    experience > 0
-      ? `${experience} years of teaching experience`
-      : 'experienced teaching professional';
+    formatExperience(tutor.experienceYears);
 
   const title =
-    `${name} — ${subjectText} Tutor in ${city} | TutorWave`;
+    `${name} — ${subjects.slice(0, 3).join(', ')} Tutor in ${city} | TutorWave`;
 
   const description =
-    `${name} is a TutorWave tutor in ${city}, offering ${subjectText}. ${experienceText}. Explore their teaching profile, qualifications and teaching expertise.`;
-
-  const slug =
-    safeDecode(params.slug);
-
-  const photo =
-    getPhotoUrl(tutor);
+    `${name} is a verified TutorWave tutor in ${city}${
+      subjects.length
+        ? ` teaching ${subjects.slice(0, 5).join(', ')}`
+        : ''
+    }${
+      experience
+        ? ` with ${experience} of teaching experience`
+        : ''
+    }.`;
 
   return {
     title,
     description,
 
+    robots: {
+      index: true,
+      follow: true,
+    },
+
     alternates: {
       canonical:
-        `${SITE_URL}/tutors/${slug}`,
+        `${SITE_URL}/tutors/${encodeURIComponent(
+          tutor.id
+        )}`,
     },
 
     openGraph: {
@@ -467,137 +291,24 @@ export async function generateMetadata({
       title,
       description,
       url:
-        `${SITE_URL}/tutors/${slug}`,
+        `${SITE_URL}/tutors/${encodeURIComponent(
+          tutor.id
+        )}`,
 
-      ...(photo
-        ? {
-            images: [
-              {
-                url: photo,
-                width: 1200,
-                height: 630,
-                alt:
-                  `${name} — TutorWave Tutor`,
-              },
-            ],
-          }
-        : {}),
+      images: tutor.profilePhoto
+        ? [
+            {
+              url: tutor.profilePhoto,
+              width: 1200,
+              height: 630,
+              alt: `${name} - TutorWave Tutor`,
+            },
+          ]
+        : [],
     },
   };
 }
 
-/* =========================================================
-   UI COMPONENTS
-========================================================= */
-
-function CheckIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      aria-hidden="true"
-    >
-      <path
-        d="M5 12l4 4L19 6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function SectionTitle({
-  eyebrow,
-  title,
-}: {
-  eyebrow?: string;
-  title: string;
-}) {
-  return (
-    <div className="mb-5">
-      {eyebrow && (
-        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#0A6FF7] mb-1.5">
-          {eyebrow}
-        </p>
-      )}
-
-      <h2 className="text-xl md:text-2xl font-bold text-[#0D1118]">
-        {title}
-      </h2>
-    </div>
-  );
-}
-
-function TagList({
-  items,
-  emptyText = 'Not provided',
-  blue = false,
-}: {
-  items: string[];
-  emptyText?: string;
-  blue?: boolean;
-}) {
-  if (!items.length) {
-    return (
-      <p className="text-sm text-[#6B7280]">
-        {emptyText}
-      </p>
-    );
-  }
-
-  return (
-    <div className="flex flex-wrap gap-2">
-      {items.map(
-        (item, index) => (
-          <span
-            key={`${item}-${index}`}
-            className={
-              `inline-flex items-center rounded-xl px-3 py-2 text-xs md:text-sm font-semibold ${
-                blue
-                  ? 'bg-[#EBF4FF] text-[#0A6FF7]'
-                  : 'bg-[#F8FAFC] text-[#273142] border border-[#E5E7EB]'
-              }`
-            }
-          >
-            {item}
-          </span>
-        )
-      )}
-    </div>
-  );
-}
-
-function DetailRow({
-  label,
-  value,
-  icon,
-}: {
-  label: string;
-  value: React.ReactNode;
-  icon: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-start gap-3 py-3.5 border-b border-[#EEF2F6] last:border-b-0">
-      <div className="w-9 h-9 rounded-xl bg-[#F3F7FF] text-[#0A6FF7] flex items-center justify-center flex-shrink-0">
-        {icon}
-      </div>
-
-      <div className="min-w-0">
-        <p className="text-[10px] uppercase tracking-wider font-bold text-[#9CA3AF] mb-0.5">
-          {label}
-        </p>
-
-        <div className="text-sm font-semibold text-[#1F2937] break-words">
-          {value}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /* =========================================================
    PAGE
@@ -608,8 +319,8 @@ export default async function TutorDetailPage({
 }: {
   params: { slug: string };
 }) {
-  const tutor =
-    await getTutorBySlug(params.slug);
+
+  const tutor = await findTutor(params.slug);
 
   /* =======================================================
      NOT FOUND
@@ -617,213 +328,215 @@ export default async function TutorDetailPage({
 
   if (!tutor) {
     return (
-      <main className="bg-white min-h-screen">
+      <main className="min-h-screen bg-white">
+
         <Header />
 
-        <section className="min-h-[55vh] flex items-center justify-center px-4 py-20">
-          <div className="max-w-xl mx-auto text-center">
+        <section className="min-h-[55vh] flex items-center justify-center px-6">
 
-            <div className="w-16 h-16 rounded-2xl bg-[#F3F7FF] flex items-center justify-center mx-auto mb-6 text-[#0A6FF7]">
+          <div className="max-w-xl text-center">
+
+            <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-[#EBF4FF] flex items-center justify-center">
+
               <svg
                 width="28"
                 height="28"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="currentColor"
-                strokeWidth="1.7"
+                stroke="#0A6FF7"
+                strokeWidth="1.8"
               >
                 <circle
                   cx="12"
                   cy="12"
                   r="9"
                 />
-                <path d="M9 9l6 6M15 9l-6 6" />
+
+                <path d="M12 8v4" />
+
+                <circle
+                  cx="12"
+                  cy="16"
+                  r="1"
+                  fill="#0A6FF7"
+                  stroke="none"
+                />
               </svg>
+
             </div>
 
             <h1 className="text-3xl md:text-4xl font-bold text-[#0D1118] mb-4">
-              Tutor Not Found
+              Tutor Profile Not Available
             </h1>
 
             <p className="text-[#6B7280] leading-relaxed mb-8">
-              The tutor profile you are looking for could not be found or may no longer be publicly available.
+              We couldn't load this tutor profile from
+              TutorWave at the moment. The tutor may have
+              been removed, may not be verified yet, or the
+              profile link may be outdated.
             </p>
 
             <Link
               href="/tutors"
-              className="inline-flex items-center gap-2 bg-[#0A6FF7] text-white font-bold px-6 py-3 rounded-xl hover:bg-[#0858c8] transition-colors"
+              className="inline-flex items-center gap-2 bg-[#0A6FF7] text-white font-semibold px-6 py-3 rounded-xl hover:bg-[#0858c8] transition-colors"
             >
               <svg
-                width="15"
-                height="15"
+                width="16"
+                height="16"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2.5"
               >
-                <path d="M19 12H5M12 19l-7-7 7-7" />
+                <path d="M19 12H5" />
+                <path d="M12 19l-7-7 7-7" />
               </svg>
 
               Back to Tutors
             </Link>
 
           </div>
+
         </section>
 
         <Footer />
+
         <WhatsAppButton />
+
       </main>
     );
   }
 
+
   /* =======================================================
-     NORMALIZED DATA
+     NORMALIZE DATA
   ======================================================= */
 
   const name =
-    displayValue(
-      tutor.fullName,
-      'Tutor'
-    );
+    tutor.fullName || 'Tutor';
 
   const subjects =
-    asArray(tutor.subjects);
+    safeArray(tutor.subjects);
 
   const classes =
-    asArray(tutor.classes);
+    safeArray(tutor.classes);
 
   const boards =
-    asArray(tutor.boards);
+    safeArray(tutor.boards);
 
   const areas =
-    asArray(tutor.areas);
-
-  const city =
-    displayValue(
-      tutor.city,
-      'Delhi NCR'
-    );
+    safeArray(tutor.areas);
 
   const qualification =
-    displayValue(
-      tutor.highestQualification
-    );
+    tutor.highestQualification ||
+    '';
 
   const college =
-    displayValue(
-      tutor.college
-    );
+    tutor.college ||
+    '';
 
   const specialization =
-    displayValue(
-      tutor.specialization
-    );
+    tutor.specialization ||
+    '';
 
   const bio =
-    displayValue(
-      tutor.bio,
-      'This tutor has not added a detailed introduction yet.'
-    );
+    tutor.bio ||
+    '';
 
-  const mode =
-    formatMode(tutor.mode);
+  const city =
+    tutor.city ||
+    '';
 
   const experience =
     formatExperience(
       tutor.experienceYears
     );
 
+  const mode =
+    formatMode(tutor.mode);
+
   const rating =
-    formatRating(tutor.rating);
+    Number(tutor.rating || 0);
 
   const placements =
     Number(
-      tutor.totalPlacements
-    ) || 0;
+      tutor.totalPlacements || 0
+    );
 
-  const demos =
-    Number(
-      tutor.totalDemos
-    ) || 0;
+  const profilePhoto =
+    tutor.profilePhoto || '';
 
-  const photo =
-    getPhotoUrl(tutor);
+  const profileUrl =
+    `${SITE_URL}/tutors/${encodeURIComponent(
+      tutor.id
+    )}`;
 
-  const isVerified =
-    tutor.isVerified === true;
-
-  const slug =
-    safeDecode(params.slug);
 
   /* =======================================================
      STRUCTURED DATA
   ======================================================= */
 
   const structuredData = {
-    '@context':
-      'https://schema.org',
+    '@context': 'https://schema.org',
 
     '@type': 'Person',
 
     name,
 
-    url:
-      `${SITE_URL}/tutors/${slug}`,
+    image: profilePhoto || undefined,
 
-    ...(photo
-      ? {
-          image: photo,
-        }
-      : {}),
-
-    ...(college &&
-    college !== 'Not provided'
-      ? {
-          alumniOf: {
-            '@type':
-              'CollegeOrUniversity',
-            name: college,
-          },
-        }
-      : {}),
-
-    description: bio,
+    description:
+      bio ||
+      `${name} is a verified tutor available through TutorWave.`,
 
     jobTitle: 'Tutor',
 
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: city || 'Delhi NCR',
+      addressCountry: 'IN',
+    },
+
+    url: profileUrl,
+
     knowsAbout: subjects,
 
-    address: {
-      '@type':
-        'PostalAddress',
-      addressLocality: city,
-      addressCountry: 'IN',
+    worksFor: {
+      '@type': 'Organization',
+      name: 'TutorWave',
+      url: SITE_URL,
     },
   };
 
+
   /* =======================================================
-     RENDER
+     PAGE UI
   ======================================================= */
 
   return (
-    <main className="bg-[#F8FAFC] min-h-screen">
+    <main className="min-h-screen bg-white">
 
       <Header />
 
+
       {/* ===================================================
-          BREADCRUMB
+          HERO
       =================================================== */}
 
-      <section className="bg-white border-b border-[#E5E7EB]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-4">
+      <section className="bg-[#F8FAFC] border-b border-[#E5E7EB]">
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-8 md:py-12">
+
+          {/* Breadcrumb */}
 
           <nav
-            className="flex flex-wrap items-center gap-2 text-xs md:text-sm text-[#6B7280]"
+            className="flex flex-wrap items-center gap-2 text-sm text-[#6B7280] mb-8"
             aria-label="Breadcrumb"
           >
+
             <Link
               href="/"
-              className="hover:text-[#0A6FF7] transition-colors"
+              className="hover:text-[#0A6FF7]"
             >
               Home
             </Link>
@@ -832,478 +545,106 @@ export default async function TutorDetailPage({
 
             <Link
               href="/tutors"
-              className="hover:text-[#0A6FF7] transition-colors"
+              className="hover:text-[#0A6FF7]"
             >
               Tutors
             </Link>
 
             <span>/</span>
 
-            <span className="text-[#0D1118] font-medium truncate max-w-[220px]">
+            <span className="text-[#0D1118] font-medium">
               {name}
             </span>
+
           </nav>
 
-        </div>
 
-        {/* Breadcrumb Schema */}
+          {/* Main Hero */}
 
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html:
-              JSON.stringify({
-                '@context':
-                  'https://schema.org',
-                '@type':
-                  'BreadcrumbList',
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-                itemListElement: [
-                  {
-                    '@type':
-                      'ListItem',
-                    position: 1,
-                    name: 'Home',
-                    item: SITE_URL,
-                  },
-                  {
-                    '@type':
-                      'ListItem',
-                    position: 2,
-                    name: 'Tutors',
-                    item:
-                      `${SITE_URL}/tutors`,
-                  },
-                  {
-                    '@type':
-                      'ListItem',
-                    position: 3,
-                    name,
-                    item:
-                      `${SITE_URL}/tutors/${slug}`,
-                  },
-                ],
-              }),
-          }}
-        />
+            {/* Left */}
 
-        {/* Person Schema */}
-
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html:
-              JSON.stringify(
-                structuredData
-              ),
-          }}
-        />
-      </section>
-
-      {/* ===================================================
-          HERO
-      =================================================== */}
-
-      <section className="bg-white border-b border-[#E5E7EB]">
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-8 md:py-12">
-
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8 lg:gap-12">
-
-            {/* LEFT */}
-
-            <div>
+            <div className="lg:col-span-2">
 
               <div className="flex flex-col sm:flex-row items-start gap-6">
 
-                {/* PHOTO */}
+                {/* Profile Photo */}
 
-                <div className="relative flex-shrink-0">
+                <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-2xl overflow-hidden bg-white border border-[#E5E7EB] shadow-sm flex-shrink-0">
 
-                  <div className="w-32 h-32 md:w-40 md:h-40 rounded-3xl overflow-hidden bg-[#F3F7FF] border border-[#E5E7EB] shadow-sm">
+                  {profilePhoto ? (
 
-                    {photo ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={photo}
-                        alt={`${name} - TutorWave Tutor`}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-[#0A6FF7] text-4xl font-bold">
-                        {name
-                          .charAt(0)
-                          .toUpperCase()}
-                      </div>
-                    )}
+                    <img
+                      src={profilePhoto}
+                      alt={`${name} - TutorWave verified tutor`}
+                      className="w-full h-full object-cover"
+                    />
 
-                  </div>
+                  ) : (
 
-                  {isVerified && (
-                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 bg-white border border-[#DCEFEA] text-[#0C8F81] rounded-full px-3 py-1.5 shadow-sm whitespace-nowrap">
+                    <div className="w-full h-full flex items-center justify-center bg-[#EBF4FF] text-[#0A6FF7] text-4xl font-bold">
 
-                      <span className="w-5 h-5 rounded-full bg-[#0C8F81] text-white flex items-center justify-center">
-                        <CheckIcon />
-                      </span>
-
-                      <span className="text-[10px] font-bold">
-                        Verified Tutor
-                      </span>
+                      {name
+                        .split(' ')
+                        .map((part) => part[0])
+                        .slice(0, 2)
+                        .join('')
+                        .toUpperCase()}
 
                     </div>
+
                   )}
 
                 </div>
 
-                {/* BASIC INFORMATION */}
 
-                <div className="min-w-0 flex-1 pt-1">
+                {/* Basic Information */}
 
-                  <div className="flex flex-wrap items-center gap-3 mb-2">
+                <div className="min-w-0">
 
-                    <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-[#0D1118]">
+                  <div className="flex flex-wrap items-center gap-3 mb-3">
+
+                    <h1 className="text-3xl md:text-4xl font-bold text-[#0D1118]">
+
                       {name}
+
                     </h1>
 
-                    {isVerified && (
-                      <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#0C8F81] bg-[#E6F7F5] px-2.5 py-1 rounded-full">
-                        <CheckIcon />
-                        Verified
+
+                    {tutor.isVerified && (
+
+                      <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0C8F81] bg-[#E6F7F5] px-3 py-1.5 rounded-full">
+
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                        >
+                          <path d="M5 12l4 4L19 6" />
+                        </svg>
+
+                        Verified Tutor
+
                       </span>
+
                     )}
 
                   </div>
 
-                  <p className="text-sm md:text-base text-[#6B7280] mb-5">
-                    Professional Tutor
-                    {city !==
-                    'Not provided'
-                      ? ` · ${city}`
-                      : ''}
-                  </p>
 
-                  {/* QUICK TAGS */}
+                  {/* Location */}
 
-                  <div className="flex flex-wrap gap-2">
+                  {city && (
 
-                    <span className="inline-flex items-center gap-1.5 bg-[#EBF4FF] text-[#0A6FF7] px-3 py-2 rounded-xl text-xs font-semibold">
-                      <svg
-                        width="13"
-                        height="13"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <circle
-                          cx="12"
-                          cy="12"
-                          r="9"
-                        />
-                        <path d="M12 7v5l3 2" />
-                      </svg>
-                      {experience}
-                    </span>
-
-                    <span className="inline-flex items-center gap-1.5 bg-[#F8FAFC] border border-[#E5E7EB] text-[#374151] px-3 py-2 rounded-xl text-xs font-semibold">
-                      <svg
-                        width="13"
-                        height="13"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3Z" />
-                      </svg>
-                      {mode}
-                    </span>
-
-                    <span className="inline-flex items-center gap-1.5 bg-[#FFF8E8] text-[#A36A00] px-3 py-2 rounded-xl text-xs font-semibold">
-                      ★ {rating}
-                    </span>
-
-                  </div>
-
-                  {/* PLACEMENTS */}
-
-                  <div className="mt-5 flex flex-wrap gap-5 text-sm">
-
-                    <div>
-                      <span className="font-bold text-[#0D1118]">
-                        {placements}
-                      </span>
-                      <span className="text-[#6B7280] ml-1">
-                        Placements
-                      </span>
-                    </div>
-
-                    <div>
-                      <span className="font-bold text-[#0D1118]">
-                        {demos}
-                      </span>
-                      <span className="text-[#6B7280] ml-1">
-                        Demos
-                      </span>
-                    </div>
-
-                  </div>
-
-                </div>
-
-              </div>
-
-            </div>
-
-            {/* CTA SIDEBAR */}
-
-            <aside>
-
-              <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 shadow-[0_8px_30px_rgba(15,23,42,0.05)] lg:sticky lg:top-24">
-
-                <p className="text-xs font-bold uppercase tracking-wider text-[#0A6FF7] mb-2">
-                  Looking for a tutor?
-                </p>
-
-                <h2 className="text-xl font-bold text-[#0D1118] mb-2">
-                  Interested in this tutor?
-                </h2>
-
-                <p className="text-sm text-[#6B7280] leading-relaxed mb-6">
-                  Share your requirement with TutorWave and our team can help you connect with a suitable tutor.
-                </p>
-
-                <Link
-                  href="/find-a-tutor"
-                  className="flex items-center justify-center gap-2 w-full bg-[#0A6FF7] text-white font-bold py-3.5 rounded-xl hover:bg-[#0858c8] transition-colors"
-                >
-                  Request This Tutor
-
-                  <svg
-                    width="15"
-                    height="15"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                  >
-                    <path d="M5 12h14M12 5l7 7-7 7" />
-                  </svg>
-                </Link>
-
-                <Link
-                  href="/find-a-tutor"
-                  className="flex items-center justify-center w-full mt-3 bg-[#EBF4FF] text-[#0A6FF7] font-bold py-3.5 rounded-xl hover:bg-[#DCEBFF] transition-colors"
-                >
-                  Tell Us Your Requirement
-                </Link>
-
-                <div className="mt-5 pt-5 border-t border-[#EEF2F6]">
-
-                  <div className="flex items-start gap-2.5">
-
-                    <div className="w-8 h-8 rounded-full bg-[#E6F7F5] text-[#0C8F81] flex items-center justify-center flex-shrink-0">
-                      <CheckIcon />
-                    </div>
-
-                    <p className="text-[11px] text-[#6B7280] leading-relaxed">
-                      Tutor profiles displayed publicly are reviewed through TutorWave&apos;s verification process before being listed.
-                    </p>
-
-                  </div>
-
-                </div>
-
-              </div>
-
-            </aside>
-
-          </div>
-
-        </div>
-
-      </section>
-
-      {/* ===================================================
-          MAIN CONTENT
-      =================================================== */}
-
-      <section className="py-10 md:py-14">
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
-
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8 lg:gap-12">
-
-            {/* LEFT */}
-
-            <div className="space-y-8">
-
-              {/* ABOUT */}
-
-              <section className="bg-white border border-[#E5E7EB] rounded-3xl p-6 md:p-8">
-
-                <SectionTitle
-                  eyebrow="Tutor Profile"
-                  title="About the Tutor"
-                />
-
-                <p className="text-sm md:text-base text-[#5F6B7A] leading-7 whitespace-pre-line">
-                  {bio}
-                </p>
-
-              </section>
-
-              {/* SUBJECTS */}
-
-              <section className="bg-white border border-[#E5E7EB] rounded-3xl p-6 md:p-8">
-
-                <SectionTitle
-                  eyebrow="Teaching"
-                  title="Subjects Taught"
-                />
-
-                <TagList
-                  items={subjects}
-                  blue
-                  emptyText="Subject information has not been added yet."
-                />
-
-              </section>
-
-              {/* CLASSES */}
-
-              <section className="bg-white border border-[#E5E7EB] rounded-3xl p-6 md:p-8">
-
-                <SectionTitle
-                  eyebrow="Academic Levels"
-                  title="Classes Taught"
-                />
-
-                <TagList
-                  items={classes}
-                  emptyText="Class information has not been added yet."
-                />
-
-              </section>
-
-              {/* BOARDS */}
-
-              <section className="bg-white border border-[#E5E7EB] rounded-3xl p-6 md:p-8">
-
-                <SectionTitle
-                  eyebrow="Curriculum"
-                  title="Boards & Curriculum"
-                />
-
-                <TagList
-                  items={boards}
-                  emptyText="Board information has not been added yet."
-                />
-
-              </section>
-
-              {/* SPECIALIZATION */}
-
-              <section className="bg-white border border-[#E5E7EB] rounded-3xl p-6 md:p-8">
-
-                <SectionTitle
-                  eyebrow="Expertise"
-                  title="Specialization"
-                />
-
-                {specialization !==
-                'Not provided' ? (
-                  <div className="rounded-2xl bg-[#F8FAFC] border border-[#EEF2F6] p-5">
-
-                    <div className="flex items-start gap-3">
-
-                      <div className="w-10 h-10 rounded-xl bg-[#EBF4FF] text-[#0A6FF7] flex items-center justify-center flex-shrink-0">
-
-                        <svg
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path d="M12 2l3 7h7l-5.5 4.5L18.5 21 12 17l-6.5 4L8 13.5 2 9h7z" />
-                        </svg>
-
-                      </div>
-
-                      <p className="text-sm text-[#374151] leading-relaxed">
-                        {specialization}
-                      </p>
-
-                    </div>
-
-                  </div>
-                ) : (
-                  <p className="text-sm text-[#6B7280]">
-                    No specialization has been added yet.
-                  </p>
-                )}
-
-              </section>
-
-              {/* EDUCATION */}
-
-              <section className="bg-white border border-[#E5E7EB] rounded-3xl p-6 md:p-8">
-
-                <SectionTitle
-                  eyebrow="Education"
-                  title="Qualification & Education"
-                />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                  <div className="rounded-2xl bg-[#F8FAFC] border border-[#EEF2F6] p-5">
-
-                    <p className="text-[10px] uppercase tracking-wider font-bold text-[#9CA3AF] mb-2">
-                      Highest Qualification
-                    </p>
-
-                    <p className="text-sm md:text-base font-bold text-[#1F2937]">
-                      {qualification}
-                    </p>
-
-                  </div>
-
-                  <div className="rounded-2xl bg-[#F8FAFC] border border-[#EEF2F6] p-5">
-
-                    <p className="text-[10px] uppercase tracking-wider font-bold text-[#9CA3AF] mb-2">
-                      College / University
-                    </p>
-
-                    <p className="text-sm md:text-base font-bold text-[#1F2937]">
-                      {college}
-                    </p>
-
-                  </div>
-
-                </div>
-
-              </section>
-
-              {/* LOCATION */}
-
-              <section className="bg-white border border-[#E5E7EB] rounded-3xl p-6 md:p-8">
-
-                <SectionTitle
-                  eyebrow="Location"
-                  title="Teaching Locations"
-                />
-
-                <div className="mb-6">
-
-                  <div className="flex items-center gap-3">
-
-                    <div className="w-10 h-10 rounded-xl bg-[#EBF4FF] text-[#0A6FF7] flex items-center justify-center">
+                    <div className="flex items-center gap-2 text-[#6B7280] mb-2">
 
                       <svg
-                        width="18"
-                        height="18"
+                        width="16"
+                        height="16"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -1317,360 +658,675 @@ export default async function TutorDetailPage({
                         />
                       </svg>
 
-                    </div>
-
-                    <div>
-
-                      <p className="text-[10px] uppercase tracking-wider font-bold text-[#9CA3AF]">
-                        City
-                      </p>
-
-                      <p className="text-sm font-bold text-[#1F2937]">
+                      <span>
                         {city}
-                      </p>
+                      </span>
 
                     </div>
 
-                  </div>
+                  )}
 
-                </div>
 
-                <div>
+                  {/* Experience */}
 
-                  <p className="text-[10px] uppercase tracking-wider font-bold text-[#9CA3AF] mb-3">
-                    Areas Served
-                  </p>
+                  {experience && (
 
-                  <TagList
-                    items={areas}
-                    emptyText="Specific areas have not been added."
-                  />
+                    <div className="flex items-center gap-2 text-[#6B7280] mb-2">
 
-                </div>
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <circle
+                          cx="12"
+                          cy="12"
+                          r="9"
+                        />
+                        <path d="M12 7v5l3 2" />
+                      </svg>
 
-              </section>
-
-              {/* TEACHING MODE */}
-
-              <section className="bg-white border border-[#E5E7EB] rounded-3xl p-6 md:p-8">
-
-                <SectionTitle
-                  eyebrow="Learning Format"
-                  title="Teaching Mode"
-                />
-
-                <div className="flex flex-wrap gap-3">
-
-                  <div className="inline-flex items-center gap-2 bg-[#EBF4FF] text-[#0A6FF7] rounded-2xl px-4 py-3 text-sm font-bold">
-
-                    <svg
-                      width="17"
-                      height="17"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <rect
-                        x="3"
-                        y="4"
-                        width="18"
-                        height="14"
-                        rx="2"
-                      />
-                      <path d="M8 21h8M12 18v3" />
-                    </svg>
-
-                    {mode}
-
-                  </div>
-
-                </div>
-
-              </section>
-
-              {/* PERFORMANCE */}
-
-              <section className="bg-white border border-[#E5E7EB] rounded-3xl p-6 md:p-8">
-
-                <SectionTitle
-                  eyebrow="TutorWave"
-                  title="Profile Statistics"
-                />
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-
-                  <div className="rounded-2xl bg-[#F8FAFC] border border-[#EEF2F6] p-5">
-
-                    <p className="text-[10px] uppercase tracking-wider font-bold text-[#9CA3AF] mb-2">
-                      Experience
-                    </p>
-
-                    <p className="text-xl font-bold text-[#0D1118]">
-                      {experience}
-                    </p>
-
-                  </div>
-
-                  <div className="rounded-2xl bg-[#F8FAFC] border border-[#EEF2F6] p-5">
-
-                    <p className="text-[10px] uppercase tracking-wider font-bold text-[#9CA3AF] mb-2">
-                      Rating
-                    </p>
-
-                    <p className="text-xl font-bold text-[#0D1118]">
-                      {rating}
-                    </p>
-
-                  </div>
-
-                  <div className="rounded-2xl bg-[#F8FAFC] border border-[#EEF2F6] p-5">
-
-                    <p className="text-[10px] uppercase tracking-wider font-bold text-[#9CA3AF] mb-2">
-                      Placements
-                    </p>
-
-                    <p className="text-xl font-bold text-[#0D1118]">
-                      {placements}
-                    </p>
-
-                  </div>
-
-                </div>
-
-              </section>
-
-              {/* VERIFICATION */}
-
-              <section className="bg-white border border-[#E5E7EB] rounded-3xl p-6 md:p-8">
-
-                <SectionTitle
-                  eyebrow="TutorWave"
-                  title="Verification"
-                />
-
-                <div className="rounded-2xl bg-[#F8FAFC] border border-[#EEF2F6] p-5">
-
-                  <div className="flex items-start gap-4">
-
-                    <div className="w-11 h-11 rounded-full bg-[#E6F7F5] text-[#0C8F81] flex items-center justify-center flex-shrink-0">
-                      <CheckIcon />
-                    </div>
-
-                    <div>
-
-                      <h3 className="font-bold text-[#1F2937] mb-1">
-                        {isVerified
-                          ? 'Verified Tutor Profile'
-                          : 'Tutor Profile'}
-                      </h3>
-
-                      <p className="text-sm text-[#6B7280] leading-relaxed">
-                        {isVerified
-                          ? 'This tutor has been verified by TutorWave and is eligible to appear in our public tutor directory.'
-                          : 'This tutor profile is currently available in the TutorWave directory.'}
-                      </p>
+                      <span>
+                        {experience} Teaching Experience
+                      </span>
 
                     </div>
 
-                  </div>
+                  )}
 
-                </div>
 
-              </section>
+                  {/* Mode */}
 
-            </div>
+                  {mode && (
 
-            {/* =================================================
-                RIGHT SIDEBAR
-            ================================================= */}
+                    <div className="flex items-center gap-2 text-[#6B7280] mb-5">
 
-            <aside className="space-y-5">
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <rect
+                          x="3"
+                          y="4"
+                          width="18"
+                          height="14"
+                          rx="2"
+                        />
+                        <path d="M8 21h8M12 18v3" />
+                      </svg>
 
-              {/* OVERVIEW */}
+                      <span>
+                        {mode}
+                      </span>
 
-              <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 lg:sticky lg:top-24">
+                    </div>
 
-                <h2 className="text-lg font-bold text-[#0D1118] mb-5">
-                  Tutor Overview
-                </h2>
+                  )}
 
-                <DetailRow
-                  label="Qualification"
-                  value={qualification}
-                  icon={
-                    <svg
-                      width="17"
-                      height="17"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <path d="M22 10L12 5 2 10l10 5 10-5Z" />
-                      <path d="M6 12v5c3 2 9 2 12 0v-5" />
-                    </svg>
-                  }
-                />
 
-                <DetailRow
-                  label="College"
-                  value={college}
-                  icon={
-                    <svg
-                      width="17"
-                      height="17"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <path d="M3 21h18" />
-                      <path d="M5 21V7l7-4 7 4v14" />
-                      <path d="M9 21v-4h6v4" />
-                    </svg>
-                  }
-                />
+                  {/* Subjects */}
 
-                <DetailRow
-                  label="Experience"
-                  value={experience}
-                  icon={
-                    <svg
-                      width="17"
-                      height="17"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <circle
-                        cx="12"
-                        cy="12"
-                        r="9"
-                      />
-                      <path d="M12 7v5l3 2" />
-                    </svg>
-                  }
-                />
+                  {subjects.length > 0 && (
 
-                <DetailRow
-                  label="Location"
-                  value={city}
-                  icon={
-                    <svg
-                      width="17"
-                      height="17"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0Z" />
-                      <circle
-                        cx="12"
-                        cy="10"
-                        r="3"
-                      />
-                    </svg>
-                  }
-                />
+                    <div className="flex flex-wrap gap-2">
 
-                <DetailRow
-                  label="Teaching Mode"
-                  value={mode}
-                  icon={
-                    <svg
-                      width="17"
-                      height="17"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <rect
-                        x="3"
-                        y="4"
-                        width="18"
-                        height="14"
-                        rx="2"
-                      />
-                      <path d="M8 21h8M12 18v3" />
-                    </svg>
-                  }
-                />
+                      {subjects.map((subject) => (
 
-                <div className="pt-5">
+                        <span
+                          key={subject}
+                          className="px-3 py-1.5 bg-white border border-[#DCE6F2] text-[#0A6FF7] text-xs font-semibold rounded-full"
+                        >
+                          {subject}
+                        </span>
 
-                  <Link
-                    href="/find-a-tutor"
-                    className="flex items-center justify-center gap-2 w-full bg-[#0A6FF7] text-white font-bold py-3.5 rounded-xl hover:bg-[#0858c8] transition-colors"
-                  >
-                    Request This Tutor
+                      ))}
 
-                    <svg
-                      width="15"
-                      height="15"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                    >
-                      <path d="M5 12h14M12 5l7 7-7 7" />
-                    </svg>
+                    </div>
 
-                  </Link>
+                  )}
 
                 </div>
 
               </div>
 
-              {/* TRUST CARD */}
+            </div>
 
-              <div className="bg-[#0D1118] rounded-3xl p-6 text-white">
 
-                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center mb-4">
+            {/* Right Summary */}
 
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                  >
-                    <path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3Z" />
-                    <path d="M9 12l2 2 4-4" />
-                  </svg>
+            <div>
+
+              <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 shadow-sm">
+
+                <div className="grid grid-cols-2 gap-3">
+
+                  {/* Rating */}
+
+                  <div className="rounded-xl bg-[#F8FAFC] p-4">
+
+                    <div className="text-xl font-bold text-[#0D1118]">
+
+                      {rating > 0
+                        ? rating.toFixed(1)
+                        : '—'}
+
+                    </div>
+
+                    <div className="text-xs text-[#6B7280] mt-1">
+                      Rating
+                    </div>
+
+                  </div>
+
+
+                  {/* Experience */}
+
+                  <div className="rounded-xl bg-[#F8FAFC] p-4">
+
+                    <div className="text-xl font-bold text-[#0D1118]">
+
+                      {tutor.experienceYears
+                        ? `${tutor.experienceYears}y`
+                        : '—'}
+
+                    </div>
+
+                    <div className="text-xs text-[#6B7280] mt-1">
+                      Experience
+                    </div>
+
+                  </div>
+
+
+                  {/* Placements */}
+
+                  <div className="rounded-xl bg-[#F8FAFC] p-4">
+
+                    <div className="text-xl font-bold text-[#0D1118]">
+
+                      {placements}
+
+                    </div>
+
+                    <div className="text-xs text-[#6B7280] mt-1">
+                      Placements
+                    </div>
+
+                  </div>
+
+
+                  {/* Verification */}
+
+                  <div className="rounded-xl bg-[#F8FAFC] p-4">
+
+                    <div className="text-xl font-bold text-[#0C8F81]">
+
+                      {tutor.isVerified
+                        ? '✓'
+                        : '—'}
+
+                    </div>
+
+                    <div className="text-xs text-[#6B7280] mt-1">
+                      Verified
+                    </div>
+
+                  </div>
 
                 </div>
 
-                <h3 className="text-base font-bold mb-2">
-                  Looking for a verified tutor?
-                </h3>
+              </div>
 
-                <p className="text-xs text-[#AAB2BF] leading-relaxed mb-5">
-                  TutorWave helps parents discover tutors based on subjects, classes, boards, location and teaching mode.
-                </p>
+            </div>
 
-                <Link
-                  href="/find-a-tutor"
-                  className="inline-flex items-center gap-2 text-xs font-bold text-white hover:text-[#8EC5FF] transition-colors"
-                >
-                  Find a Tutor
+          </div>
 
-                  <svg
-                    width="13"
-                    height="13"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
+        </div>
+
+      </section>
+
+
+      {/* ===================================================
+          DETAILS
+      =================================================== */}
+
+      <section className="py-12 md:py-16">
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+
+            {/* =================================================
+                MAIN INFORMATION
+            ================================================= */}
+
+            <div className="lg:col-span-2 space-y-8">
+
+
+              {/* ABOUT */}
+
+              {bio && (
+
+                <section>
+
+                  <h2 className="text-xl md:text-2xl font-bold text-[#0D1118] mb-4">
+                    About {name}
+                  </h2>
+
+                  <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl p-6">
+
+                    <p className="text-[#4B5563] leading-7 whitespace-pre-line">
+                      {bio}
+                    </p>
+
+                  </div>
+
+                </section>
+
+              )}
+
+
+              {/* TEACHING PROFILE */}
+
+              <section>
+
+                <h2 className="text-xl md:text-2xl font-bold text-[#0D1118] mb-5">
+                  Teaching Profile
+                </h2>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+
+                  {/* Subjects */}
+
+                  {subjects.length > 0 && (
+
+                    <div className="border border-[#E5E7EB] rounded-2xl p-5">
+
+                      <div className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
+                        Subjects
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+
+                        {subjects.map((subject) => (
+
+                          <span
+                            key={subject}
+                            className="px-3 py-1.5 bg-[#EBF4FF] text-[#0A6FF7] rounded-lg text-sm font-medium"
+                          >
+                            {subject}
+                          </span>
+
+                        ))}
+
+                      </div>
+
+                    </div>
+
+                  )}
+
+
+                  {/* Classes */}
+
+                  {classes.length > 0 && (
+
+                    <div className="border border-[#E5E7EB] rounded-2xl p-5">
+
+                      <div className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
+                        Classes
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+
+                        {classes.map((item) => (
+
+                          <span
+                            key={item}
+                            className="px-3 py-1.5 bg-[#F8FAFC] border border-[#E5E7EB] text-[#1F2937] rounded-lg text-sm font-medium"
+                          >
+                            {item}
+                          </span>
+
+                        ))}
+
+                      </div>
+
+                    </div>
+
+                  )}
+
+
+                  {/* Boards */}
+
+                  {boards.length > 0 && (
+
+                    <div className="border border-[#E5E7EB] rounded-2xl p-5">
+
+                      <div className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
+                        Boards
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+
+                        {boards.map((board) => (
+
+                          <span
+                            key={board}
+                            className="px-3 py-1.5 bg-[#F8FAFC] border border-[#E5E7EB] text-[#1F2937] rounded-lg text-sm font-medium"
+                          >
+                            {board}
+                          </span>
+
+                        ))}
+
+                      </div>
+
+                    </div>
+
+                  )}
+
+
+                  {/* Mode */}
+
+                  {mode && (
+
+                    <div className="border border-[#E5E7EB] rounded-2xl p-5">
+
+                      <div className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
+                        Teaching Mode
+                      </div>
+
+                      <div className="text-base font-semibold text-[#0D1118]">
+                        {mode}
+                      </div>
+
+                    </div>
+
+                  )}
+
+                </div>
+
+              </section>
+
+
+              {/* QUALIFICATIONS */}
+
+              {(qualification || college) && (
+
+                <section>
+
+                  <h2 className="text-xl md:text-2xl font-bold text-[#0D1118] mb-5">
+                    Education & Qualifications
+                  </h2>
+
+                  <div className="border border-[#E5E7EB] rounded-2xl overflow-hidden">
+
+                    {qualification && (
+
+                      <div className="p-5 border-b border-[#E5E7EB]">
+
+                        <div className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-2">
+                          Highest Qualification
+                        </div>
+
+                        <div className="text-base font-semibold text-[#0D1118]">
+                          {qualification}
+                        </div>
+
+                      </div>
+
+                    )}
+
+
+                    {college && (
+
+                      <div className="p-5">
+
+                        <div className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-2">
+                          College / University
+                        </div>
+
+                        <div className="text-base font-semibold text-[#0D1118]">
+                          {college}
+                        </div>
+
+                      </div>
+
+                    )}
+
+                  </div>
+
+                </section>
+
+              )}
+
+
+              {/* SPECIALIZATION */}
+
+              {specialization && (
+
+                <section>
+
+                  <h2 className="text-xl md:text-2xl font-bold text-[#0D1118] mb-4">
+                    Specialization
+                  </h2>
+
+                  <div className="bg-[#EBF4FF] border border-[#D7E8FF] rounded-2xl p-6">
+
+                    <p className="text-[#1F4F85] leading-7">
+                      {specialization}
+                    </p>
+
+                  </div>
+
+                </section>
+
+              )}
+
+
+              {/* LOCATION */}
+
+              {(city || areas.length > 0) && (
+
+                <section>
+
+                  <h2 className="text-xl md:text-2xl font-bold text-[#0D1118] mb-5">
+                    Location & Service Areas
+                  </h2>
+
+                  <div className="border border-[#E5E7EB] rounded-2xl p-6">
+
+                    {city && (
+
+                      <div className="mb-5">
+
+                        <div className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-2">
+                          City
+                        </div>
+
+                        <div className="text-base font-semibold text-[#0D1118]">
+                          {city}
+                        </div>
+
+                      </div>
+
+                    )}
+
+
+                    {areas.length > 0 && (
+
+                      <div>
+
+                        <div className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
+                          Areas Covered
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+
+                          {areas.map((area) => (
+
+                            <span
+                              key={area}
+                              className="px-3 py-1.5 bg-[#F8FAFC] border border-[#E5E7EB] text-[#374151] rounded-lg text-sm"
+                            >
+                              {area}
+                            </span>
+
+                          ))}
+
+                        </div>
+
+                      </div>
+
+                    )}
+
+                  </div>
+
+                </section>
+
+              )}
+
+            </div>
+
+
+            {/* =================================================
+                SIDEBAR
+            ================================================= */}
+
+            <aside>
+
+              <div className="lg:sticky lg:top-24">
+
+                <div className="bg-[#0D1118] rounded-2xl p-6 text-white">
+
+                  <div className="flex items-center gap-3 mb-5">
+
+                    <div className="w-10 h-10 rounded-xl bg-[#0A6FF7] flex items-center justify-center">
+
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path d="M20 6L9 17l-5-5" />
+                      </svg>
+
+                    </div>
+
+                    <div>
+
+                      <div className="font-bold">
+                        Verified Tutor
+                      </div>
+
+                      <div className="text-xs text-[#9CA3AF]">
+                        Profile reviewed by TutorWave
+                      </div>
+
+                    </div>
+
+                  </div>
+
+
+                  <h3 className="text-lg font-bold mb-2">
+                    Interested in {name}?
+                  </h3>
+
+                  <p className="text-sm text-[#9CA3AF] leading-6 mb-6">
+                    Submit your tuition requirement and
+                    our team can help you connect with a
+                    suitable tutor.
+                  </p>
+
+
+                  <Link
+                    href="/find-a-tutor"
+                    className="block w-full text-center bg-[#0A6FF7] text-white font-bold py-3 rounded-xl hover:bg-[#0858c8] transition-colors mb-3"
                   >
-                    <path d="M5 12h14M12 5l7 7-7 7" />
-                  </svg>
+                    Request This Tutor
+                  </Link>
 
-                </Link>
+
+                  <Link
+                    href="/find-a-tutor"
+                    className="block w-full text-center bg-white/10 text-white font-semibold py-3 rounded-xl hover:bg-white/15 transition-colors"
+                  >
+                    Submit Requirement
+                  </Link>
+
+                </div>
+
+
+                {/* Quick facts */}
+
+                <div className="mt-5 border border-[#E5E7EB] rounded-2xl p-5">
+
+                  <h3 className="font-bold text-[#0D1118] mb-4">
+                    Quick Information
+                  </h3>
+
+                  <div className="space-y-4">
+
+
+                    {experience && (
+
+                      <div className="flex items-start justify-between gap-4">
+
+                        <span className="text-sm text-[#6B7280]">
+                          Experience
+                        </span>
+
+                        <span className="text-sm font-semibold text-[#0D1118] text-right">
+                          {experience}
+                        </span>
+
+                      </div>
+
+                    )}
+
+
+                    {mode && (
+
+                      <div className="flex items-start justify-between gap-4">
+
+                        <span className="text-sm text-[#6B7280]">
+                          Mode
+                        </span>
+
+                        <span className="text-sm font-semibold text-[#0D1118] text-right">
+                          {mode}
+                        </span>
+
+                      </div>
+
+                    )}
+
+
+                    {city && (
+
+                      <div className="flex items-start justify-between gap-4">
+
+                        <span className="text-sm text-[#6B7280]">
+                          Location
+                        </span>
+
+                        <span className="text-sm font-semibold text-[#0D1118] text-right">
+                          {city}
+                        </span>
+
+                      </div>
+
+                    )}
+
+
+                    {subjects.length > 0 && (
+
+                      <div className="flex items-start justify-between gap-4">
+
+                        <span className="text-sm text-[#6B7280]">
+                          Subjects
+                        </span>
+
+                        <span className="text-sm font-semibold text-[#0D1118] text-right">
+                          {subjects.length}
+                        </span>
+
+                      </div>
+
+                    )}
+
+
+                    {classes.length > 0 && (
+
+                      <div className="flex items-start justify-between gap-4">
+
+                        <span className="text-sm text-[#6B7280]">
+                          Classes
+                        </span>
+
+                        <span className="text-sm font-semibold text-[#0D1118] text-right">
+                          {classes.length}
+                        </span>
+
+                      </div>
+
+                    )}
+
+                  </div>
+
+                </div>
 
               </div>
 
@@ -1682,56 +1338,61 @@ export default async function TutorDetailPage({
 
       </section>
 
+
       {/* ===================================================
           BOTTOM CTA
       =================================================== */}
 
-      <section className="pb-14">
+      <section className="bg-[#F8FAFC] border-t border-[#E5E7EB] py-12">
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
+        <div className="max-w-4xl mx-auto px-4 text-center">
 
-          <div className="bg-[#0D1118] rounded-3xl p-7 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <h2 className="text-2xl md:text-3xl font-bold text-[#0D1118] mb-3">
+            Looking for the right tutor?
+          </h2>
 
-            <div>
+          <p className="text-[#6B7280] mb-6">
+            Tell us your requirements and TutorWave
+            can help you find a suitable verified tutor.
+          </p>
 
-              <p className="text-[11px] uppercase tracking-[0.14em] font-bold text-[#5EA7FF] mb-2">
-                TutorWave
-              </p>
+          <Link
+            href="/find-a-tutor"
+            className="inline-flex items-center gap-2 bg-[#0A6FF7] text-white font-bold px-7 py-3.5 rounded-xl hover:bg-[#0858c8] transition-colors"
+          >
+            Find a Tutor
 
-              <h2 className="text-xl md:text-2xl font-bold text-white mb-2">
-                Looking for the right tutor for your child?
-              </h2>
-
-              <p className="text-sm text-[#9CA3AF] max-w-2xl leading-relaxed">
-                Tell us your requirements and our team will help identify suitable tutor options.
-              </p>
-
-            </div>
-
-            <Link
-              href="/find-a-tutor"
-              className="flex-shrink-0 inline-flex items-center gap-2 bg-[#0A6FF7] text-white font-bold px-6 py-3.5 rounded-xl hover:bg-[#0858c8] transition-colors"
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
             >
-              Find a Tutor
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
 
-              <svg
-                width="15"
-                height="15"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-              >
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
-
-            </Link>
-
-          </div>
+          </Link>
 
         </div>
 
       </section>
+
+
+      {/* ===================================================
+          STRUCTURED DATA
+      =================================================== */}
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(
+            structuredData
+          ),
+        }}
+      />
+
 
       <Footer />
 
