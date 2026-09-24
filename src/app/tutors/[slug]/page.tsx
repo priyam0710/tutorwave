@@ -1643,4 +1643,3 @@ export default async function TutorDetailPage({
     </main>
   );
 }
-```
