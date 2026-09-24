@@ -1,14 +1,9 @@
-
 import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import WhatsAppButton from '@/app/components/WhatsAppButton';
-
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 const CRM_API_URL =
   process.env.TUTORWAVE_CRM_URL ||
