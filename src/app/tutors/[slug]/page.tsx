@@ -1535,42 +1535,56 @@ export default async function TutorDetailPage({
 
                 {/* REQUEST */}
 
-                <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 shadow-sm">
+               <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 shadow-sm">
 
-                  <p className="text-xs uppercase tracking-[0.12em] font-bold text-[#0A6FF7] mb-2">
-                    TutorWave
-                  </p>
+  <p className="text-xs uppercase tracking-[0.12em] font-bold text-[#0A6FF7] mb-2">
+    TutorWave
+  </p>
 
-                  <h2 className="text-xl font-bold text-[#111827]">
-                    Interested in this tutor?
-                  </h2>
+  <h2 className="text-xl font-bold text-[#0D1118]">
+    Looking for a suitable tutor?
+  </h2>
 
-                  <p className="text-sm text-[#6B7280] leading-6 mt-3">
-                    Tell us your child's class,
-                    subject and tuition
-                    requirements.
-                  </p>
+  <p className="text-sm text-[#6B7280] mt-3 leading-6">
+    If this tutor matches your requirements, you can request
+    this profile using the button above. Our team will help
+    confirm availability and suitability.
+  </p>
 
-                  <Link
-                    href="/find-a-tutor"
-                    className="flex items-center justify-center gap-2 w-full bg-[#0A6FF7] text-white font-bold py-3.5 rounded-xl mt-5 hover:bg-[#0858C8] transition-colors"
-                  >
-                    Request This Tutor
-                    <ArrowIcon />
-                  </Link>
+  <Link
+    href="/tutors"
+    className="flex items-center justify-center w-full bg-[#EBF4FF] text-[#0A6FF7] font-bold py-4 rounded-xl hover:bg-[#DCEBFF] transition-colors mt-6"
+  >
+    Browse Other Tutors
+  </Link>
 
-                  <Link
-                    href="/tutors"
-                    className="flex items-center justify-center w-full bg-[#EBF4FF] text-[#0A6FF7] font-bold py-3.5 rounded-xl mt-3 hover:bg-[#DCEBFF] transition-colors"
-                  >
-                    Browse Other Tutors
-                  </Link>
+  <div className="border-t border-[#E5E7EB] mt-6 pt-6">
 
-                  <p className="text-xs text-[#6B7280] text-center mt-4">
-                    No obligation to hire.
-                  </p>
+    <div className="flex items-start gap-3">
 
-                </div>
+      <div className="w-10 h-10 rounded-xl bg-[#E6F7F5] flex items-center justify-center flex-shrink-0 text-[#0C8F81]">
+        <CheckIcon />
+      </div>
+
+      <div>
+        <p className="text-sm font-bold text-[#0D1118]">
+          {tutor.isVerified
+            ? 'Verified Tutor'
+            : 'Tutor Profile'}
+        </p>
+
+        <p className="text-xs text-[#6B7280] mt-1 leading-5">
+          {tutor.isVerified
+            ? 'This tutor profile has been reviewed and verified by the TutorWave team.'
+            : 'Tutor verification information is available through the TutorWave team.'}
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
 
                 {/* QUICK SUMMARY */}
 
