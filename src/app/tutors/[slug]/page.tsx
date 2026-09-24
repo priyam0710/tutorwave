@@ -15,37 +15,62 @@ const CRM_API_URL =
 
 type Tutor = {
   id?: string;
+
   fullName?: string;
   profilePhoto?: string;
   gender?: string;
 
   city?: string;
-  areas?: string[];
+  location?: string;
+  area?: string;
+  locality?: string;
+  areas?: string[] | string;
 
-  subjects?: string[];
-  classes?: string[];
-  boards?: string[];
+  subjects?: string[] | string;
+  classes?: string[] | string;
+  boards?: string[] | string;
 
   mode?: string;
+  teachingMode?: string | string[];
+  preferredMode?: string;
+  modes?: string[];
 
   highestQualification?: string;
+  qualification?: string;
+  degree?: string;
   college?: string;
+  collegeUniversity?: string;
+  university?: string;
+  institution?: string;
   specialization?: string;
 
   experienceYears?: number | string;
+  experience?: number | string;
 
   bio?: string;
+  about?: string;
+  aboutTutor?: string;
+  description?: string;
 
-  rating?: number;
+  rating?: number | string;
+  averageRating?: number | string;
 
   isVerified?: boolean;
+  verified?: boolean;
+  verificationStatus?: string;
+  status?: string;
 
-  languages?: string[];
-  teachingLanguages?: string[];
+  languages?: string[] | string;
+  teachingLanguages?: string[] | string;
+  language?: string;
+  spokenLanguages?: string[] | string;
 
   availability?: string;
-  availabilityDays?: string[];
+  availabilityDays?: string[] | string;
   availabilityTime?: string;
+  availableTimings?: string;
+  preferredTiming?: string;
+  timings?: string;
 
   feeRange?: string;
   hourlyRate?: string | number;
@@ -53,21 +78,83 @@ type Tutor = {
 
   studentsTaught?: number | string;
   totalStudents?: number | string;
+  studentsCount?: number | string;
 
-  schoolsTaught?: string[];
-  previousInstitutions?: string[];
-  institutions?: string[];
+  /* =======================================================
+     SCHOOL / TEACHING BACKGROUND
+  ======================================================= */
+
+  schoolsTaught?: string[] | string;
+  schoolNames?: string[] | string;
+  studentsTaughtFromSchools?: string[] | string;
+  previousInstitutions?: string[] | string;
+  institutions?: string[] | string;
+
+  schoolExperience?: string;
+  schoolTeachingExperience?: string;
+  schoolExperienceYears?: string | number;
 
   teachingExperience?: string;
   experienceDetails?: string;
 
   teachingApproach?: string;
   teachingMethodology?: string;
+  approach?: string;
+  teachingMethods?: string[] | string;
 
-  achievements?: string[];
-  certifications?: string[];
+  achievements?: string[] | string;
+  certifications?: string[] | string;
 
-  schoolExperience?: string;
+  /* =======================================================
+     NESTED CRM STRUCTURE
+  ======================================================= */
+
+  teaching?: {
+    experience?: number | string;
+
+    schoolExperience?: string;
+    schoolTeachingExperience?: string;
+    schoolExperienceYears?: number | string;
+
+    studentsTaughtFrom?: string | string[];
+    studentsTaughtFromSchools?: string | string[];
+
+    boards?: string[] | string;
+
+    primaryClasses?: string[] | string;
+    primarySubjects?: string[] | string;
+
+    secondaryClasses?: string[] | string;
+    secondarySubjects?: string[] | string;
+
+    seniorSecondaryClasses?: string[] | string;
+    seniorSecondarySubjects?: string[] | string;
+
+    englishFluency?: string;
+  };
+
+  education?: {
+    highestQualification?: string;
+    college?: string;
+    university?: string;
+    stream?: string;
+    specialization?: string;
+    additionalQualification?: string;
+  };
+
+  personal?: {
+    fullName?: string;
+    profilePhoto?: string;
+    city?: string;
+    location?: string;
+  };
+
+  preferences?: {
+    teachingMode?: string[] | string;
+    offlineAreas?: string | string[];
+    availability?: string[] | string;
+    studentTypes?: string[] | string;
+  };
 
   [key: string]: any;
 };
@@ -106,34 +193,44 @@ function tutorMatchesSlug(
     return false;
   }
 
-  const slug = normalize(safeDecode(rawSlug));
-  const nameSlug = normalize(tutor.fullName);
+  const slug = normalize(
+    safeDecode(rawSlug)
+  );
+
+  const nameSlug = normalize(
+    tutor.fullName
+  );
 
   const id = String(tutor.id).toLowerCase();
-  const idShort = id.replace(/-/g, '').slice(0, 8);
 
-  const expectedSlug = `${nameSlug}-${idShort}`;
+  const idShort = id
+    .replace(/-/g, '')
+    .slice(0, 8);
+
+  const expectedSlug =
+    `${nameSlug}-${idShort}`;
 
   if (slug === expectedSlug) {
     return true;
   }
 
   if (slug.startsWith(`${nameSlug}-`)) {
-    const suffix = slug.slice(nameSlug.length + 1);
+    const suffix =
+      slug.slice(
+        nameSlug.length + 1
+      );
 
     if (
       suffix === idShort ||
-      id.replace(/-/g, '').startsWith(suffix)
+      id
+        .replace(/-/g, '')
+        .startsWith(suffix)
     ) {
       return true;
     }
   }
 
-  if (slug === nameSlug) {
-    return true;
-  }
-
-  return false;
+  return slug === nameSlug;
 }
 
 async function getTutors(): Promise<Tutor[]> {
@@ -167,7 +264,7 @@ async function getTutors(): Promise<Tutor[]> {
       : [];
   } catch (error) {
     console.error(
-      'Unable to fetch tutors from TutorWave CRM:',
+      'Unable to fetch tutors:',
       error
     );
 
@@ -182,168 +279,74 @@ async function findTutorBySlug(
 
   return (
     tutors.find((tutor) =>
-      tutorMatchesSlug(tutor, rawSlug)
+      tutorMatchesSlug(
+        tutor,
+        rawSlug
+      )
     ) || null
   );
 }
 
-function formatExperience(
-  value?: number | string
-) {
+/* =========================================================
+   DATA NORMALIZATION
+========================================================= */
+
+function cleanArray(value: any): string[] {
   if (
     value === undefined ||
-    value === null ||
-    value === ''
+    value === null
   ) {
-    return null;
+    return [];
   }
 
-  return `${value} ${
-    String(value) === '1'
-      ? 'year'
-      : 'years'
-  }`;
-}
-
-function formatMode(mode?: string) {
-  if (!mode) return null;
-
-  const value = mode.toLowerCase().trim();
-
-  if (value === 'both') {
-    return 'Home & Online';
-  }
-
-  if (value === 'online') {
-    return 'Online Tuition';
-  }
-
-  if (
-    value === 'offline' ||
-    value === 'home'
-  ) {
-    return 'Home Tuition';
-  }
-
-  return mode;
-}
-
-function initials(name?: string) {
-  if (!name) return 'TW';
-
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) =>
-      part.charAt(0).toUpperCase()
-    )
-    .join('');
-}
-
-/* ---------------------------------------------------------
-   ARRAY NORMALIZER
---------------------------------------------------------- */
-
-function cleanArray(
-  value: any
-): string[] {
   if (Array.isArray(value)) {
     return value
+      .flat(Infinity)
       .filter(
         (item) =>
           item !== undefined &&
           item !== null &&
           String(item).trim() !== ''
       )
-      .map((item) => String(item).trim())
+      .map((item) =>
+        String(item).trim()
+      )
       .filter(Boolean);
   }
 
-  /*
-   * Also support CRM values that may arrive as
-   * comma-separated / newline-separated strings.
-   */
   if (typeof value === 'string') {
-    return value
-      .split(/[,|\n]+/)
-      .map((item) => item.trim())
+    const text = value.trim();
+
+    if (!text) {
+      return [];
+    }
+
+    return text
+      .split(/[,;|•\n]+/)
+      .map((item) =>
+        item.trim()
+      )
       .filter(Boolean);
   }
 
-  return [];
+  return [String(value).trim()]
+    .filter(Boolean);
 }
-
-/* ---------------------------------------------------------
-   FIRST ARRAY
---------------------------------------------------------- */
 
 function firstArray(
   ...values: any[]
 ): string[] {
-  const combined: string[] = [];
-
   for (const value of values) {
-    const result = cleanArray(value);
+    const result =
+      cleanArray(value);
 
     if (result.length > 0) {
-      combined.push(...result);
+      return result;
     }
   }
 
-  return [...new Set(combined)];
+  return [];
 }
-
-/* ---------------------------------------------------------
-   SCHOOL / INSTITUTION NORMALIZER
---------------------------------------------------------- */
-
-function getSchoolsTaught(
-  tutor: Tutor
-): string[] {
-  const possibleSchoolFields = [
-    tutor.schoolsTaught,
-    tutor.previousInstitutions,
-    tutor.institutions,
-
-    /*
-     * Additional possible CRM field names.
-     * These make the profile resilient if the form
-     * stores school names under a slightly different key.
-     */
-    tutor.schools,
-    tutor.schoolNames,
-    tutor.teachingInstitutions,
-    tutor.institutionsTaught,
-    tutor.schoolsTaughtFrom,
-    tutor.studentSchools,
-  ];
-
-  const schools: string[] = [];
-
-  for (
-    const field of possibleSchoolFields
-  ) {
-    const values = cleanArray(field);
-
-    if (values.length > 0) {
-      schools.push(...values);
-    }
-  }
-
-  return [
-    ...new Set(
-      schools.filter(
-        (school) =>
-          school.trim() !== ''
-      )
-    ),
-  ];
-}
-
-/* ---------------------------------------------------------
-   TEXT
---------------------------------------------------------- */
 
 function firstText(
   ...values: any[]
@@ -361,8 +364,8 @@ function firstText(
   return null;
 }
 
-function formatNumber(
-  value?: number | string
+function formatExperience(
+  value?: number | string | null
 ) {
   if (
     value === undefined ||
@@ -372,7 +375,86 @@ function formatNumber(
     return null;
   }
 
-  return String(value);
+  const text =
+    String(value).trim();
+
+  if (
+    /year|years|month|months/i.test(
+      text
+    )
+  ) {
+    return text;
+  }
+
+  return `${text} ${
+    text === '1'
+      ? 'year'
+      : 'years'
+  }`;
+}
+
+function formatMode(
+  mode?: string | string[] | null
+) {
+  const values =
+    cleanArray(mode);
+
+  if (!values.length) {
+    return null;
+  }
+
+  const normalized =
+    values.map((value) =>
+      value
+        .toLowerCase()
+        .trim()
+    );
+
+  const hasHome =
+    normalized.includes('home') ||
+    normalized.includes('offline') ||
+    normalized.includes(
+      'home tuition'
+    );
+
+  const hasOnline =
+    normalized.includes('online') ||
+    normalized.includes(
+      'online tuition'
+    );
+
+  if (
+    hasHome &&
+    hasOnline
+  ) {
+    return 'Home & Online';
+  }
+
+  if (hasOnline) {
+    return 'Online Tuition';
+  }
+
+  if (hasHome) {
+    return 'Home Tuition';
+  }
+
+  return values.join(' • ');
+}
+
+function initials(name?: string) {
+  if (!name) {
+    return 'TW';
+  }
+
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(
+      (part) =>
+        part.charAt(0).toUpperCase()
+    )
+    .join('');
 }
 
 /* =========================================================
@@ -391,7 +473,7 @@ function Section({
   return (
     <section className="bg-white border border-[#E5E7EB] rounded-3xl p-6 sm:p-8">
       {eyebrow && (
-        <p className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.12em] text-[#0A6FF7] mb-2">
+        <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#0A6FF7] mb-2">
           {eyebrow}
         </p>
       )}
@@ -434,7 +516,9 @@ function InfoRow({
   value?: string | null;
   icon: React.ReactNode;
 }) {
-  if (!value) return null;
+  if (!value) {
+    return null;
+  }
 
   return (
     <div className="flex items-start gap-4">
@@ -464,26 +548,10 @@ function CheckIcon() {
       fill="none"
       stroke="currentColor"
       strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
     >
       <path d="M5 12l4 4L19 6" />
-    </svg>
-  );
-}
-
-function SchoolIcon() {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-    >
-      <path d="M3 21h18" />
-      <path d="M5 21V9l7-5 7 5v12" />
-      <path d="M9 21v-6h6v6" />
-      <path d="M8 11h2M14 11h2" />
     </svg>
   );
 }
@@ -495,7 +563,9 @@ function SchoolIcon() {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{
+    slug: string;
+  }>;
 }): Promise<Metadata> {
   const { slug } = await params;
 
@@ -512,22 +582,41 @@ export async function generateMetadata({
   }
 
   const name =
-    tutor.fullName || 'Tutor';
+    tutor.fullName ||
+    tutor.personal?.fullName ||
+    'Tutor';
 
   const subjects =
-    Array.isArray(tutor.subjects) &&
-    tutor.subjects.length
-      ? tutor.subjects.join(', ')
-      : 'Multiple Subjects';
+    firstArray(
+      tutor.subjects,
+      tutor.teaching
+        ?.primarySubjects,
+      tutor.teaching
+        ?.secondarySubjects,
+      tutor.teaching
+        ?.seniorSecondarySubjects
+    );
 
   const city =
-    tutor.city || 'Delhi NCR';
+    firstText(
+      tutor.city,
+      tutor.location,
+      tutor.personal?.city,
+      tutor.personal?.location
+    ) || 'Delhi NCR';
 
   return {
-    title: `${name} — ${subjects} Tutor in ${city} | TutorWave`,
+    title:
+      `${name} — ${
+        subjects.length
+          ? subjects.join(', ')
+          : 'Home Tuition'
+      } Tutor in ${city} | TutorWave`,
+
     description:
       tutor.bio ||
-      `${name} is a TutorWave tutor available for ${subjects} in ${city}.`,
+      tutor.about ||
+      `${name} is a TutorWave tutor available for personalized tuition in ${city}.`,
   };
 }
 
@@ -538,7 +627,9 @@ export async function generateMetadata({
 export default async function TutorDetailPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{
+    slug: string;
+  }>;
 }) {
   const { slug } = await params;
 
@@ -580,30 +671,14 @@ export default async function TutorDetailPage({
             </h1>
 
             <p className="text-[#6B7280] leading-relaxed mb-8">
-              We couldn't find this tutor
-              profile in the TutorWave
-              tutor network. The profile may
-              have been removed, unpublished
-              or is still being verified.
+              We couldn't find this tutor profile in the TutorWave tutor network.
             </p>
 
             <Link
               href="/tutors"
               className="inline-flex items-center gap-2 bg-[#0A6FF7] text-white font-semibold px-6 py-3 rounded-xl hover:bg-[#0858c8] transition-colors"
             >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M19 12H5" />
-                <path d="M12 19l-7-7 7-7" />
-              </svg>
-
-              Browse Tutors
+              ← Browse Tutors
             </Link>
 
           </div>
@@ -620,62 +695,199 @@ export default async function TutorDetailPage({
   ======================================================= */
 
   const name =
-    tutor.fullName || 'Tutor';
+    tutor.fullName ||
+    tutor.personal?.fullName ||
+    'Tutor';
 
   const photo =
-    tutor.profilePhoto || '';
+    tutor.profilePhoto ||
+    tutor.personal?.profilePhoto ||
+    '';
+
+  /* SUBJECTS */
 
   const subjects =
-    cleanArray(tutor.subjects);
+    firstArray(
+      tutor.subjects,
+      tutor.teaching
+        ?.primarySubjects,
+      tutor.teaching
+        ?.secondarySubjects,
+      tutor.teaching
+        ?.seniorSecondarySubjects
+    );
+
+  /* CLASSES */
 
   const classes =
-    cleanArray(tutor.classes);
+    firstArray(
+      tutor.classes,
+      tutor.teaching
+        ?.primaryClasses,
+      tutor.teaching
+        ?.secondaryClasses,
+      tutor.teaching
+        ?.seniorSecondaryClasses
+    );
+
+  /* BOARDS */
 
   const boards =
-    cleanArray(tutor.boards);
+    firstArray(
+      tutor.boards,
+      tutor.teaching?.boards
+    );
+
+  /* LOCATION */
+
+  const city =
+    firstText(
+      tutor.city,
+      tutor.location,
+      tutor.area,
+      tutor.locality,
+      tutor.personal?.city,
+      tutor.personal?.location
+    ) || 'Delhi NCR';
 
   const areas =
-    cleanArray(tutor.areas);
+    firstArray(
+      tutor.areas,
+      tutor.preferences
+        ?.offlineAreas
+    );
+
+  /* EXPERIENCE */
+
+  const rawExperience =
+    tutor.experienceYears ??
+    tutor.experience ??
+    tutor.teaching?.experience;
+
+  const experience =
+    formatExperience(
+      rawExperience
+    );
+
+  /* MODE */
+
+  const mode =
+    formatMode(
+      tutor.mode ??
+      tutor.teachingMode ??
+      tutor.modes ??
+      tutor.preferredMode ??
+      tutor.preferences
+        ?.teachingMode
+    );
+
+  /* QUALIFICATION */
+
+  const qualification =
+    firstText(
+      tutor.highestQualification,
+      tutor.qualification,
+      tutor.degree,
+      tutor.education
+        ?.highestQualification
+    );
+
+  /* COLLEGE */
+
+  const college =
+    firstText(
+      tutor.college,
+      tutor.university,
+      tutor.collegeUniversity,
+      tutor.institution,
+      tutor.education?.college,
+      tutor.education?.university
+    );
+
+  /* SPECIALIZATION */
+
+  const specialization =
+    firstText(
+      tutor.specialization,
+      tutor.education
+        ?.specialization
+    );
+
+  /* =======================================================
+     SCHOOL TEACHING EXPERIENCE
+  ======================================================= */
+
+  const schoolExperience =
+    firstText(
+      tutor.schoolExperience,
+      tutor.schoolTeachingExperience,
+      tutor.schoolExperienceYears,
+
+      /* IMPORTANT — nested CRM field */
+      tutor.teaching
+        ?.schoolExperience,
+
+      tutor.teaching
+        ?.schoolTeachingExperience,
+
+      tutor.teaching
+        ?.schoolExperienceYears
+    );
+
+  /* =======================================================
+     STUDENTS TAUGHT FROM — SCHOOL NAMES
+  ======================================================= */
+
+  const schoolsTaught =
+    firstArray(
+
+      /* Direct fields */
+      tutor.schoolsTaught,
+      tutor.schoolNames,
+      tutor.studentsTaughtFromSchools,
+      tutor.previousInstitutions,
+      tutor.institutions,
+
+      /* IMPORTANT — ACTUAL REGISTRATION FIELD */
+      tutor.teaching
+        ?.studentsTaughtFrom,
+
+      /* Possible CRM variation */
+      tutor.teaching
+        ?.studentsTaughtFromSchools
+    );
+
+  /* STUDENTS COUNT */
+
+  const studentsTaught =
+    firstText(
+      tutor.studentsTaught,
+      tutor.totalStudents,
+      tutor.studentsCount
+    );
+
+  /* LANGUAGES */
 
   const languages =
     firstArray(
       tutor.languages,
-      tutor.teachingLanguages
+      tutor.teachingLanguages,
+      tutor.language,
+      tutor.spokenLanguages
     );
 
-  /*
-   * Robust school extraction
-   */
-  const schoolsTaught =
-    getSchoolsTaught(tutor);
+  /* ABOUT */
 
-  const achievements =
-    cleanArray(tutor.achievements);
-
-  const certifications =
-    cleanArray(tutor.certifications);
-
-  const city =
-    tutor.city || 'Delhi NCR';
-
-  const experience =
-    formatExperience(
-      tutor.experienceYears
-    );
-
-  const mode =
-    formatMode(tutor.mode);
-
-  const qualification =
+  const bio =
     firstText(
-      tutor.highestQualification
-    );
+      tutor.bio,
+      tutor.about,
+      tutor.aboutTutor,
+      tutor.description
+    ) ||
+    `${name} is a TutorWave tutor available for personalized tuition support.`;
 
-  const college =
-    firstText(tutor.college);
-
-  const specialization =
-    firstText(tutor.specialization);
+  /* TEACHING EXPERIENCE DETAILS */
 
   const experienceDetails =
     firstText(
@@ -683,24 +895,39 @@ export default async function TutorDetailPage({
       tutor.experienceDetails
     );
 
-  const schoolExperience =
-    firstText(
-      tutor.schoolExperience
-    );
+  /* TEACHING APPROACH */
 
   const teachingApproach =
     firstText(
       tutor.teachingApproach,
-      tutor.teachingMethodology
+      tutor.teachingMethodology,
+      tutor.approach,
+      tutor.teachingMethods
     );
 
+  /* AVAILABILITY */
+
   const availability =
-    firstText(tutor.availability);
+    firstText(
+      tutor.availability,
+      tutor.availableTimings,
+      tutor.preferredTiming,
+      tutor.timings,
+      tutor.preferences
+        ?.availability
+    );
 
   const availabilityTime =
     firstText(
       tutor.availabilityTime
     );
+
+  const availabilityDays =
+    firstArray(
+      tutor.availabilityDays
+    );
+
+  /* FEES */
 
   const feeRange =
     firstText(
@@ -709,65 +936,46 @@ export default async function TutorDetailPage({
       tutor.hourlyRate
     );
 
-  const studentsTaught =
-    formatNumber(
-      tutor.studentsTaught ??
-      tutor.totalStudents
-    );
+  /* VERIFICATION */
+
+  const isVerified =
+    tutor.isVerified === true ||
+    tutor.verified === true ||
+    String(
+      tutor.verificationStatus || ''
+    ).toLowerCase() ===
+      'verified' ||
+    String(
+      tutor.status || ''
+    ).toLowerCase() ===
+      'verified';
+
+  /* RATING */
+
+  const ratingValue =
+    tutor.rating ??
+    tutor.averageRating;
 
   const rating =
-    typeof tutor.rating === 'number'
-      ? tutor.rating
+    ratingValue !== undefined &&
+    ratingValue !== null &&
+    ratingValue !== ''
+      ? Number(ratingValue)
       : null;
 
-  const bio =
-    tutor.bio?.trim() ||
-    `${name} is a TutorWave tutor available for personalized tuition support.`;
+  /* ACHIEVEMENTS */
 
-  /* =======================================================
-     WHY THIS TUTOR MAY BE A GOOD FIT
-  ======================================================= */
-
-  const fitPoints: string[] = [];
-
-  if (experience) {
-    fitPoints.push(
-      `${experience} teaching experience`
+  const achievements =
+    cleanArray(
+      tutor.achievements
     );
-  }
 
-  if (boards.length > 0) {
-    fitPoints.push(
-      `${boards.join(' & ')} curriculum experience`
+  /* CERTIFICATIONS */
+
+  const certifications =
+    cleanArray(
+      tutor.certifications
     );
-  }
-
-  if (subjects.length > 0) {
-    fitPoints.push(
-      subjects.length === 1
-        ? subjects[0]
-        : subjects.slice(0, 4).join(', ')
-    );
-  }
-
-  if (classes.length > 0) {
-    fitPoints.push(
-      `Classes ${classes.join(', ')}`
-    );
-  }
-
-  if (mode) {
-    fitPoints.push(mode);
-  }
-
-  if (city) {
-    fitPoints.push(
-      `Tuition available in ${city}`
-    );
-  }
-
-  const finalFitPoints =
-    fitPoints.slice(0, 6);
 
   /* =======================================================
      RETURN
@@ -822,7 +1030,7 @@ export default async function TutorDetailPage({
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-8 sm:py-10">
 
-          <div className="grid grid-cols-1 lg:grid-cols-[180px_minmax(0,1fr)_190px] gap-7 lg:gap-10 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-[180px_1fr_auto] gap-7 lg:gap-10 items-start">
 
             {/* PHOTO */}
 
@@ -853,7 +1061,7 @@ export default async function TutorDetailPage({
                   {name}
                 </h1>
 
-                {tutor.isVerified && (
+                {isVerified && (
                   <span className="inline-flex items-center gap-1.5 bg-[#E6F7F5] text-[#0C8F81] px-3 py-1.5 rounded-full text-xs font-bold">
                     <CheckIcon />
                     Verified Tutor
@@ -878,63 +1086,19 @@ export default async function TutorDetailPage({
 
                 {experience && (
                   <div className="inline-flex items-center gap-2 bg-[#F8FAFC] border border-[#E5E7EB] px-4 py-2.5 rounded-xl text-sm font-medium text-[#374151]">
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#0A6FF7"
-                      strokeWidth="2"
-                    >
-                      <circle
-                        cx="12"
-                        cy="12"
-                        r="9"
-                      />
-                      <path d="M12 7v5l3 2" />
-                    </svg>
+                    ⏱
                     {experience}
                   </div>
                 )}
 
                 <div className="inline-flex items-center gap-2 bg-[#F8FAFC] border border-[#E5E7EB] px-4 py-2.5 rounded-xl text-sm font-medium text-[#374151]">
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#0A6FF7"
-                    strokeWidth="2"
-                  >
-                    <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0Z" />
-                    <circle
-                      cx="12"
-                      cy="10"
-                      r="3"
-                    />
-                  </svg>
+                  📍
                   {city}
                 </div>
 
                 {mode && (
                   <div className="inline-flex items-center gap-2 bg-[#F8FAFC] border border-[#E5E7EB] px-4 py-2.5 rounded-xl text-sm font-medium text-[#374151]">
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#0A6FF7"
-                      strokeWidth="2"
-                    >
-                      <rect
-                        x="3"
-                        y="4"
-                        width="18"
-                        height="16"
-                        rx="2"
-                      />
-                      <path d="M7 8h10M7 12h10M7 16h6" />
-                    </svg>
+                    🏠
                     {mode}
                   </div>
                 )}
@@ -943,30 +1107,32 @@ export default async function TutorDetailPage({
 
             </div>
 
-            {/* REQUEST CARD */}
+            {/* QUICK STATS */}
 
-            <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl p-5">
+            <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
 
-              <p className="text-xs uppercase tracking-[0.12em] font-bold text-[#0A6FF7] mb-2">
-                TutorWave
-              </p>
+              {rating !== null &&
+                !Number.isNaN(rating) && (
+                  <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl px-5 py-4 min-w-[145px]">
 
-              <p className="font-bold text-[#0D1118] mb-2">
-                Interested in this tutor?
-              </p>
+                    <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-1">
+                      Rating
+                    </p>
 
-              <p className="text-xs text-[#6B7280] leading-5 mb-4">
-                Share your requirement and
-                our team will help you proceed.
-              </p>
+                    <div className="flex items-center gap-2">
 
-              <Link
-                href="/find-a-tutor"
-                className="flex items-center justify-center gap-2 w-full bg-[#0A6FF7] text-white font-bold py-3 rounded-xl hover:bg-[#0858c8] transition-colors text-sm"
-              >
-                Request This Tutor
-                <span>→</span>
-              </Link>
+                      <span className="text-2xl font-bold text-[#0D1118]">
+                        {rating.toFixed(1)}
+                      </span>
+
+                      <span className="text-[#F59E0B]">
+                        ★
+                      </span>
+
+                    </div>
+
+                  </div>
+                )}
 
             </div>
 
@@ -987,46 +1153,10 @@ export default async function TutorDetailPage({
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_350px] gap-7 lg:gap-8">
 
             {/* =================================================
-                LEFT COLUMN
+                LEFT
             ================================================= */}
 
             <div className="space-y-6">
-
-              {/* =================================================
-                  WHY THIS TUTOR
-              ================================================= */}
-
-              {finalFitPoints.length > 0 && (
-                <Section
-                  title="Why This Tutor May Be a Good Fit"
-                  eyebrow="Quick suitability check"
-                >
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-
-                    {finalFitPoints.map(
-                      (point, index) => (
-                        <div
-                          key={`${point}-${index}`}
-                          className="flex items-start gap-3 p-4 rounded-2xl bg-[#F8FAFC] border border-[#E5E7EB]"
-                        >
-
-                          <div className="w-7 h-7 rounded-full bg-[#E6F7F5] text-[#0C8F81] flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <CheckIcon />
-                          </div>
-
-                          <p className="text-sm sm:text-[15px] font-medium text-[#374151] leading-6">
-                            {point}
-                          </p>
-
-                        </div>
-                      )
-                    )}
-
-                  </div>
-
-                </Section>
-              )}
 
               {/* =================================================
                   TUTOR AT A GLANCE
@@ -1039,115 +1169,28 @@ export default async function TutorDetailPage({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
 
-                  {experience && (
-                    <InfoRow
-                      label="Experience"
-                      value={experience}
-                      icon={
-                        <svg
-                          width="19"
-                          height="19"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.8"
-                        >
-                          <circle
-                            cx="12"
-                            cy="12"
-                            r="9"
-                          />
-                          <path d="M12 7v5l3 2" />
-                        </svg>
-                      }
-                    />
-                  )}
+                  <InfoRow
+                    label="Experience"
+                    value={experience}
+                    icon={<span>⏱</span>}
+                  />
 
                   <InfoRow
                     label="Location"
                     value={city}
-                    icon={
-                      <svg
-                        width="19"
-                        height="19"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                      >
-                        <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0Z" />
-                        <circle
-                          cx="12"
-                          cy="10"
-                          r="3"
-                        />
-                      </svg>
-                    }
+                    icon={<span>📍</span>}
                   />
 
                   <InfoRow
                     label="Teaching Mode"
                     value={mode}
-                    icon={
-                      <svg
-                        width="19"
-                        height="19"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                      >
-                        <rect
-                          x="3"
-                          y="4"
-                          width="18"
-                          height="16"
-                          rx="2"
-                        />
-                        <path d="M7 8h10M7 12h10M7 16h6" />
-                      </svg>
-                    }
+                    icon={<span>🏠</span>}
                   />
 
                   <InfoRow
                     label="Students Taught"
                     value={studentsTaught}
-                    icon={
-                      <svg
-                        width="19"
-                        height="19"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                      >
-                        <circle
-                          cx="9"
-                          cy="8"
-                          r="3"
-                        />
-                        <path d="M3 20c0-3.5 2.5-6 6-6s6 2.5 6 6" />
-                        <path d="M16 11c2.5 0 5 1.8 5 5" />
-                      </svg>
-                    }
-                  />
-
-                  <InfoRow
-                    label="Qualification"
-                    value={qualification}
-                    icon={
-                      <svg
-                        width="19"
-                        height="19"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                      >
-                        <path d="M22 10l-10-5-10 5 10 5 10-5Z" />
-                        <path d="M6 12v5c3 2 9 2 12 0v-5" />
-                      </svg>
-                    }
+                    icon={<span>👥</span>}
                   />
 
                 </div>
@@ -1158,93 +1201,99 @@ export default async function TutorDetailPage({
                   ACADEMIC EXPERTISE
               ================================================= */}
 
-              <Section
-                title="Academic Expertise"
-                eyebrow="Subjects, classes & boards"
-              >
+              {(subjects.length > 0 ||
+                classes.length > 0 ||
+                boards.length > 0 ||
+                specialization) && (
 
-                <div className="space-y-7">
+                <Section
+                  title="Academic Expertise"
+                  eyebrow="Subjects, classes & boards"
+                >
 
-                  {subjects.length > 0 && (
-                    <div>
+                  <div className="space-y-7">
 
-                      <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
-                        Subjects
-                      </p>
+                    {subjects.length > 0 && (
+                      <div>
 
-                      <div className="flex flex-wrap gap-2.5">
-                        {subjects.map(
-                          (subject) => (
-                            <Tag
-                              key={subject}
-                              blue
-                            >
-                              {subject}
-                            </Tag>
-                          )
-                        )}
+                        <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
+                          Subjects
+                        </p>
+
+                        <div className="flex flex-wrap gap-2.5">
+                          {subjects.map(
+                            (subject) => (
+                              <Tag
+                                key={subject}
+                                blue
+                              >
+                                {subject}
+                              </Tag>
+                            )
+                          )}
+                        </div>
+
                       </div>
+                    )}
 
-                    </div>
-                  )}
+                    {classes.length > 0 && (
+                      <div>
 
-                  {classes.length > 0 && (
-                    <div>
+                        <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
+                          Classes
+                        </p>
 
-                      <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
-                        Classes
-                      </p>
+                        <div className="flex flex-wrap gap-2.5">
+                          {classes.map(
+                            (item) => (
+                              <Tag key={item}>
+                                {item}
+                              </Tag>
+                            )
+                          )}
+                        </div>
 
-                      <div className="flex flex-wrap gap-2.5">
-                        {classes.map(
-                          (item) => (
-                            <Tag key={item}>
-                              {item}
-                            </Tag>
-                          )
-                        )}
                       </div>
+                    )}
 
-                    </div>
-                  )}
+                    {boards.length > 0 && (
+                      <div>
 
-                  {boards.length > 0 && (
-                    <div>
+                        <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
+                          Boards
+                        </p>
 
-                      <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
-                        Boards
-                      </p>
+                        <div className="flex flex-wrap gap-2.5">
+                          {boards.map(
+                            (board) => (
+                              <Tag key={board}>
+                                {board}
+                              </Tag>
+                            )
+                          )}
+                        </div>
 
-                      <div className="flex flex-wrap gap-2.5">
-                        {boards.map(
-                          (board) => (
-                            <Tag key={board}>
-                              {board}
-                            </Tag>
-                          )
-                        )}
                       </div>
+                    )}
 
-                    </div>
-                  )}
+                    {specialization && (
+                      <div>
 
-                  {specialization && (
-                    <div>
+                        <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
+                          Specialisation
+                        </p>
 
-                      <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
-                        Specialisation
-                      </p>
+                        <p className="text-[#374151] leading-7">
+                          {specialization}
+                        </p>
 
-                      <p className="text-[#374151] leading-7">
-                        {specialization}
-                      </p>
+                      </div>
+                    )}
 
-                    </div>
-                  )}
+                  </div>
 
-                </div>
-
-              </Section>
+                </Section>
+              )}
 
               {/* =================================================
                   EDUCATION
@@ -1252,6 +1301,7 @@ export default async function TutorDetailPage({
 
               {(qualification ||
                 college) && (
+
                 <Section
                   title="Education & Qualifications"
                   eyebrow="Academic background"
@@ -1261,22 +1311,6 @@ export default async function TutorDetailPage({
 
                     {qualification && (
                       <div className="border border-[#E5E7EB] rounded-2xl p-5">
-
-                        <div className="w-11 h-11 rounded-xl bg-[#EBF4FF] flex items-center justify-center text-[#0A6FF7] mb-4">
-
-                          <svg
-                            width="21"
-                            height="21"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.8"
-                          >
-                            <path d="M22 10l-10-5-10 5 10 5 10-5Z" />
-                            <path d="M6 12v5c3 2 9 2 12 0v-5" />
-                          </svg>
-
-                        </div>
 
                         <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-2">
                           Highest Qualification
@@ -1291,22 +1325,6 @@ export default async function TutorDetailPage({
 
                     {college && (
                       <div className="border border-[#E5E7EB] rounded-2xl p-5">
-
-                        <div className="w-11 h-11 rounded-xl bg-[#EBF4FF] flex items-center justify-center text-[#0A6FF7] mb-4">
-
-                          <svg
-                            width="21"
-                            height="21"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.8"
-                          >
-                            <path d="M4 4h16v16H4z" />
-                            <path d="M8 8h8M8 12h8M8 16h5" />
-                          </svg>
-
-                        </div>
 
                         <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-2">
                           College / University
@@ -1330,6 +1348,7 @@ export default async function TutorDetailPage({
 
               {(experience ||
                 experienceDetails) && (
+
                 <Section
                   title="Teaching Experience"
                   eyebrow="Professional experience"
@@ -1338,34 +1357,14 @@ export default async function TutorDetailPage({
                   <div className="flex gap-5">
 
                     <div className="w-12 h-12 rounded-2xl bg-[#EBF4FF] flex items-center justify-center flex-shrink-0 text-[#0A6FF7]">
-
-                      <svg
-                        width="22"
-                        height="22"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                      >
-                        <rect
-                          x="3"
-                          y="7"
-                          width="18"
-                          height="13"
-                          rx="2"
-                        />
-                        <path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2" />
-                        <path d="M3 12h18" />
-                      </svg>
-
+                      👨‍🏫
                     </div>
 
                     <div>
 
                       {experience && (
                         <p className="text-lg font-bold text-[#0D1118] mb-2">
-                          {experience} of teaching
-                          experience
+                          {experience} of teaching experience
                         </p>
                       )}
 
@@ -1383,50 +1382,11 @@ export default async function TutorDetailPage({
               )}
 
               {/* =================================================
-                  STUDENTS TAUGHT FROM
-              ================================================= */}
-
-              {schoolsTaught.length > 0 && (
-                <Section
-                  title="Students Taught From"
-                  eyebrow="School exposure"
-                >
-
-                  <p className="text-[#6B7280] mb-5 leading-7">
-                    Has taught students from:
-                  </p>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-
-                    {schoolsTaught.map(
-                      (school, index) => (
-                        <div
-                          key={`${school}-${index}`}
-                          className="flex items-center gap-3 p-4 rounded-2xl bg-[#F8FAFC] border border-[#E5E7EB]"
-                        >
-
-                          <div className="w-10 h-10 rounded-xl bg-[#EBF4FF] text-[#0A6FF7] flex items-center justify-center flex-shrink-0">
-                            <SchoolIcon />
-                          </div>
-
-                          <span className="text-sm font-semibold text-[#0D1118] leading-5">
-                            {school}
-                          </span>
-
-                        </div>
-                      )
-                    )}
-
-                  </div>
-
-                </Section>
-              )}
-
-              {/* =================================================
                   SCHOOL TEACHING EXPERIENCE
               ================================================= */}
 
               {schoolExperience && (
+
                 <Section
                   title="School Teaching Experience"
                   eyebrow="School background"
@@ -1435,12 +1395,44 @@ export default async function TutorDetailPage({
                   <div className="flex items-start gap-5">
 
                     <div className="w-12 h-12 rounded-2xl bg-[#EBF4FF] flex items-center justify-center flex-shrink-0 text-[#0A6FF7]">
-                      <SchoolIcon />
+                      🏫
                     </div>
 
                     <p className="text-[#374151] leading-8">
                       {schoolExperience}
                     </p>
+
+                  </div>
+
+                </Section>
+              )}
+
+              {/* =================================================
+                  STUDENTS TAUGHT FROM
+              ================================================= */}
+
+              {schoolsTaught.length > 0 && (
+
+                <Section
+                  title="Students Taught From"
+                  eyebrow="School exposure"
+                >
+
+                  <p className="text-[#6B7280] mb-5 leading-7">
+                    This tutor has taught students from:
+                  </p>
+
+                  <div className="flex flex-wrap gap-2.5">
+
+                    {schoolsTaught.map(
+                      (school, index) => (
+                        <Tag
+                          key={`${school}-${index}`}
+                        >
+                          {school}
+                        </Tag>
+                      )
+                    )}
 
                   </div>
 
@@ -1467,6 +1459,7 @@ export default async function TutorDetailPage({
               ================================================= */}
 
               {teachingApproach && (
+
                 <Section
                   title="Teaching Approach"
                   eyebrow="How the tutor teaches"
@@ -1488,6 +1481,7 @@ export default async function TutorDetailPage({
               ================================================= */}
 
               {languages.length > 0 && (
+
                 <Section
                   title="Languages"
                   eyebrow="Communication"
@@ -1522,23 +1516,7 @@ export default async function TutorDetailPage({
                   <div className="flex items-center gap-4">
 
                     <div className="w-12 h-12 rounded-2xl bg-[#EBF4FF] flex items-center justify-center text-[#0A6FF7]">
-
-                      <svg
-                        width="22"
-                        height="22"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                      >
-                        <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0Z" />
-                        <circle
-                          cx="12"
-                          cy="10"
-                          r="3"
-                        />
-                      </svg>
-
+                      📍
                     </div>
 
                     <div>
@@ -1587,9 +1565,8 @@ export default async function TutorDetailPage({
 
               {(availability ||
                 availabilityTime ||
-                cleanArray(
-                  tutor.availabilityDays
-                ).length > 0) && (
+                availabilityDays.length > 0) && (
+
                 <Section
                   title="Availability"
                   eyebrow="When the tutor may be available"
@@ -1625,9 +1602,7 @@ export default async function TutorDetailPage({
                       </div>
                     )}
 
-                    {cleanArray(
-                      tutor.availabilityDays
-                    ).length > 0 && (
+                    {availabilityDays.length > 0 && (
                       <div>
 
                         <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-3">
@@ -1636,9 +1611,7 @@ export default async function TutorDetailPage({
 
                         <div className="flex flex-wrap gap-2">
 
-                          {cleanArray(
-                            tutor.availabilityDays
-                          ).map(
+                          {availabilityDays.map(
                             (day) => (
                               <Tag key={day}>
                                 {day}
@@ -1661,6 +1634,7 @@ export default async function TutorDetailPage({
               ================================================= */}
 
               {achievements.length > 0 && (
+
                 <Section
                   title="Achievements"
                   eyebrow="Additional highlights"
@@ -1669,10 +1643,7 @@ export default async function TutorDetailPage({
                   <div className="space-y-3">
 
                     {achievements.map(
-                      (
-                        achievement,
-                        index
-                      ) => (
+                      (achievement, index) => (
                         <div
                           key={`${achievement}-${index}`}
                           className="flex items-start gap-3"
@@ -1700,6 +1671,7 @@ export default async function TutorDetailPage({
               ================================================= */}
 
               {certifications.length > 0 && (
+
                 <Section
                   title="Certifications"
                   eyebrow="Additional qualifications"
@@ -1709,9 +1681,7 @@ export default async function TutorDetailPage({
 
                     {certifications.map(
                       (certificate) => (
-                        <Tag
-                          key={certificate}
-                        >
+                        <Tag key={certificate}>
                           {certificate}
                         </Tag>
                       )
@@ -1723,83 +1693,7 @@ export default async function TutorDetailPage({
               )}
 
               {/* =================================================
-                  HOW IT WORKS
-              ================================================= */}
-
-              <section className="bg-white border border-[#E5E7EB] rounded-3xl p-6 sm:p-8">
-
-                <p className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.12em] text-[#0A6FF7] mb-2">
-                  TutorWave
-                </p>
-
-                <h2 className="text-xl sm:text-2xl font-bold text-[#0D1118] mb-7">
-                  How It Works
-                </h2>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-
-                  <div className="relative">
-
-                    <div className="w-11 h-11 rounded-xl bg-[#EBF4FF] text-[#0A6FF7] flex items-center justify-center font-bold mb-4">
-                      1
-                    </div>
-
-                    <h3 className="font-bold text-[#0D1118] mb-2">
-                      Share your requirement
-                    </h3>
-
-                    <p className="text-sm text-[#6B7280] leading-6">
-                      Tell us your child's
-                      class, subject,
-                      location and learning
-                      requirements.
-                    </p>
-
-                  </div>
-
-                  <div>
-
-                    <div className="w-11 h-11 rounded-xl bg-[#EBF4FF] text-[#0A6FF7] flex items-center justify-center font-bold mb-4">
-                      2
-                    </div>
-
-                    <h3 className="font-bold text-[#0D1118] mb-2">
-                      We confirm suitability
-                    </h3>
-
-                    <p className="text-sm text-[#6B7280] leading-6">
-                      Our team checks the
-                      requirement against
-                      the tutor's profile and
-                      availability.
-                    </p>
-
-                  </div>
-
-                  <div>
-
-                    <div className="w-11 h-11 rounded-xl bg-[#EBF4FF] text-[#0A6FF7] flex items-center justify-center font-bold mb-4">
-                      3
-                    </div>
-
-                    <h3 className="font-bold text-[#0D1118] mb-2">
-                      We help you proceed
-                    </h3>
-
-                    <p className="text-sm text-[#6B7280] leading-6">
-                      We help coordinate the
-                      next step so you can
-                      proceed with confidence.
-                    </p>
-
-                  </div>
-
-                </div>
-
-              </section>
-
-              {/* =================================================
-                  MOBILE REQUEST CTA
+                  MOBILE REQUEST
               ================================================= */}
 
               <div className="lg:hidden bg-white border border-[#E5E7EB] rounded-3xl p-6">
@@ -1813,10 +1707,7 @@ export default async function TutorDetailPage({
                 </h2>
 
                 <p className="text-sm text-[#6B7280] leading-6 mb-5">
-                  Tell us about your
-                  child's requirements
-                  and our team will help
-                  you proceed.
+                  Tell us your tuition requirement and our team will help you proceed.
                 </p>
 
                 <Link
@@ -1832,16 +1723,14 @@ export default async function TutorDetailPage({
             </div>
 
             {/* =================================================
-                RIGHT SIDEBAR
+                SIDEBAR
             ================================================= */}
 
             <aside className="hidden lg:block">
 
               <div className="sticky top-24 space-y-5">
 
-                {/* =================================================
-                    PROFILE SUMMARY
-                ================================================= */}
+                {/* PROFILE SUMMARY */}
 
                 <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6">
 
@@ -1929,9 +1818,7 @@ export default async function TutorDetailPage({
 
                 </div>
 
-                {/* =================================================
-                    TUTORWAVE VERIFICATION
-                ================================================= */}
+                {/* TUTORWAVE VERIFICATION */}
 
                 <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6">
 
@@ -1958,7 +1845,6 @@ export default async function TutorDetailPage({
                   <div className="space-y-3">
 
                     <div className="flex items-start gap-3">
-
                       <div className="mt-0.5 text-[#0C8F81]">
                         <CheckIcon />
                       </div>
@@ -1966,38 +1852,30 @@ export default async function TutorDetailPage({
                       <p className="text-sm text-[#4B5563]">
                         Profile reviewed
                       </p>
-
                     </div>
 
                     <div className="flex items-start gap-3">
-
                       <div className="mt-0.5 text-[#0C8F81]">
                         <CheckIcon />
                       </div>
 
                       <p className="text-sm text-[#4B5563]">
-                        Qualification information
-                        reviewed
+                        Qualification information reviewed
                       </p>
-
                     </div>
 
                     <div className="flex items-start gap-3">
-
                       <div className="mt-0.5 text-[#0C8F81]">
                         <CheckIcon />
                       </div>
 
                       <p className="text-sm text-[#4B5563]">
-                        Photo and profile
-                        information reviewed
+                        Photo and profile information reviewed
                       </p>
-
                     </div>
 
-                    {tutor.isVerified && (
+                    {isVerified && (
                       <div className="flex items-start gap-3">
-
                         <div className="mt-0.5 text-[#0C8F81]">
                           <CheckIcon />
                         </div>
@@ -2005,7 +1883,6 @@ export default async function TutorDetailPage({
                         <p className="text-sm font-semibold text-[#0D1118]">
                           Verified Tutor
                         </p>
-
                       </div>
                     )}
 
@@ -2013,9 +1890,7 @@ export default async function TutorDetailPage({
 
                 </div>
 
-                {/* =================================================
-                    BROWSE OTHER TUTORS
-                ================================================= */}
+                {/* BROWSE OTHER TUTORS */}
 
                 <div className="bg-[#0D1118] rounded-3xl p-6">
 
@@ -2024,13 +1899,11 @@ export default async function TutorDetailPage({
                   </p>
 
                   <h3 className="text-xl font-bold text-white mb-2">
-                    More Tutor Options
+                    Looking for more options?
                   </h3>
 
                   <p className="text-sm text-white/60 leading-6 mb-5">
-                    Explore other tutors
-                    available through
-                    TutorWave.
+                    Explore other tutors available through TutorWave.
                   </p>
 
                   <Link
@@ -2043,9 +1916,7 @@ export default async function TutorDetailPage({
 
                 </div>
 
-                {/* =================================================
-                    FEE INFORMATION
-                ================================================= */}
+                {/* FEE */}
 
                 {feeRange && (
                   <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6">
@@ -2059,9 +1930,7 @@ export default async function TutorDetailPage({
                     </p>
 
                     <p className="text-xs text-[#6B7280] mt-2 leading-5">
-                      Final fee may depend on
-                      class, subject, location
-                      and tuition requirements.
+                      Final fee may depend on class, subject, location and tuition requirements.
                     </p>
 
                   </div>
@@ -2070,6 +1939,93 @@ export default async function TutorDetailPage({
               </div>
 
             </aside>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      {/* ===================================================
+          HOW IT WORKS
+          IMPORTANT: BELOW MAIN PROFILE, NOT SIDEBAR
+      =================================================== */}
+
+      <section className="bg-white border-t border-[#E5E7EB] py-12 sm:py-16">
+
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-12">
+
+          <div className="text-center mb-10">
+
+            <p className="text-xs uppercase tracking-[0.15em] font-bold text-[#0A6FF7] mb-2">
+              TutorWave
+            </p>
+
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#0D1118]">
+              How It Works
+            </h2>
+
+            <p className="text-[#6B7280] mt-3 max-w-2xl mx-auto">
+              Getting started with a TutorWave tutor is simple.
+            </p>
+
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+            {/* STEP 1 */}
+
+            <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-3xl p-7">
+
+              <div className="w-12 h-12 rounded-2xl bg-[#EBF4FF] text-[#0A6FF7] flex items-center justify-center text-lg font-bold mb-5">
+                01
+              </div>
+
+              <h3 className="text-lg font-bold text-[#0D1118] mb-2">
+                Share Your Requirement
+              </h3>
+
+              <p className="text-sm text-[#6B7280] leading-6">
+                Tell us your child's class, subject, location and preferred tuition requirements.
+              </p>
+
+            </div>
+
+            {/* STEP 2 */}
+
+            <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-3xl p-7">
+
+              <div className="w-12 h-12 rounded-2xl bg-[#EBF4FF] text-[#0A6FF7] flex items-center justify-center text-lg font-bold mb-5">
+                02
+              </div>
+
+              <h3 className="text-lg font-bold text-[#0D1118] mb-2">
+                We Confirm Suitability
+              </h3>
+
+              <p className="text-sm text-[#6B7280] leading-6">
+                Our team reviews the requirement and confirms whether this tutor is suitable for your needs.
+              </p>
+
+            </div>
+
+            {/* STEP 3 */}
+
+            <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-3xl p-7">
+
+              <div className="w-12 h-12 rounded-2xl bg-[#EBF4FF] text-[#0A6FF7] flex items-center justify-center text-lg font-bold mb-5">
+                03
+              </div>
+
+              <h3 className="text-lg font-bold text-[#0D1118] mb-2">
+                We Help You Proceed
+              </h3>
+
+              <p className="text-sm text-[#6B7280] leading-6">
+                Once the requirements match, our team helps coordinate the next step with the tutor.
+              </p>
+
+            </div>
 
           </div>
 
@@ -2090,14 +2046,11 @@ export default async function TutorDetailPage({
           </p>
 
           <h2 className="text-2xl sm:text-3xl font-bold text-white">
-            Need help choosing a tutor?
+            Interested in this tutor?
           </h2>
 
           <p className="text-white/60 mt-3 max-w-2xl mx-auto leading-7">
-            Tell us your child's class,
-            subject, location and learning
-            requirements. Our team will help
-            you find a suitable tutor.
+            Share your child's class, subject, location and learning requirements with our team.
           </p>
 
           <div className="flex flex-col sm:flex-row justify-center gap-3 mt-7">
@@ -2106,7 +2059,7 @@ export default async function TutorDetailPage({
               href="/find-a-tutor"
               className="inline-flex items-center justify-center gap-2 bg-[#0A6FF7] text-white font-bold px-7 py-3.5 rounded-xl hover:bg-[#0858c8] transition-colors"
             >
-              Find a Tutor
+              Request This Tutor
               <span>→</span>
             </Link>
 
