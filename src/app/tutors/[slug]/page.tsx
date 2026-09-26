@@ -144,22 +144,44 @@ type Tutor = {
   };
 
   education?: {
-    highestQualification?: string;
-    college?: string;
-    university?: string;
-    stream?: string;
-    specialization?: string;
-    additionalQualification?: string;
-    additionalQualifications?: string[] | string;
-    qualificationStream?: string;
-    educationStream?: string;
-    fieldOfStudy?: string;
-    course?: string;
-    major?: string;
-    stream?: string;
-    qualificationDetails?: string;
-    qualifications?: string[] | string;
-  };
+  highestQualification?: string;
+  qualification?: string;
+  degree?: string;
+
+  college?: string;
+  university?: string;
+  institution?: string;
+
+  stream?: string;
+  qualificationStream?: string;
+  educationStream?: string;
+  fieldOfStudy?: string;
+  course?: string;
+  major?: string;
+  specialization?: string;
+
+  additionalQualification?: string;
+  additionalQualifications?: string[] | string;
+
+  qualificationDetails?: string;
+
+  qualifications?:
+    | string[]
+    | string
+    | Array<{
+        qualification?: string;
+        degree?: string;
+        highestQualification?: string;
+        stream?: string;
+        qualificationStream?: string;
+        educationStream?: string;
+        fieldOfStudy?: string;
+        specialization?: string;
+        college?: string;
+        university?: string;
+        institution?: string;
+      }>;
+};
 
   personal?: {
     fullName?: string;
@@ -785,17 +807,66 @@ export default async function TutorDetailPage({
     tutor.preferredMode ??
     tutor.preferences?.teachingMode
   );
+/*
+ * =======================================================
+ * EDUCATION NORMALIZATION
+ *
+ * Supports both:
+ *
+ * education: {
+ *   highestQualification: "...",
+ *   stream: "Science"
+ * }
+ *
+ * and:
+ *
+ * education: [
+ *   {
+ *     qualification: "...",
+ *     stream: "Science"
+ *   }
+ * ]
+ * =======================================================
+ */
 
+const educationRecords: any[] = Array.isArray(tutor.education)
+  ? tutor.education
+  : tutor.education
+    ? [tutor.education]
+    : [];
+
+const educationQualificationValues = educationRecords.flatMap(
+  (item: any) =>
+    cleanArray(
+      item?.highestQualification ??
+      item?.qualification ??
+      item?.degree
+    )
+);
+
+const educationStreamValues = educationRecords.flatMap(
+  (item: any) =>
+    cleanArray(
+      item?.stream ??
+      item?.qualificationStream ??
+      item?.educationStream ??
+      item?.fieldOfStudy ??
+      item?.course ??
+      item?.major ??
+      item?.specialization
+    )
+);
   /*
    * Qualification
    */
-  const qualification =
-    firstText(
-      tutor.highestQualification,
-      tutor.qualification,
-      tutor.degree,
-      tutor.education?.highestQualification
-    );
+const qualification =
+  firstText(
+    tutor.highestQualification,
+    tutor.qualification,
+    tutor.degree,
+    ...educationQualificationValues,
+    tutor.education?.highestQualification
+  );
 
   /*
    * College / university
@@ -826,40 +897,88 @@ export default async function TutorDetailPage({
    * in education.stream. We keep the fallback fields here
    * so older CRM records continue to display correctly.
    */
-  const qualificationStream =
-    firstText(
-      tutor.education?.stream,
-      tutor.education?.qualificationStream,
-      tutor.education?.educationStream,
-      tutor.education?.fieldOfStudy,
-      tutor.education?.course,
-      tutor.education?.major,
-      tutor.education?.specialization,
-      tutor.specialization,
-      tutor.stream,
-      tutor.qualificationStream,
-      tutor.educationStream,
-      tutor.fieldOfStudy,
-      tutor.course,
-      tutor.major,
-      tutor.qualificationDetails
-    );
+ const qualificationStream =
+  firstText(
+    ...educationStreamValues,
+
+    tutor.specialization,
+    tutor.stream,
+    tutor.qualificationStream,
+    tutor.educationStream,
+    tutor.fieldOfStudy,
+    tutor.course,
+    tutor.major,
+    tutor.qualificationDetails
+  );
 
   /*
    * The registration form stores additional qualifications as
    * education.additionalQualification. Older CRM records may
    * expose the same value at the root or as a qualifications array.
    */
-  const additionalQualifications =
-    firstArray(
-      tutor.education?.additionalQualifications,
-      tutor.education?.additionalQualification,
-      tutor.additionalQualifications,
-      tutor.additionalQualification,
-      tutor.education?.qualifications,
-      tutor.qualifications
-    );
+const additionalQualifications = [
+  ...firstArray(
+    tutor.education?.additionalQualifications,
+    tutor.education?.additionalQualification,
+    tutor.additionalQualifications,
+    tutor.additionalQualification
+  ),
 
+  ...educationRecords.flatMap((item: any) => {
+    const qualifications = Array.isArray(item?.qualifications)
+      ? item.qualifications
+      : [];
+
+    return qualifications.flatMap((qualificationItem: any) => {
+      if (typeof qualificationItem === 'string') {
+        return [qualificationItem.trim()];
+      }
+
+      if (
+        !qualificationItem ||
+        typeof qualificationItem !== 'object'
+      ) {
+        return [];
+      }
+
+      const degree = firstText(
+        qualificationItem.qualification,
+        qualificationItem.degree,
+        qualificationItem.highestQualification
+      );
+
+      const stream = firstText(
+        qualificationItem.stream,
+        qualificationItem.qualificationStream,
+        qualificationItem.educationStream,
+        qualificationItem.fieldOfStudy,
+        qualificationItem.specialization
+      );
+
+      if (degree && stream) {
+        return [`${degree} • ${stream}`];
+      }
+
+      if (degree) {
+        return [degree];
+      }
+
+      if (stream) {
+        return [stream];
+      }
+
+      return [];
+    });
+  }),
+
+  ...firstArray(tutor.education?.qualifications),
+
+  ...firstArray(tutor.qualifications)
+].filter(
+  (value, index, array) =>
+    value &&
+    array.indexOf(value) === index
+);
   /*
    * Teaching experience details
    */
