@@ -834,6 +834,8 @@ export default async function TutorDetailPage({
       tutor.education?.fieldOfStudy,
       tutor.education?.course,
       tutor.education?.major,
+      tutor.education?.specialization,
+      tutor.specialization,
       tutor.stream,
       tutor.qualificationStream,
       tutor.educationStream,
@@ -2371,49 +2373,58 @@ export default async function TutorDetailPage({
           HOW IT WORKS
       =================================================== */}
 
-      <section className="pb-12 sm:pb-16">
+      <section className="bg-[#F6F8FB] py-10 sm:py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
-          <div className="bg-[#0D1118] rounded-3xl px-5 py-7 sm:px-8 sm:py-8 text-white">
+          <div className="bg-white border border-[#E5E7EB] rounded-3xl px-5 py-7 sm:px-8 sm:py-8 shadow-sm">
 
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-7">
-              <div>
-                <p className="text-xs uppercase tracking-[0.12em] font-bold text-[#5DB8FF] mb-2">
-                  TutorWave
-                </p>
-                <h2 className="text-xl sm:text-2xl font-bold">
-                  How It Works
-                </h2>
-              </div>
-
-              <p className="text-sm text-white/60 leading-6 max-w-xl lg:text-right">
-                Finding the right home tutor is simple. Share your requirement and let TutorWave help you take the next step.
+            <div className="text-center mb-7 sm:mb-8">
+              <p className="text-xs uppercase tracking-[0.14em] font-bold text-[#0A6FF7] mb-2">
+                TutorWave
+              </p>
+              <h2 className="text-xl sm:text-2xl font-bold text-[#0D1118]">
+                How It Works
+              </h2>
+              <p className="text-sm text-[#6B7280] mt-2 max-w-2xl mx-auto leading-6">
+                Finding the right home tutor is simple. Here is how TutorWave helps you move from requirement to the right tutor.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
-              <div className="rounded-2xl bg-white/[0.06] border border-white/10 p-4 sm:p-5">
+              <div className="rounded-2xl border border-[#E5E7EB] bg-[#F8FAFC] p-5">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold">1</div>
-                  <p className="font-semibold">Share your requirement</p>
+                  <div className="w-9 h-9 rounded-full bg-[#EBF4FF] text-[#0A6FF7] flex items-center justify-center text-sm font-bold">
+                    1
+                  </div>
+                  <p className="font-bold text-[#0D1118]">Share your requirement</p>
                 </div>
-                <p className="text-sm text-white/60 leading-6">Tell us your child's class, subject and location.</p>
+                <p className="text-sm text-[#6B7280] leading-6">
+                  Tell us your child's class, subject, location and learning requirements.
+                </p>
               </div>
 
-              <div className="rounded-2xl bg-white/[0.06] border border-white/10 p-4 sm:p-5">
+              <div className="rounded-2xl border border-[#E5E7EB] bg-[#F8FAFC] p-5">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold">2</div>
-                  <p className="font-semibold">We confirm suitability</p>
+                  <div className="w-9 h-9 rounded-full bg-[#EBF4FF] text-[#0A6FF7] flex items-center justify-center text-sm font-bold">
+                    2
+                  </div>
+                  <p className="font-bold text-[#0D1118]">We confirm suitability</p>
                 </div>
-                <p className="text-sm text-white/60 leading-6">Our team reviews your requirement and tutor preferences.</p>
+                <p className="text-sm text-[#6B7280] leading-6">
+                  Our team reviews your requirement and checks the tutor's suitability.
+                </p>
               </div>
 
-              <div className="rounded-2xl bg-[#0A6FF7] p-4 sm:p-5">
+              <div className="rounded-2xl border border-[#D7E8FF] bg-[#EBF4FF] p-5">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center text-sm font-bold">3</div>
-                  <p className="font-semibold">Take the next step</p>
+                  <div className="w-9 h-9 rounded-full bg-[#0A6FF7] text-white flex items-center justify-center text-sm font-bold">
+                    3
+                  </div>
+                  <p className="font-bold text-[#0D1118]">Take the next step</p>
                 </div>
-                <p className="text-sm text-white/75 leading-6">We help you proceed with the selected tutor.</p>
+                <p className="text-sm text-[#4B5563] leading-6">
+                  We help you proceed with the selected tutor and move forward with confidence.
+                </p>
               </div>
 
             </div>
@@ -2425,45 +2436,43 @@ export default async function TutorDetailPage({
           FINAL CTA
       =================================================== */}
 
-      <section className="bg-[#0D1118] py-12 sm:py-16">
+      <section className="bg-[#F6F8FB] py-10 sm:py-14">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
+          <div className="rounded-3xl bg-[#FFFFFF] border border-[#E5E7EB] shadow-sm px-6 py-9 sm:px-10 sm:py-10 text-center">
 
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
+            <p className="text-[#0A6FF7] text-xs sm:text-sm font-bold uppercase tracking-[0.15em] mb-3">
+              TutorWave
+            </p>
 
-          <p className="text-[#5DB8FF] text-sm font-bold uppercase tracking-[0.15em] mb-3">
-            TutorWave
-          </p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#0D1118]">
+              Looking for the right tutor for your child?
+            </h2>
 
-          <h2 className="text-2xl sm:text-3xl font-bold text-white">
-            Looking for the right tutor for your child?
-          </h2>
+            <p className="text-[#6B7280] mt-3 max-w-2xl mx-auto leading-7">
+              Tell us your child's class, subject, location and learning requirements. Our team will help you find a suitable tutor.
+            </p>
 
-          <p className="text-white/60 mt-3 max-w-2xl mx-auto leading-7">
-            Tell us your child's class, subject, location
-            and learning requirements. Our team will help
-            you find a suitable tutor.
-          </p>
+            <div className="flex flex-col sm:flex-row justify-center gap-3 mt-7">
 
-          <div className="flex flex-col sm:flex-row justify-center gap-3 mt-7">
+              <Link
+                href="/find-a-tutor"
+                className="inline-flex items-center justify-center gap-2 bg-[#0A6FF7] text-white font-bold px-7 py-3.5 rounded-xl hover:bg-[#0858c8] transition-colors"
+              >
+                Find a Tutor
+                <span>→</span>
+              </Link>
 
-            <Link
-              href="/find-a-tutor"
-              className="inline-flex items-center justify-center gap-2 bg-[#0A6FF7] text-white font-bold px-7 py-3.5 rounded-xl hover:bg-[#0858c8] transition-colors"
-            >
-              Find a Tutor
-              <span>→</span>
-            </Link>
+              <Link
+                href="/tutors"
+                className="inline-flex items-center justify-center bg-[#EEF2F7] text-[#0D1118] font-bold px-7 py-3.5 rounded-xl hover:bg-[#E5E7EB] transition-colors"
+              >
+                Browse All Tutors
+              </Link>
 
-            <Link
-              href="/tutors"
-              className="inline-flex items-center justify-center bg-white/10 text-white font-bold px-7 py-3.5 rounded-xl hover:bg-white/15 transition-colors"
-            >
-              Browse All Tutors
-            </Link>
+            </div>
 
           </div>
-
         </div>
-
       </section>
 
       <Footer />
