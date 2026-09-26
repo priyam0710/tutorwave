@@ -2180,35 +2180,6 @@ const additionalQualifications = [
                 </Section>
               )}
 
-              {/* =================================================
-                  MOBILE CTA
-              ================================================= */}
-
-              <div className="lg:hidden bg-white border border-[#E5E7EB] rounded-3xl p-6">
-
-                <p className="text-xs uppercase tracking-wider font-bold text-[#0A6FF7] mb-2">
-                  TutorWave
-                </p>
-
-                <h2 className="text-xl font-bold text-[#0D1118] mb-2">
-                  Interested in {name}?
-                </h2>
-
-                <p className="text-sm text-[#6B7280] leading-6 mb-5">
-                  Tell us about your child's requirements
-                  and our team will help you proceed.
-                </p>
-
-                <Link
-                  href="/find-a-tutor"
-                  className="flex items-center justify-center gap-2 w-full bg-[#0A6FF7] text-white font-bold py-3.5 rounded-xl"
-                >
-                  Request This Tutor
-                  <span>→</span>
-                </Link>
-
-              </div>
-
             </div>
 
             {/* =================================================
@@ -2442,39 +2413,6 @@ const additionalQualifications = [
                     Browse Tutors
                     <span>→</span>
                   </Link>
-
-                </div>
-
-                {/* =================================================
-                    REQUEST CTA
-                ================================================= */}
-
-                <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 shadow-sm">
-
-                  <p className="text-xs uppercase tracking-[0.12em] font-bold text-[#0A6FF7] mb-2">
-                    TutorWave
-                  </p>
-
-                  <h2 className="text-2xl font-bold text-[#0D1118]">
-                    Interested in this tutor?
-                  </h2>
-
-                  <p className="text-sm text-[#6B7280] mt-3 leading-6">
-                    Share your tuition requirement and
-                    our team will help you proceed.
-                  </p>
-
-                  <Link
-                    href="/find-a-tutor"
-                    className="flex items-center justify-center gap-2 w-full bg-[#0A6FF7] text-white font-bold py-4 rounded-xl hover:bg-[#0858c8] transition-colors mt-6"
-                  >
-                    Request This Tutor
-                    <span>→</span>
-                  </Link>
-
-                  <p className="text-xs text-center text-[#6B7280] mt-3">
-                    No obligation to hire.
-                  </p>
 
                 </div>
 
