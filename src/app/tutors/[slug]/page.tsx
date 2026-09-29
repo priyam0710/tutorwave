@@ -1136,10 +1136,36 @@ export default async function TutorDetailPage({
     )
   );
 
+  const additionalQualificationItems =
+    additionalQualificationValues.flatMap((value) =>
+      String(value)
+        .split(/\s*[,;|\n]+\s*/)
+        .map((item) => item.trim())
+        .filter(Boolean)
+    );
+
+  const qualificationKeys = new Set(
+    [qualification]
+      .filter(Boolean)
+      .map((value) =>
+        String(value)
+          .replace(/\s+/g, ' ')
+          .trim()
+          .toLowerCase()
+      )
+  );
+
   const additionalQualifications =
     uniqueArray(
-      additionalQualificationValues
-    );
+      additionalQualificationItems
+    ).filter((item) => {
+      const key = item
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase();
+
+      return !qualificationKeys.has(key);
+    });
 
   /* =======================================================
      SCHOOL EXPERIENCE
@@ -1319,7 +1345,7 @@ export default async function TutorDetailPage({
   );
 
   const certificationKeysToExclude = new Set(
-    [qualification, highestQualification]
+    [qualification]
       .filter(Boolean)
       .map((value) =>
         String(value)
