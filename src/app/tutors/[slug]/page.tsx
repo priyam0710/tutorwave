@@ -141,6 +141,11 @@ type Tutor = {
   schoolExperience?: string;
   schoolTeachingExperience?: string;
   schoolExperienceYears?: string | number;
+  coachingExperience?: string;
+  coachingTeachingExperience?: string;
+  coachingExperienceYears?: string | number;
+  coachingBackground?: string;
+  coachingInstitute?: string;
 
   teachingExperience?: string;
   experienceDetails?: string;
@@ -162,6 +167,11 @@ type Tutor = {
     schoolExperience?: string;
     schoolTeachingExperience?: string;
     schoolExperienceYears?: number | string;
+    coachingExperience?: string;
+    coachingTeachingExperience?: string;
+    coachingExperienceYears?: number | string;
+    coachingBackground?: string;
+    coachingInstitute?: string;
 
     studentsTaughtFrom?: string | string[];
     studentsTaughtFromSchools?: string | string[];
@@ -1145,6 +1155,18 @@ export default async function TutorDetailPage({
       tutor.teaching?.schoolExperienceYears
     );
 
+  const coachingExperience =
+    firstText(
+      tutor.coachingExperience,
+      tutor.coachingTeachingExperience,
+      tutor.coachingExperienceYears,
+      tutor.coachingBackground,
+      tutor.teaching?.coachingExperience,
+      tutor.teaching?.coachingTeachingExperience,
+      tutor.teaching?.coachingExperienceYears,
+      tutor.teaching?.coachingBackground
+    );
+
   /* =======================================================
      SCHOOLS / INSTITUTIONS TAUGHT FROM
   ======================================================= */
@@ -1285,12 +1307,38 @@ export default async function TutorDetailPage({
      CERTIFICATIONS
   ======================================================= */
 
-  const certifications =
-    uniqueArray(
-      cleanArray(
-        tutor.certifications
+  const certificationValues = [
+    ...cleanArray(tutor.certifications),
+    ...cleanArray(tutor.additionalQualifications),
+    ...cleanArray(tutor.additionalQualification),
+  ].flatMap((value) =>
+    String(value)
+      .split(/\s*[,;|\n]+\s*/)
+      .map((item) => item.trim())
+      .filter(Boolean)
+  );
+
+  const certificationKeysToExclude = new Set(
+    [qualification, highestQualification]
+      .filter(Boolean)
+      .map((value) =>
+        String(value)
+          .replace(/\s+/g, ' ')
+          .trim()
+          .toLowerCase()
       )
-    );
+  );
+
+  const certifications = uniqueArray(
+    certificationValues
+  ).filter((certificate) => {
+    const key = certificate
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+
+    return !certificationKeysToExclude.has(key);
+  });
 
   /* =======================================================
      BIO
@@ -1302,36 +1350,6 @@ export default async function TutorDetailPage({
       tutor.about,
       tutor.aboutTutor,
       tutor.description
-    );
-
-  /* =======================================================
-     PROFILE STRENGTH
-  ======================================================= */
-
-  const profileSignals = [
-    Boolean(photo),
-    subjects.length > 0,
-    classes.length > 0,
-    boards.length > 0,
-    Boolean(experience),
-    Boolean(qualification),
-    Boolean(college),
-    Boolean(mode),
-    Boolean(city),
-    languages.length > 0,
-    schoolsTaught.length > 0,
-    Boolean(schoolExperience),
-    Boolean(teachingApproach),
-    Boolean(availability),
-    Boolean(feeRange),
-    Boolean(isVerified),
-  ];
-
-  const profileCompleteness =
-    Math.round(
-      (profileSignals.filter(Boolean).length /
-        profileSignals.length) *
-        100
     );
 
   /* =======================================================
@@ -1789,7 +1807,21 @@ export default async function TutorDetailPage({
                       </div>
 
                       <p className="text-[#374151] leading-7">
-                        School / coaching teaching experience
+                        School teaching experience
+                      </p>
+
+                    </div>
+                  )}
+
+                  {coachingExperience && (
+                    <div className="flex items-start gap-3">
+
+                      <div className="mt-0.5 text-[#0A6FF7]">
+                        <CheckIcon />
+                      </div>
+
+                      <p className="text-[#374151] leading-7">
+                        Coaching / institute teaching experience
                       </p>
 
                     </div>
@@ -2322,35 +2354,79 @@ export default async function TutorDetailPage({
                   SCHOOL EXPERIENCE
               ================================================= */}
 
-              {schoolExperience && (
+              {(schoolExperience || coachingExperience) && (
                 <Section
-                  title="School Teaching Experience"
+                  title="Teaching Background"
                   eyebrow="School / coaching background"
                 >
 
-                  <div className="flex items-start gap-5">
+                  <div className="space-y-6">
 
-                    <div className="w-12 h-12 rounded-2xl bg-[#EBF4FF] flex items-center justify-center flex-shrink-0 text-[#0A6FF7]">
+                    {schoolExperience && (
+                      <div className="flex items-start gap-5">
 
-                      <svg
-                        width="22"
-                        height="22"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                      >
-                        <path d="M3 21h18" />
-                        <path d="M5 21V9l7-5 7 5v12" />
-                        <path d="M9 21v-6h6v6" />
-                        <path d="M8 11h2M14 11h2" />
-                      </svg>
+                        <div className="w-12 h-12 rounded-2xl bg-[#EBF4FF] flex items-center justify-center flex-shrink-0 text-[#0A6FF7]">
 
-                    </div>
+                          <svg
+                            width="22"
+                            height="22"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                          >
+                            <path d="M3 21h18" />
+                            <path d="M5 21V9l7-5 7 5v12" />
+                            <path d="M9 21v-6h6v6" />
+                            <path d="M8 11h2M14 11h2" />
+                          </svg>
 
-                    <p className="text-[#374151] leading-8">
-                      {schoolExperience}
-                    </p>
+                        </div>
+
+                        <div>
+                          <p className="font-bold text-[#0D1118] mb-1">
+                            School Teaching
+                          </p>
+                          <p className="text-[#374151] leading-8">
+                            {schoolExperience}
+                          </p>
+                        </div>
+
+                      </div>
+                    )}
+
+                    {coachingExperience && (
+                      <div className="flex items-start gap-5">
+
+                        <div className="w-12 h-12 rounded-2xl bg-[#EBF4FF] flex items-center justify-center flex-shrink-0 text-[#0A6FF7]">
+
+                          <svg
+                            width="22"
+                            height="22"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                          >
+                            <path d="M4 19h16" />
+                            <path d="M6 19V9h12v10" />
+                            <path d="M8 9V6h8v3" />
+                            <path d="M9 13h6M9 16h6" />
+                          </svg>
+
+                        </div>
+
+                        <div>
+                          <p className="font-bold text-[#0D1118] mb-1">
+                            Coaching / Institute Teaching
+                          </p>
+                          <p className="text-[#374151] leading-8">
+                            {coachingExperience}
+                          </p>
+                        </div>
+
+                      </div>
+                    )}
 
                   </div>
 
@@ -2653,57 +2729,6 @@ export default async function TutorDetailPage({
 
                 </Section>
               )}
-
-              {/* =================================================
-                  PROFILE COMPLETENESS
-              ================================================= */}
-
-              <Section
-                title="Profile Information"
-                eyebrow="TutorWave profile"
-              >
-
-                <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl p-5">
-
-                  <div className="flex items-center justify-between gap-4 mb-3">
-
-                    <div>
-                      <p className="font-bold text-[#0D1118]">
-                        Profile information available
-                      </p>
-
-                      <p className="text-sm text-[#6B7280] mt-1">
-                        This profile displays information provided through the TutorWave tutor registration process.
-                      </p>
-                    </div>
-
-                    {isVerified && (
-                      <div className="hidden sm:flex items-center gap-2 text-[#0C8F81] font-bold text-sm whitespace-nowrap">
-                        <CheckIcon />
-                        Verified
-                      </div>
-                    )}
-
-                  </div>
-
-                  <div className="h-2 rounded-full bg-[#E5E7EB] overflow-hidden">
-
-                    <div
-                      className="h-full rounded-full bg-[#0A6FF7]"
-                      style={{
-                        width: `${profileCompleteness}%`,
-                      }}
-                    />
-
-                  </div>
-
-                  <p className="text-xs text-[#6B7280] mt-2">
-                    Profile information completeness: {profileCompleteness}%
-                  </p>
-
-                </div>
-
-              </Section>
 
             </div>
 
