@@ -424,16 +424,27 @@ function formatMode(
     value.toLowerCase().trim()
   );
 
+  // The CRM can store the combined mode as "Both".
+  // Never expose that internal value to parents.
+  const hasBoth =
+    normalized.includes('both') ||
+    normalized.includes('home & online') ||
+    normalized.includes('home and online') ||
+    normalized.includes('home + online') ||
+    normalized.includes('home/online');
+
   const hasHome =
     normalized.includes('home') ||
     normalized.includes('offline') ||
-    normalized.includes('home tuition');
+    normalized.includes('home tuition') ||
+    normalized.includes('home classes');
 
   const hasOnline =
     normalized.includes('online') ||
-    normalized.includes('online tuition');
+    normalized.includes('online tuition') ||
+    normalized.includes('online classes');
 
-  if (hasHome && hasOnline) {
+  if (hasBoth || (hasHome && hasOnline)) {
     return 'Available for Home Tuition & Online Classes';
   }
 
