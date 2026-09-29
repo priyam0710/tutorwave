@@ -1016,12 +1016,21 @@ export default async function TutorDetailPage({
     cleanArray(tutor.achievements);
 
   /*
-   * Certifications
+   * Additional Qualifications
+   *
+   * The CRM may store these under different fields depending
+   * on when/how the tutor profile was created. Consolidate all
+   * supported fields into ONE clean, de-duplicated list so the
+   * profile never shows the same qualification twice.
    */
-  const certifications =
-    uniqueArray(
-      cleanArray(tutor.certifications)
-    );
+  const additionalQualifications =
+    uniqueArray([
+      ...cleanArray(tutor.additionalQualification),
+      ...cleanArray(tutor.additionalQualifications),
+      ...cleanArray(tutor.education?.additionalQualification),
+      ...cleanArray(tutor.education?.additionalQualifications),
+      ...cleanArray(tutor.certifications),
+    ]);
 
   /* =======================================================
      RETURN
@@ -2050,23 +2059,23 @@ export default async function TutorDetailPage({
               )}
 
               {/* =================================================
-                  CERTIFICATIONS
+                  ADDITIONAL QUALIFICATIONS
               ================================================= */}
 
-              {certifications.length > 0 && (
+              {additionalQualifications.length > 0 && (
                 <Section
-                  title="Certifications"
-                  eyebrow="Additional qualifications"
+                  title="Additional Qualifications"
+                  eyebrow="Certifications & other qualifications"
                 >
 
                   <div className="flex flex-wrap gap-2.5">
 
-                    {certifications.map(
-                      (certificate, index) => (
+                    {additionalQualifications.map(
+                      (qualificationItem, index) => (
                         <Tag
-                          key={`${certificate}-${index}`}
+                          key={`${qualificationItem}-${index}`}
                         >
-                          {certificate}
+                          {qualificationItem}
                         </Tag>
                       )
                     )}
