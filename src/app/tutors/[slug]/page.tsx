@@ -124,8 +124,12 @@ type Tutor = {
     schoolTeachingExperience?: string;
     schoolExperienceYears?: number | string;
 
-    studentsTaughtFrom?: string | string[];
-    studentsTaughtFromSchools?: string | string[];
+    studentsTaughtFrom?: string | string[] | Record<string, any> | Record<string, any>[];
+    studentsTaughtFromSchools?: string | string[] | Record<string, any> | Record<string, any>[];
+    schoolsTaught?: string | string[] | Record<string, any> | Record<string, any>[];
+    schoolNames?: string | string[] | Record<string, any> | Record<string, any>[];
+    previousInstitutions?: string | string[] | Record<string, any> | Record<string, any>[];
+    institutions?: string | string[] | Record<string, any> | Record<string, any>[];
 
     boards?: string[] | string;
 
@@ -918,21 +922,44 @@ export default async function TutorDetailPage({
    * =======================================================
    */
 
-  const schoolsTaught = firstArray(
-    /*
-     * Direct CRM fields
-     */
+  const schoolSourceValues = [
     tutor.schoolsTaught,
     tutor.schoolNames,
     tutor.studentsTaughtFromSchools,
     tutor.previousInstitutions,
     tutor.institutions,
-
-    /*
-     * Nested CRM fields
-     */
     tutor.teaching?.studentsTaughtFrom,
-    tutor.teaching?.studentsTaughtFromSchools
+    tutor.teaching?.studentsTaughtFromSchools,
+    tutor.teaching?.schoolsTaught,
+    tutor.teaching?.schoolNames,
+    tutor.teaching?.previousInstitutions,
+    tutor.teaching?.institutions,
+  ];
+
+  const schoolsTaught = uniqueArray(
+    schoolSourceValues.flatMap((value: any) => {
+      if (value === undefined || value === null || value === '') return [];
+
+      const items = Array.isArray(value) ? value.flat(Infinity) : [value];
+
+      return items.flatMap((item: any) => {
+        if (item === undefined || item === null || item === '') return [];
+
+        if (typeof item === 'object') {
+          return cleanArray([
+            item.schoolName,
+            item.school,
+            item.name,
+            item.institution,
+            item.institutionName,
+            item.school_name,
+            item.school_name_value
+          ]);
+        }
+
+        return cleanArray(item);
+      });
+    })
   );
 
   /*
@@ -1634,7 +1661,7 @@ export default async function TutorDetailPage({
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
 
-                    {qualification && (
+                    {(qualification || qualificationStreams.length > 0) && (
                       <div className="border border-[#E5E7EB] rounded-2xl p-5">
 
                         <div className="w-11 h-11 rounded-xl bg-[#EBF4FF] flex items-center justify-center text-[#0A6FF7] mb-4">
@@ -1653,52 +1680,38 @@ export default async function TutorDetailPage({
 
                         </div>
 
-                        <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-2">
-                          Highest Qualification
-                        </p>
-
                         {qualification && (
-                          <p className="font-semibold text-[#0D1118]">
-                            {qualification}
-                          </p>
+                          <>
+                            <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-2">
+                              Highest Qualification
+                            </p>
+
+                            <p className="font-semibold text-[#0D1118]">
+                              {qualification}
+                            </p>
+                          </>
                         )}
 
-                      </div>
-                    )}
+                        {qualificationStreams.length > 0 && (
+                          <div className={`${qualification ? 'mt-5 pt-5 border-t border-[#E5E7EB]' : ''}`}>
 
-                    {qualificationStreams.length > 0 && (
-                      <div className="border border-[#E5E7EB] rounded-2xl p-5">
-
-                        <div className="w-11 h-11 rounded-xl bg-[#EBF4FF] flex items-center justify-center text-[#0A6FF7] mb-4">
-
-                          <svg
-                            width="21"
-                            height="21"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.8"
-                          >
-                            <path d="M4 5h16v14H4z" />
-                            <path d="M8 9h8M8 13h6M8 17h4" />
-                          </svg>
-
-                        </div>
-
-                        <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-2">
-                          Stream
-                        </p>
-
-                        <div className="space-y-1">
-                          {qualificationStreams.map((stream, index) => (
-                            <p
-                              key={`${stream}-${index}`}
-                              className="font-semibold text-[#0D1118]"
-                            >
-                              {stream}
+                            <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-2">
+                              Stream
                             </p>
-                          ))}
-                        </div>
+
+                            <div className="space-y-1">
+                              {qualificationStreams.map((stream, index) => (
+                                <p
+                                  key={`${stream}-${index}`}
+                                  className="font-semibold text-[#0D1118]"
+                                >
+                                  {stream}
+                                </p>
+                              ))}
+                            </div>
+
+                          </div>
+                        )}
 
                       </div>
                     )}
@@ -1840,8 +1853,8 @@ export default async function TutorDetailPage({
 
               {schoolsTaught.length > 0 && (
                 <Section
-                  title="Students Taught From"
-                  eyebrow="School exposure"
+                  title="Students Taught From Schools"
+                  eyebrow="School / institution exposure"
                 >
 
                   <p className="text-[#6B7280] mb-5 leading-7">
