@@ -1879,9 +1879,6 @@ export default async function TutorDetailPage({
                         </div>
 
                         <div>
-                          <p className="text-sm font-semibold uppercase tracking-wide text-[#6B7280] mb-1">
-                            School Teaching Experience
-                          </p>
                           <p className="text-[#374151] leading-8">
                             {schoolExperience}
                           </p>
@@ -2355,87 +2352,6 @@ export default async function TutorDetailPage({
                         <span className="text-sm font-semibold text-[#0D1118] text-right">
                           {mode}
                         </span>
-                      </div>
-                    )}
-
-                  </div>
-
-                </div>
-
-                {/* =================================================
-                    TUTORWAVE VERIFICATION
-                ================================================= */}
-
-                <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6">
-
-                  <div className="flex items-center gap-3 mb-5">
-
-                    <div className="w-10 h-10 rounded-xl bg-[#E6F7F5] flex items-center justify-center text-[#0C8F81]">
-                      <CheckIcon />
-                    </div>
-
-                    <div>
-
-                      <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280]">
-                        TutorWave
-                      </p>
-
-                      <h3 className="font-bold text-[#0D1118]">
-                        Verification
-                      </h3>
-
-                    </div>
-
-                  </div>
-
-                  <div className="space-y-3">
-
-                    <div className="flex items-start gap-3">
-                      <span className="text-[#0C8F81] mt-0.5">
-                        <CheckIcon />
-                      </span>
-
-                      <p className="text-sm text-[#374151] leading-6">
-                        Profile reviewed by TutorWave
-                      </p>
-                    </div>
-
-                    {qualification && (
-                      <div className="flex items-start gap-3">
-                        <span className="text-[#0C8F81] mt-0.5">
-                          <CheckIcon />
-                        </span>
-
-                        <p className="text-sm text-[#374151] leading-6">
-                          Qualification information provided
-                        </p>
-                      </div>
-                    )}
-
-                    {photo && (
-                      <div className="flex items-start gap-3">
-                        <span className="text-[#0C8F81] mt-0.5">
-                          <CheckIcon />
-                        </span>
-
-                        <p className="text-sm text-[#374151] leading-6">
-                          Profile photo provided
-                        </p>
-                      </div>
-                    )}
-
-                    {isVerified && (
-                      <div className="pt-3 mt-3 border-t border-[#E5E7EB]">
-
-                        <p className="text-sm font-bold text-[#0C8F81]">
-                          ✓ Verified Tutor Profile
-                        </p>
-
-                        <p className="text-xs text-[#6B7280] mt-1 leading-5">
-                          This profile has been reviewed and
-                          verified by the TutorWave team.
-                        </p>
-
                       </div>
                     )}
 
