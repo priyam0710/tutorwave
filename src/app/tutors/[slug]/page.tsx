@@ -90,6 +90,8 @@ type Tutor = {
    * School / teaching background
    */
   schoolsTaught?: string[] | string;
+  studentsTaughtFrom?: string | string[] | Record<string, any> | Record<string, any>[];
+  schoolName?: string | string[];
   previousInstitutions?: string[] | string;
   institutions?: string[];
   schoolNames?: string[] | string;
@@ -98,6 +100,10 @@ type Tutor = {
   schoolExperience?: string;
   schoolTeachingExperience?: string;
   schoolExperienceYears?: string | number;
+  coachingExperience?: string;
+  coachingTeachingExperience?: string;
+  coachingExperienceYears?: string | number;
+  coachingBackground?: string;
 
   teachingExperience?: string;
   experienceDetails?: string;
@@ -125,6 +131,11 @@ type Tutor = {
     schoolExperienceYears?: number | string;
 
     studentsTaughtFrom?: string | string[] | Record<string, any> | Record<string, any>[];
+    schoolName?: string | string[];
+    coachingExperience?: string;
+    coachingTeachingExperience?: string;
+    coachingExperienceYears?: string | number;
+    coachingBackground?: string;
     studentsTaughtFromSchools?: string | string[] | Record<string, any> | Record<string, any>[];
     schoolsTaught?: string | string[] | Record<string, any> | Record<string, any>[];
     schoolNames?: string | string[] | Record<string, any> | Record<string, any>[];
@@ -910,21 +921,33 @@ export default async function TutorDetailPage({
       tutor.teaching?.schoolExperienceYears
     );
 
+  const coachingExperience =
+    firstText(
+      tutor.coachingExperience,
+      tutor.coachingTeachingExperience,
+      tutor.coachingExperienceYears,
+      tutor.coachingBackground,
+      tutor.teaching?.coachingExperience,
+      tutor.teaching?.coachingTeachingExperience,
+      tutor.teaching?.coachingExperienceYears,
+      tutor.teaching?.coachingBackground
+    );
+
   /*
    * =======================================================
-   * STUDENTS TAUGHT FROM / SCHOOL NAMES
+   * SCHOOLS / INSTITUTIONS TAUGHT FROM
    *
-   * The registration form submits:
-   *
-   * teaching.studentsTaughtFrom
-   *
-   * This is the important fix.
+   * Read both direct and nested CRM fields. In particular,
+   * `studentsTaughtFrom` can exist at the top level in the
+   * public tutor response.
    * =======================================================
    */
 
   const schoolSourceValues = [
     tutor.schoolsTaught,
     tutor.schoolNames,
+    tutor.schoolName,
+    tutor.studentsTaughtFrom,
     tutor.studentsTaughtFromSchools,
     tutor.previousInstitutions,
     tutor.institutions,
@@ -953,11 +976,19 @@ export default async function TutorDetailPage({
             item.institution,
             item.institutionName,
             item.school_name,
-            item.school_name_value
+            item.school_name_value,
+            item.title,
+            item.label,
+            item.value,
           ]);
         }
 
-        return cleanArray(item);
+        const text = String(item).trim();
+
+        // Do not expose a boolean/Yes/No as a school name.
+        if (/^(yes|no|true|false)$/i.test(text)) return [];
+
+        return cleanArray(text);
       });
     })
   );
@@ -1812,35 +1843,85 @@ export default async function TutorDetailPage({
                   SCHOOL TEACHING EXPERIENCE
               ================================================= */}
 
-              {schoolExperience && (
+              {(schoolExperience || coachingExperience) && (
                 <Section
-                  title="School Teaching Experience"
+                  title={
+                    schoolExperience && coachingExperience
+                      ? "School & Coaching Teaching Experience"
+                      : schoolExperience
+                        ? "School Teaching Experience"
+                        : "Coaching Teaching Experience"
+                  }
                   eyebrow="School / coaching background"
                 >
 
-                  <div className="flex items-start gap-5">
+                  <div className="space-y-5">
 
-                    <div className="w-12 h-12 rounded-2xl bg-[#EBF4FF] flex items-center justify-center flex-shrink-0 text-[#0A6FF7]">
+                    {schoolExperience && (
+                      <div className="flex items-start gap-5">
 
-                      <svg
-                        width="22"
-                        height="22"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                      >
-                        <path d="M3 21h18" />
-                        <path d="M5 21V9l7-5 7 5v12" />
-                        <path d="M9 21v-6h6v6" />
-                        <path d="M8 11h2M14 11h2" />
-                      </svg>
+                        <div className="w-12 h-12 rounded-2xl bg-[#EBF4FF] flex items-center justify-center flex-shrink-0 text-[#0A6FF7]">
 
-                    </div>
+                          <svg
+                            width="22"
+                            height="22"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                          >
+                            <path d="M3 21h18" />
+                            <path d="M5 21V9l7-5 7 5v12" />
+                            <path d="M9 21v-6h6v6" />
+                            <path d="M8 11h2M14 11h2" />
+                          </svg>
 
-                    <p className="text-[#374151] leading-8">
-                      {schoolExperience}
-                    </p>
+                        </div>
+
+                        <div>
+                          <p className="text-sm font-semibold uppercase tracking-wide text-[#6B7280] mb-1">
+                            School Teaching Experience
+                          </p>
+                          <p className="text-[#374151] leading-8">
+                            {schoolExperience}
+                          </p>
+                        </div>
+
+                      </div>
+                    )}
+
+                    {coachingExperience && (
+                      <div className="flex items-start gap-5">
+
+                        <div className="w-12 h-12 rounded-2xl bg-[#EBF4FF] flex items-center justify-center flex-shrink-0 text-[#0A6FF7]">
+
+                          <svg
+                            width="22"
+                            height="22"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                          >
+                            <path d="M4 19h16" />
+                            <path d="M6 17V7h12v10" />
+                            <path d="M9 7V5h6v2" />
+                            <path d="M8 11h8M8 14h5" />
+                          </svg>
+
+                        </div>
+
+                        <div>
+                          <p className="text-sm font-semibold uppercase tracking-wide text-[#6B7280] mb-1">
+                            Coaching / Institute Teaching Experience
+                          </p>
+                          <p className="text-[#374151] leading-8">
+                            {coachingExperience}
+                          </p>
+                        </div>
+
+                      </div>
+                    )}
 
                   </div>
 
