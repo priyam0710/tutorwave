@@ -1161,6 +1161,22 @@ export default async function TutorDetailPage({
                   {name}
                 </h1>
 
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#ECFDF5] text-[#059669] text-xs sm:text-sm font-bold border border-[#A7F3D0]">
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                  Verified
+                </span>
+
               </div>
 
               {experience && (
@@ -1875,21 +1891,6 @@ export default async function TutorDetailPage({
 
                 </Section>
               )}
-
-              {/* =================================================
-                  ABOUT
-              ================================================= */}
-
-              <Section
-                title={`About ${name}`}
-                eyebrow="Tutor introduction"
-              >
-
-                <p className="text-[#4B5563] leading-8 text-[15px] sm:text-base">
-                  {bio}
-                </p>
-
-              </Section>
 
               {/* =================================================
                   TEACHING APPROACH
