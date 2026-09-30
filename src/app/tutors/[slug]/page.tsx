@@ -1055,34 +1055,6 @@ export default async function TutorDetailPage({
     );
 
   /*
-   * Verification
-   */
-  const isVerified =
-    tutor.isVerified === true ||
-    tutor.verified === true ||
-    String(tutor.verificationStatus || '')
-      .toLowerCase() === 'verified' ||
-    String(tutor.status || '')
-      .toLowerCase() === 'verified';
-
-  /*
-   * Rating
-   *
-   * Kept only if the CRM actually has a rating.
-   * No placements.
-   */
-  const ratingValue =
-    tutor.rating ??
-    tutor.averageRating;
-
-  const rating =
-    ratingValue !== undefined &&
-    ratingValue !== null &&
-    ratingValue !== ''
-      ? Number(ratingValue)
-      : null;
-
-  /*
    * Achievements
    */
   const achievements =
@@ -1158,7 +1130,7 @@ export default async function TutorDetailPage({
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-8 sm:py-10">
 
-          <div className="grid grid-cols-1 lg:grid-cols-[180px_1fr_auto] gap-7 lg:gap-10 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-[180px_1fr] gap-7 lg:gap-10 items-start">
 
             {/* PHOTO */}
 
@@ -1188,13 +1160,6 @@ export default async function TutorDetailPage({
                 <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#0D1118] tracking-tight">
                   {name}
                 </h1>
-
-                {isVerified && (
-                  <span className="inline-flex items-center gap-1.5 bg-[#E6F7F5] text-[#0C8F81] px-3 py-1.5 rounded-full text-xs font-bold">
-                    <CheckIcon />
-                    Verified Tutor
-                  </span>
-                )}
 
               </div>
 
@@ -1275,49 +1240,6 @@ export default async function TutorDetailPage({
 
                   </div>
                 )}
-
-              </div>
-
-            </div>
-
-            {/* QUICK STATS */}
-
-            <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
-
-              {rating !== null &&
-                !Number.isNaN(rating) && (
-                  <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl px-5 py-4 min-w-[145px]">
-
-                    <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-1">
-                      Rating
-                    </p>
-
-                    <div className="flex items-center gap-2">
-
-                      <span className="text-2xl font-bold text-[#0D1118]">
-                        {rating.toFixed(1)}
-                      </span>
-
-                      <span className="text-[#F59E0B]">
-                        ★
-                      </span>
-
-                    </div>
-
-                  </div>
-                )}
-
-              <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl px-5 py-4 min-w-[145px]">
-
-                <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-1">
-                  Profile
-                </p>
-
-                <span className="text-base font-bold text-[#0D1118]">
-                  {isVerified
-                    ? 'Verified'
-                    : 'TutorWave Tutor'}
-                </span>
 
               </div>
 
@@ -2386,83 +2308,6 @@ export default async function TutorDetailPage({
                     Browse Tutors
                     <span>→</span>
                   </Link>
-
-                </div>
-
-                {/* =================================================
-                    HOW IT WORKS
-                ================================================= */}
-
-                <div className="bg-[#0D1118] rounded-3xl p-6 text-white">
-
-                  <p className="text-xs uppercase tracking-[0.12em] font-bold text-[#5DB8FF] mb-2">
-                    TutorWave
-                  </p>
-
-                  <h3 className="text-xl font-bold mb-5">
-                    How It Works
-                  </h3>
-
-                  <div className="space-y-5">
-
-                    <div className="flex items-start gap-4">
-
-                      <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold flex-shrink-0">
-                        1
-                      </div>
-
-                      <div>
-                        <p className="font-semibold">
-                          Share your requirement
-                        </p>
-
-                        <p className="text-sm text-white/60 mt-1 leading-5">
-                          Tell us your child's class,
-                          subject and location.
-                        </p>
-                      </div>
-
-                    </div>
-
-                    <div className="flex items-start gap-4">
-
-                      <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold flex-shrink-0">
-                        2
-                      </div>
-
-                      <div>
-                        <p className="font-semibold">
-                          We confirm suitability
-                        </p>
-
-                        <p className="text-sm text-white/60 mt-1 leading-5">
-                          Our team reviews your requirement
-                          and tutor preferences.
-                        </p>
-                      </div>
-
-                    </div>
-
-                    <div className="flex items-start gap-4">
-
-                      <div className="w-8 h-8 rounded-full bg-[#0A6FF7] flex items-center justify-center text-sm font-bold flex-shrink-0">
-                        3
-                      </div>
-
-                      <div>
-                        <p className="font-semibold">
-                          We help you proceed
-                        </p>
-
-                        <p className="text-sm text-white/60 mt-1 leading-5">
-                          We help you take the next step
-                          with the selected tutor.
-                        </p>
-                      </div>
-
-                    </div>
-
-                  </div>
 
                 </div>
 
