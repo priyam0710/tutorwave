@@ -48,6 +48,7 @@ type Tutor = {
   fieldOfStudy?: string;
   course?: string;
   major?: string;
+  stream?: string;
 
   experienceYears?: number | string;
   experience?: number | string;
@@ -138,6 +139,7 @@ type Tutor = {
     seniorSecondarySubjects?: string[] | string;
 
     englishFluency?: string;
+    stream?: string;
   };
 
   education?: {
@@ -857,7 +859,9 @@ export default async function TutorDetailPage({
   const qualificationStreams =
     uniqueArray(
       firstArray(
+        tutor.stream,
         tutor.education?.stream,
+        tutor.teaching?.stream,
         tutor.qualificationStream,
         tutor.educationStream,
         tutor.fieldOfStudy,
@@ -1659,15 +1663,42 @@ export default async function TutorDetailPage({
                           </p>
                         )}
 
-                        {qualificationStreams.length > 0 && (
-                          <ul className="mt-2 space-y-1.5 text-sm font-medium text-[#4B5563] leading-6 list-disc pl-5">
-                            {qualificationStreams.map((stream, index) => (
-                              <li key={`${stream}-${index}`}>
-                                {stream}
-                              </li>
-                            ))}
-                          </ul>
-                        )}
+                      </div>
+                    )}
+
+                    {qualificationStreams.length > 0 && (
+                      <div className="border border-[#E5E7EB] rounded-2xl p-5">
+
+                        <div className="w-11 h-11 rounded-xl bg-[#EBF4FF] flex items-center justify-center text-[#0A6FF7] mb-4">
+
+                          <svg
+                            width="21"
+                            height="21"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                          >
+                            <path d="M4 5h16v14H4z" />
+                            <path d="M8 9h8M8 13h6M8 17h4" />
+                          </svg>
+
+                        </div>
+
+                        <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-2">
+                          Stream
+                        </p>
+
+                        <div className="space-y-1">
+                          {qualificationStreams.map((stream, index) => (
+                            <p
+                              key={`${stream}-${index}`}
+                              className="font-semibold text-[#0D1118]"
+                            >
+                              {stream}
+                            </p>
+                          ))}
+                        </div>
 
                       </div>
                     )}
