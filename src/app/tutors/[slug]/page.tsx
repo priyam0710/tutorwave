@@ -752,6 +752,15 @@ export default async function TutorDetailPage({
     tutor.personal?.fullName ||
     'Tutor';
 
+  /*
+   * "Request This Tutor" / "Interested in this tutor?" CTAs
+   * deep-link straight into TutorWave's WhatsApp number with a
+   * pre-filled demo-class request naming this specific tutor.
+   */
+  const tutorWhatsAppHref = `https://wa.me/918588879239?text=${encodeURIComponent(
+    `I want demo class with ${name}`
+  )}`;
+
   const photo =
     tutor.profilePhoto ||
     tutor.personal?.profilePhoto ||
@@ -2236,13 +2245,15 @@ export default async function TutorDetailPage({
                   and our team will help you proceed.
                 </p>
 
-                <Link
-                  href="/find-a-tutor"
+                <a
+                  href={tutorWhatsAppHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 w-full bg-[#0A6FF7] text-white font-bold py-3.5 rounded-xl hover:bg-[#0858c8] transition-colors"
                 >
                   Request This Tutor
                   <span>→</span>
-                </Link>
+                </a>
 
               </div>
 
@@ -2407,18 +2418,15 @@ export default async function TutorDetailPage({
                     our team will help you proceed.
                   </p>
 
-                  <Link
-                    href="/find-a-tutor"
+                  <a
+                    href={tutorWhatsAppHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2 w-full bg-[#0A6FF7] text-white font-bold py-4 rounded-xl hover:bg-[#0858c8] transition-colors mt-6"
                   >
                     Request This Tutor
                     <span>→</span>
-                  </Link>
-
-                  <p className="text-xs text-center text-[#6B7280] mt-3">
-                    No obligation to hire.
-                  </p>
-
+                  </a>
                 </div>
 
               </div>
