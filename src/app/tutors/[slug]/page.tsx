@@ -1,4 +1,3 @@
-
 import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
@@ -510,23 +509,35 @@ function formatNumber(
 function Section({
   title,
   eyebrow,
+  icon,
   children,
 }: {
   title: string;
   eyebrow?: string;
+  icon?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
-    <section className="bg-white border border-[#E5E7EB] rounded-3xl p-6 sm:p-8">
-      {eyebrow && (
-        <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#0A6FF7] mb-2">
-          {eyebrow}
-        </p>
-      )}
+    <section className="group bg-white border border-[#E5E7EB] rounded-[28px] p-6 sm:p-8 shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-shadow hover:shadow-[0_8px_24px_rgba(16,24,40,0.06)]">
+      <div className="flex items-start gap-4 mb-6">
+        {icon && (
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#0A6FF7] to-[#2F8EFF] flex items-center justify-center text-white flex-shrink-0 shadow-[0_4px_10px_rgba(10,111,247,0.25)]">
+            {icon}
+          </div>
+        )}
 
-      <h2 className="text-xl sm:text-2xl font-bold text-[#0D1118] mb-6">
-        {title}
-      </h2>
+        <div>
+          {eyebrow && (
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#0A6FF7] mb-1.5">
+              {eyebrow}
+            </p>
+          )}
+
+          <h2 className="text-xl sm:text-2xl font-bold text-[#0D1118] leading-tight">
+            {title}
+          </h2>
+        </div>
+      </div>
 
       {children}
     </section>
@@ -542,12 +553,13 @@ function Tag({
 }) {
   return (
     <span
-      className={`inline-flex items-center px-3.5 py-2 rounded-xl text-sm font-medium ${
+      className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold transition-colors ${
         blue
-          ? 'bg-[#EBF4FF] text-[#0A6FF7]'
-          : 'bg-[#F8FAFC] border border-[#E5E7EB] text-[#374151]'
+          ? 'bg-gradient-to-br from-[#EBF4FF] to-[#E3F0FF] text-[#0A6FF7] border border-[#D6E9FF] hover:border-[#0A6FF7]/40'
+          : 'bg-[#F8FAFC] border border-[#E5E7EB] text-[#374151] hover:border-[#0A6FF7]/30 hover:bg-[#F2F7FF]'
       }`}
     >
+      {blue && <span className="w-1.5 h-1.5 rounded-full bg-[#0A6FF7]" />}
       {children}
     </span>
   );
@@ -565,7 +577,7 @@ function InfoRow({
   if (!value) return null;
 
   return (
-    <div className="flex items-start gap-4">
+    <div className="flex items-start gap-4 p-3 -m-3 rounded-2xl transition-colors hover:bg-[#F8FAFC]">
       <div className="w-10 h-10 rounded-xl bg-[#EBF4FF] flex items-center justify-center flex-shrink-0 text-[#0A6FF7]">
         {icon}
       </div>
@@ -676,13 +688,13 @@ export default async function TutorDetailPage({
       <main className="min-h-screen bg-white">
         <Header />
 
-        <section className="min-h-[55vh] flex items-center justify-center px-4">
+        <section className="min-h-[60vh] flex items-center justify-center px-4 bg-gradient-to-b from-[#F8FAFC] to-white">
           <div className="text-center max-w-lg">
 
-            <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-[#EBF4FF] flex items-center justify-center">
+            <div className="w-20 h-20 mx-auto mb-7 rounded-3xl bg-gradient-to-br from-[#EBF4FF] to-[#DCEBFF] flex items-center justify-center shadow-[0_8px_24px_rgba(10,111,247,0.12)]">
               <svg
-                width="28"
-                height="28"
+                width="32"
+                height="32"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="#0A6FF7"
@@ -693,11 +705,11 @@ export default async function TutorDetailPage({
               </svg>
             </div>
 
-            <h1 className="text-3xl font-bold text-[#0D1118] mb-3">
+            <h1 className="text-3xl sm:text-4xl font-bold text-[#0D1118] mb-3 tracking-tight">
               Tutor Profile Not Found
             </h1>
 
-            <p className="text-[#6B7280] leading-relaxed mb-8">
+            <p className="text-[#6B7280] leading-relaxed mb-9">
               We couldn't find this tutor profile in the
               TutorWave tutor network. The profile may have
               been removed, unpublished or is still being
@@ -706,7 +718,7 @@ export default async function TutorDetailPage({
 
             <Link
               href="/tutors"
-              className="inline-flex items-center gap-2 bg-[#0A6FF7] text-white font-semibold px-6 py-3 rounded-xl hover:bg-[#0858c8] transition-colors"
+              className="inline-flex items-center gap-2 bg-[#0A6FF7] text-white font-semibold px-7 py-3.5 rounded-xl hover:bg-[#0858c8] transition-colors shadow-[0_8px_20px_rgba(10,111,247,0.25)]"
             >
               <svg
                 width="16"
@@ -1093,27 +1105,27 @@ export default async function TutorDetailPage({
       <div className="bg-white border-b border-[#E5E7EB]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-4">
 
-          <div className="flex items-center gap-2 text-sm text-[#6B7280]">
+          <div className="flex items-center gap-2 text-sm text-[#6B7280] overflow-x-auto whitespace-nowrap">
 
             <Link
               href="/"
-              className="hover:text-[#0A6FF7]"
+              className="hover:text-[#0A6FF7] transition-colors"
             >
               Home
             </Link>
 
-            <span>/</span>
+            <span className="text-[#CBD5E1]">/</span>
 
             <Link
               href="/tutors"
-              className="hover:text-[#0A6FF7]"
+              className="hover:text-[#0A6FF7] transition-colors"
             >
               Tutors
             </Link>
 
-            <span>/</span>
+            <span className="text-[#CBD5E1]">/</span>
 
-            <span className="text-[#0D1118] font-medium truncate">
+            <span className="text-[#0D1118] font-semibold truncate">
               {name}
             </span>
 
@@ -1134,21 +1146,23 @@ export default async function TutorDetailPage({
 
             {/* PHOTO */}
 
-            <div className="w-40 h-40 sm:w-44 sm:h-44 rounded-3xl overflow-hidden bg-[#EBF4FF] border border-[#E5E7EB] shadow-sm">
+            <div className="relative w-40 h-40 sm:w-44 sm:h-44 mx-auto lg:mx-0">
+              <div className="w-full h-full rounded-3xl overflow-hidden bg-[#EBF4FF] border border-[#E5E7EB] shadow-sm">
 
-              {photo ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={photo}
-                  alt={`${name} - TutorWave Tutor`}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-[#0A6FF7]">
-                  {initials(name)}
-                </div>
-              )}
+                {photo ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={photo}
+                    alt={`${name} - TutorWave Tutor`}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-[#0A6FF7]">
+                    {initials(name)}
+                  </div>
+                )}
 
+              </div>
             </div>
 
             {/* MAIN INFORMATION */}
@@ -1271,11 +1285,11 @@ export default async function TutorDetailPage({
           MAIN CONTENT
       =================================================== */}
 
-      <section className="py-8 sm:py-10">
+      <section className="py-8 sm:py-12">
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
 
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_350px] gap-7 lg:gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-7 lg:gap-8">
 
             {/* =================================================
                 LEFT COLUMN
@@ -1290,13 +1304,18 @@ export default async function TutorDetailPage({
               <Section
                 title="Why This Tutor May Be a Good Fit"
                 eyebrow="Profile highlights"
+                icon={
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.8-6.3 3.8 1.7-7-5.4-4.7 7.1-.6L12 2z" />
+                  </svg>
+                }
               >
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
                   {experience && (
                     <div className="flex items-start gap-3">
-                      <div className="mt-0.5 text-[#0A6FF7]">
+                      <div className="mt-0.5 w-6 h-6 rounded-full bg-[#EBF4FF] flex items-center justify-center text-[#0A6FF7] flex-shrink-0">
                         <CheckIcon />
                       </div>
 
@@ -1308,7 +1327,7 @@ export default async function TutorDetailPage({
 
                   {boards.length > 0 && (
                     <div className="flex items-start gap-3">
-                      <div className="mt-0.5 text-[#0A6FF7]">
+                      <div className="mt-0.5 w-6 h-6 rounded-full bg-[#EBF4FF] flex items-center justify-center text-[#0A6FF7] flex-shrink-0">
                         <CheckIcon />
                       </div>
 
@@ -1320,7 +1339,7 @@ export default async function TutorDetailPage({
 
                   {subjects.length > 0 && (
                     <div className="flex items-start gap-3">
-                      <div className="mt-0.5 text-[#0A6FF7]">
+                      <div className="mt-0.5 w-6 h-6 rounded-full bg-[#EBF4FF] flex items-center justify-center text-[#0A6FF7] flex-shrink-0">
                         <CheckIcon />
                       </div>
 
@@ -1332,7 +1351,7 @@ export default async function TutorDetailPage({
 
                   {classes.length > 0 && (
                     <div className="flex items-start gap-3">
-                      <div className="mt-0.5 text-[#0A6FF7]">
+                      <div className="mt-0.5 w-6 h-6 rounded-full bg-[#EBF4FF] flex items-center justify-center text-[#0A6FF7] flex-shrink-0">
                         <CheckIcon />
                       </div>
 
@@ -1344,7 +1363,7 @@ export default async function TutorDetailPage({
 
                   {mode && (
                     <div className="flex items-start gap-3">
-                      <div className="mt-0.5 text-[#0A6FF7]">
+                      <div className="mt-0.5 w-6 h-6 rounded-full bg-[#EBF4FF] flex items-center justify-center text-[#0A6FF7] flex-shrink-0">
                         <CheckIcon />
                       </div>
 
@@ -1356,7 +1375,7 @@ export default async function TutorDetailPage({
 
                   {city && (
                     <div className="flex items-start gap-3">
-                      <div className="mt-0.5 text-[#0A6FF7]">
+                      <div className="mt-0.5 w-6 h-6 rounded-full bg-[#EBF4FF] flex items-center justify-center text-[#0A6FF7] flex-shrink-0">
                         <CheckIcon />
                       </div>
 
@@ -1377,9 +1396,17 @@ export default async function TutorDetailPage({
               <Section
                 title="Tutor at a Glance"
                 eyebrow="Quick overview"
+                icon={
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                    <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                    <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                    <rect x="14" y="14" width="7" height="7" rx="1.5" />
+                  </svg>
+                }
               >
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
 
                   {experience && (
                     <InfoRow
@@ -1539,6 +1566,12 @@ export default async function TutorDetailPage({
               <Section
                 title="Academic Expertise"
                 eyebrow="Subjects, classes & boards"
+                icon={
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M4 19.5V6a2 2 0 012-2h13v15H6a2 2 0 00-2 2.5z" />
+                    <path d="M19 15H6" />
+                  </svg>
+                }
               >
 
                 <div className="space-y-7">
@@ -1601,9 +1634,9 @@ export default async function TutorDetailPage({
                   )}
 
                   {specialization && (
-                    <div>
+                    <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl p-5">
 
-                      <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
+                      <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-2">
                         Specialisation
                       </p>
 
@@ -1626,12 +1659,18 @@ export default async function TutorDetailPage({
                 <Section
                   title="Education & Qualifications"
                   eyebrow="Academic background"
+                  icon={
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M22 10l-10-5-10 5 10 5 10-5Z" />
+                      <path d="M6 12v5c3 2 9 2 12 0v-5" />
+                    </svg>
+                  }
                 >
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
 
                     {(qualification || qualificationStreams.length > 0) && (
-                      <div className="border border-[#E5E7EB] rounded-2xl p-5">
+                      <div className="border border-[#E5E7EB] rounded-2xl p-5 transition-colors hover:border-[#0A6FF7]/30">
 
                         <div className="w-11 h-11 rounded-xl bg-[#EBF4FF] flex items-center justify-center text-[#0A6FF7] mb-4">
 
@@ -1686,7 +1725,7 @@ export default async function TutorDetailPage({
                     )}
 
                     {college && (
-                      <div className="border border-[#E5E7EB] rounded-2xl p-5">
+                      <div className="border border-[#E5E7EB] rounded-2xl p-5 transition-colors hover:border-[#0A6FF7]/30">
 
                         <div className="w-11 h-11 rounded-xl bg-[#EBF4FF] flex items-center justify-center text-[#0A6FF7] mb-4">
 
@@ -1729,32 +1768,16 @@ export default async function TutorDetailPage({
                 <Section
                   title="Teaching Experience"
                   eyebrow="Professional experience"
+                  icon={
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="7" width="18" height="13" rx="2" />
+                      <path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2" />
+                      <path d="M3 12h18" />
+                    </svg>
+                  }
                 >
 
                   <div className="flex gap-5">
-
-                    <div className="w-12 h-12 rounded-2xl bg-[#EBF4FF] flex items-center justify-center flex-shrink-0 text-[#0A6FF7]">
-
-                      <svg
-                        width="22"
-                        height="22"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                      >
-                        <rect
-                          x="3"
-                          y="7"
-                          width="18"
-                          height="13"
-                          rx="2"
-                        />
-                        <path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2" />
-                        <path d="M3 12h18" />
-                      </svg>
-
-                    </div>
 
                     <div>
 
@@ -1791,14 +1814,21 @@ export default async function TutorDetailPage({
                         : "Coaching Teaching Experience"
                   }
                   eyebrow="School / coaching background"
+                  icon={
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M3 21h18" />
+                      <path d="M5 21V9l7-5 7 5v12" />
+                      <path d="M9 21v-6h6v6" />
+                    </svg>
+                  }
                 >
 
                   <div className="space-y-5">
 
                     {schoolExperience && (
-                      <div className="flex items-start gap-5">
+                      <div className="flex items-start gap-5 bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl p-5">
 
-                        <div className="w-12 h-12 rounded-2xl bg-[#EBF4FF] flex items-center justify-center flex-shrink-0 text-[#0A6FF7]">
+                        <div className="w-12 h-12 rounded-2xl bg-white border border-[#E5E7EB] flex items-center justify-center flex-shrink-0 text-[#0A6FF7]">
 
                           <svg
                             width="22"
@@ -1817,6 +1847,9 @@ export default async function TutorDetailPage({
                         </div>
 
                         <div>
+                          <p className="text-sm font-semibold uppercase tracking-wide text-[#6B7280] mb-1">
+                            School Teaching Experience
+                          </p>
                           <p className="text-[#374151] leading-8">
                             {schoolExperience}
                           </p>
@@ -1826,9 +1859,9 @@ export default async function TutorDetailPage({
                     )}
 
                     {coachingExperience && (
-                      <div className="flex items-start gap-5">
+                      <div className="flex items-start gap-5 bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl p-5">
 
-                        <div className="w-12 h-12 rounded-2xl bg-[#EBF4FF] flex items-center justify-center flex-shrink-0 text-[#0A6FF7]">
+                        <div className="w-12 h-12 rounded-2xl bg-white border border-[#E5E7EB] flex items-center justify-center flex-shrink-0 text-[#0A6FF7]">
 
                           <svg
                             width="22"
@@ -1871,6 +1904,13 @@ export default async function TutorDetailPage({
                 <Section
                   title="Students Taught From Schools"
                   eyebrow="School / institution exposure"
+                  icon={
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="9" cy="8" r="3" />
+                      <path d="M3 20c0-3.5 2.5-6 6-6s6 2.5 6 6" />
+                      <path d="M16 11c2.5 0 5 1.8 5 5" />
+                    </svg>
+                  }
                 >
 
                   <p className="text-[#6B7280] mb-5 leading-7">
@@ -1900,9 +1940,15 @@ export default async function TutorDetailPage({
                 <Section
                   title="Teaching Approach"
                   eyebrow="How the tutor teaches"
+                  icon={
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                      <path d="M12 8v4l3 2" />
+                    </svg>
+                  }
                 >
 
-                  <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl p-5">
+                  <div className="bg-gradient-to-br from-[#F8FAFC] to-[#F1F6FF] border border-[#E5E7EB] rounded-2xl p-5">
 
                     <p className="text-[#374151] leading-8">
                       {teachingApproach}
@@ -1921,6 +1967,12 @@ export default async function TutorDetailPage({
                 <Section
                   title="Languages"
                   eyebrow="Communication"
+                  icon={
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="9" />
+                      <path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18" />
+                    </svg>
+                  }
                 >
 
                   <div className="flex flex-wrap gap-2.5">
@@ -1945,6 +1997,12 @@ export default async function TutorDetailPage({
               <Section
                 title="Teaching Location"
                 eyebrow="Where the tutor teaches"
+                icon={
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0Z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
+                }
               >
 
                 <div className="space-y-6">
@@ -2019,6 +2077,12 @@ export default async function TutorDetailPage({
                 <Section
                   title="Availability"
                   eyebrow="When the tutor may be available"
+                  icon={
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="5" width="18" height="16" rx="2" />
+                      <path d="M16 3v4M8 3v4M3 11h18" />
+                    </svg>
+                  }
                 >
 
                   <div className="space-y-5">
@@ -2086,6 +2150,12 @@ export default async function TutorDetailPage({
                 <Section
                   title="Achievements"
                   eyebrow="Additional highlights"
+                  icon={
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="8" r="6" />
+                      <path d="M9 13.5L7 22l5-3 5 3-2-8.5" />
+                    </svg>
+                  }
                 >
 
                   <div className="space-y-3">
@@ -2097,7 +2167,7 @@ export default async function TutorDetailPage({
                           className="flex items-start gap-3"
                         >
 
-                          <div className="mt-1 text-[#0A6FF7]">
+                          <div className="mt-0.5 w-6 h-6 rounded-full bg-[#EBF4FF] flex items-center justify-center text-[#0A6FF7] flex-shrink-0">
                             <CheckIcon />
                           </div>
 
@@ -2122,6 +2192,12 @@ export default async function TutorDetailPage({
                 <Section
                   title="Additional Qualifications"
                   eyebrow="Certifications & other qualifications"
+                  icon={
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 15a6 6 0 100-12 6 6 0 000 12z" />
+                      <path d="M8.5 13.5L7 22l5-3 5 3-1.5-8.5" />
+                    </svg>
+                  }
                 >
 
                   <div className="flex flex-wrap gap-2.5">
@@ -2145,7 +2221,7 @@ export default async function TutorDetailPage({
                   MOBILE CTA
               ================================================= */}
 
-              <div className="lg:hidden bg-white border border-[#E5E7EB] rounded-3xl p-6">
+              <div className="lg:hidden bg-white border border-[#E5E7EB] rounded-[28px] p-6 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
 
                 <p className="text-xs uppercase tracking-wider font-bold text-[#0A6FF7] mb-2">
                   TutorWave
@@ -2162,7 +2238,7 @@ export default async function TutorDetailPage({
 
                 <Link
                   href="/find-a-tutor"
-                  className="flex items-center justify-center gap-2 w-full bg-[#0A6FF7] text-white font-bold py-3.5 rounded-xl"
+                  className="flex items-center justify-center gap-2 w-full bg-[#0A6FF7] text-white font-bold py-3.5 rounded-xl hover:bg-[#0858c8] transition-colors"
                 >
                   Request This Tutor
                   <span>→</span>
@@ -2184,7 +2260,7 @@ export default async function TutorDetailPage({
                     PROFILE SUMMARY
                 ================================================= */}
 
-                <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6">
+                <div className="bg-white border border-[#E5E7EB] rounded-[28px] p-6 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
 
                   <p className="text-xs uppercase tracking-[0.12em] font-bold text-[#0A6FF7] mb-2">
                     TutorWave
@@ -2197,7 +2273,7 @@ export default async function TutorDetailPage({
                   <div className="space-y-4">
 
                     {experience && (
-                      <div className="flex justify-between gap-4">
+                      <div className="flex justify-between gap-4 pb-3 border-b border-[#F1F5F9]">
                         <span className="text-sm text-[#6B7280]">
                           Experience
                         </span>
@@ -2209,7 +2285,7 @@ export default async function TutorDetailPage({
                     )}
 
                     {qualification && (
-                      <div className="flex justify-between gap-4">
+                      <div className="flex justify-between gap-4 pb-3 border-b border-[#F1F5F9]">
                         <span className="text-sm text-[#6B7280]">
                           Highest Qualification
                         </span>
@@ -2221,7 +2297,7 @@ export default async function TutorDetailPage({
                     )}
 
                     {subjects.length > 0 && (
-                      <div className="flex justify-between gap-4">
+                      <div className="flex justify-between gap-4 pb-3 border-b border-[#F1F5F9]">
                         <span className="text-sm text-[#6B7280]">
                           Subjects
                         </span>
@@ -2233,7 +2309,7 @@ export default async function TutorDetailPage({
                     )}
 
                     {classes.length > 0 && (
-                      <div className="flex justify-between gap-4">
+                      <div className="flex justify-between gap-4 pb-3 border-b border-[#F1F5F9]">
                         <span className="text-sm text-[#6B7280]">
                           Classes
                         </span>
@@ -2245,7 +2321,7 @@ export default async function TutorDetailPage({
                     )}
 
                     {boards.length > 0 && (
-                      <div className="flex justify-between gap-4">
+                      <div className="flex justify-between gap-4 pb-3 border-b border-[#F1F5F9]">
                         <span className="text-sm text-[#6B7280]">
                           Boards
                         </span>
@@ -2256,7 +2332,7 @@ export default async function TutorDetailPage({
                       </div>
                     )}
 
-                    <div className="flex justify-between gap-4">
+                    <div className="flex justify-between gap-4 pb-3 border-b border-[#F1F5F9]">
                       <span className="text-sm text-[#6B7280]">
                         Location
                       </span>
@@ -2286,7 +2362,7 @@ export default async function TutorDetailPage({
                     BROWSE OTHER TUTORS
                 ================================================= */}
 
-                <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6">
+                <div className="bg-white border border-[#E5E7EB] rounded-[28px] p-6 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
 
                   <p className="text-xs uppercase tracking-wider font-bold text-[#0A6FF7] mb-2">
                     Explore
@@ -2316,7 +2392,7 @@ export default async function TutorDetailPage({
                     REQUEST CTA
                 ================================================= */}
 
-                <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 shadow-sm">
+                <div className="bg-white border border-[#E5E7EB] rounded-[28px] p-6 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
 
                   <p className="text-xs uppercase tracking-[0.12em] font-bold text-[#0A6FF7] mb-2">
                     TutorWave
@@ -2381,7 +2457,7 @@ export default async function TutorDetailPage({
 
             <Link
               href="/find-a-tutor"
-              className="inline-flex items-center justify-center gap-2 bg-[#0A6FF7] text-white font-bold px-7 py-3.5 rounded-xl hover:bg-[#0858c8] transition-colors"
+              className="inline-flex items-center justify-center gap-2 bg-[#0A6FF7] text-white font-bold px-7 py-3.5 rounded-xl hover:bg-[#0858c8] transition-colors shadow-[0_10px_24px_rgba(10,111,247,0.35)]"
             >
               Find a Tutor
               <span>→</span>
@@ -2389,7 +2465,7 @@ export default async function TutorDetailPage({
 
             <Link
               href="/tutors"
-              className="inline-flex items-center justify-center bg-white/10 text-white font-bold px-7 py-3.5 rounded-xl hover:bg-white/15 transition-colors"
+              className="inline-flex items-center justify-center bg-white/10 text-white font-bold px-7 py-3.5 rounded-xl hover:bg-white/15 transition-colors border border-white/10"
             >
               Browse All Tutors
             </Link>
