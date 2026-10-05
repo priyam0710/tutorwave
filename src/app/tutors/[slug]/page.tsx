@@ -27,6 +27,9 @@ type Tutor = {
 
   subjects?: string[] | string;
   classes?: string[] | string;
+  primaryAllSubjects?: boolean | string;
+  secondaryAllSubjects?: boolean | string;
+  seniorSecondaryAllSubjects?: boolean | string;
   boards?: string[] | string;
 
   mode?: string;
@@ -144,14 +147,16 @@ type Tutor = {
     boards?: string[] | string;
 
     primaryClasses?: string[] | string;
-    primaryAllSubjects?: boolean | string;
     primarySubjects?: string[] | string;
+    primaryAllSubjects?: boolean | string;
 
     secondaryClasses?: string[] | string;
     secondarySubjects?: string[] | string;
+    secondaryAllSubjects?: boolean | string;
 
     seniorSecondaryClasses?: string[] | string;
     seniorSecondarySubjects?: string[] | string;
+    seniorSecondaryAllSubjects?: boolean | string;
 
     englishFluency?: string;
     stream?: string;
@@ -388,114 +393,6 @@ function uniqueArray(values: string[]): string[] {
     });
 }
 
-
-/*
- * =========================================================
- * CLASS-WISE SUBJECT DISPLAY
- *
- * The tutor registration form stores teaching information
- * separately for:
- *
- * 1. Nursery/Class 1-8
- * 2. Class 9-10
- * 3. Class 11-12
- *
- * Do NOT use the combined `subjects` / `classes` fields when
- * these group-specific fields are available. Those combined
- * fields are useful as a fallback for older tutor records,
- * but using them first causes the public profile to display
- * everything as one generalized "Class 5-12" group.
- * =========================================================
- */
-
-const CLASS_ORDER = [
-  'Nursery',
-  'LKG',
-  'UKG',
-  'Class 1',
-  'Class 2',
-  'Class 3',
-  'Class 4',
-  'Class 5',
-  'Class 6',
-  'Class 7',
-  'Class 8',
-  'Class 9',
-  'Class 10',
-  'Class 11',
-  'Class 12',
-];
-
-function normalizeBoolean(value: any): boolean {
-  if (value === true) return true;
-
-  if (typeof value === 'string') {
-    return ['true', 'yes', '1'].includes(
-      value.trim().toLowerCase()
-    );
-  }
-
-  return false;
-}
-
-function classOrderIndex(value: string): number {
-  const normalized = value.trim().toLowerCase();
-
-  return CLASS_ORDER.findIndex(
-    (item) => item.toLowerCase() === normalized
-  );
-}
-
-function formatClassGroup(values: any): string {
-  const selected = uniqueArray(cleanArray(values))
-    .filter((value) => classOrderIndex(value) >= 0)
-    .sort(
-      (a, b) =>
-        classOrderIndex(a) - classOrderIndex(b)
-    );
-
-  if (!selected.length) return '';
-
-  // Exact contiguous ranges are much easier for parents to scan.
-  if (selected.length >= 2) {
-    const indexes = selected.map(classOrderIndex);
-
-    const contiguous = indexes.every(
-      (index, i) =>
-        i === 0 || index === indexes[i - 1] + 1
-    );
-
-    if (contiguous) {
-      return `${selected[0]}–${selected[selected.length - 1]}`;
-    }
-  }
-
-  return selected.join(', ');
-}
-
-function getGroupSubjects(
-  subjectsValue: any,
-  allSubjectsValue?: any
-): string[] {
-  if (normalizeBoolean(allSubjectsValue)) {
-    return ['All Subjects'];
-  }
-
-  return uniqueArray(cleanArray(subjectsValue));
-}
-
-function hasGroupData(group: {
-  classes: any;
-  subjects: any;
-  allSubjects?: any;
-}): boolean {
-  return (
-    cleanArray(group.classes).length > 0 ||
-    cleanArray(group.subjects).length > 0 ||
-    normalizeBoolean(group.allSubjects)
-  );
-}
-
 function firstText(...values: any[]): string | null {
   for (const value of values) {
     if (
@@ -508,6 +405,194 @@ function firstText(...values: any[]): string | null {
   }
 
   return null;
+}
+
+function isTruthyBoolean(value: any) {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  if (typeof value === 'number') {
+    return value === 1;
+  }
+
+  if (typeof value === 'string') {
+    return [
+      'true',
+      '1',
+      'yes',
+      'y',
+      'all',
+      'all subjects',
+    ].includes(value.trim().toLowerCase());
+  }
+
+  return false;
+}
+
+function classNumber(value: string) {
+  const text = String(value || '').trim().toLowerCase();
+
+  if (/^(nursery|nurs|pre[- ]?nursery|pre[- ]?n)$/i.test(text)) {
+    return 0;
+  }
+
+  if (/^(lkg|lower kindergarten)$/i.test(text)) {
+    return -2;
+  }
+
+  if (/^(ukg|upper kindergarten)$/i.test(text)) {
+    return -1;
+  }
+
+  const match = text.match(/(?:class|grade|std\.?|standard)?\s*(\d{1,2})\b/i);
+
+  if (!match) {
+    return null;
+  }
+
+  const number = Number(match[1]);
+
+  return number >= 1 && number <= 12 ? number : null;
+}
+
+function classDisplayLabel(value: string) {
+  const text = String(value || '').trim();
+
+  if (/^nursery$/i.test(text)) return 'Nursery';
+  if (/^(lkg|lower kindergarten)$/i.test(text)) return 'LKG';
+  if (/^(ukg|upper kindergarten)$/i.test(text)) return 'UKG';
+
+  const number = classNumber(text);
+
+  return number !== null
+    ? `Class ${number}`
+    : text;
+}
+
+/*
+ * Converts the actual selected classes into a parent-friendly
+ * range without inventing classes.
+ *
+ * Examples:
+ *   Class 5, 6, 7, 8  -> Class 5–8
+ *   Class 9, 10         -> Class 9–10
+ *   Class 11, 12        -> Class 11–12
+ *   Class 5, Class 7    -> Class 5 • Class 7
+ */
+function formatTeachingClassRange(values: string[]) {
+  const cleaned = uniqueArray(values);
+
+  if (cleaned.length === 0) {
+    return null;
+  }
+
+  const parsed = cleaned
+    .map((value) => ({
+      original: value,
+      number: classNumber(value),
+    }))
+    .filter(
+      (item): item is {
+        original: string;
+        number: number;
+      } => item.number !== null
+    )
+    .sort((a, b) => a.number - b.number);
+
+  /*
+   * If some values are not standard class labels, retain the
+   * original labels instead of silently dropping them.
+   */
+  if (parsed.length !== cleaned.length) {
+    return cleaned.map(classDisplayLabel).join(' • ');
+  }
+
+  if (parsed.length === 1) {
+    return classDisplayLabel(parsed[0].original);
+  }
+
+  const numbers = parsed.map((item) => item.number);
+  const uniqueNumbers = [...new Set(numbers)];
+
+  const isContinuous = uniqueNumbers.every(
+    (number, index) =>
+      index === 0 ||
+      number === uniqueNumbers[index - 1] + 1
+  );
+
+  if (!isContinuous) {
+    return parsed
+      .map((item) => classDisplayLabel(item.original))
+      .join(' • ');
+  }
+
+  const first = uniqueNumbers[0];
+  const last = uniqueNumbers[uniqueNumbers.length - 1];
+
+  /*
+   * Handle early-school ranges naturally.
+   */
+  if (first < 1) {
+    const firstLabel =
+      first === -2
+        ? 'LKG'
+        : first === -1
+          ? 'UKG'
+          : 'Nursery';
+
+    if (last === 0) {
+      return `${firstLabel} – Nursery`;
+    }
+
+    return `${firstLabel} – Class ${last}`;
+  }
+
+  return `Class ${first}–${last}`;
+}
+
+function buildTeachingLevelSummary(
+  label: string,
+  classesValue: any,
+  subjectsValue: any,
+  allSubjectsValue: any
+) {
+  const classesForLevel = firstArray(classesValue);
+  const subjectsForLevel = uniqueArray(
+    firstArray(subjectsValue)
+  );
+
+  const allSubjects = isTruthyBoolean(allSubjectsValue);
+
+  /*
+   * A level should only appear when the tutor actually has
+   * something selected for that level.
+   */
+  if (
+    classesForLevel.length === 0 &&
+    subjectsForLevel.length === 0 &&
+    !allSubjects
+  ) {
+    return null;
+  }
+
+  const classRange =
+    formatTeachingClassRange(classesForLevel) ||
+    label;
+
+  const subjectText = allSubjects
+    ? 'All Subjects'
+    : subjectsForLevel.length > 0
+      ? subjectsForLevel.join(' · ')
+      : null;
+
+  return {
+    key: label,
+    label: classRange,
+    subjects: subjectsForLevel,
+    allSubjects,
+    subjectText,
+  };
 }
 
 function formatExperience(value?: number | string | null) {
@@ -748,10 +833,10 @@ export async function generateMetadata({
     'Tutor';
 
   const subjects = firstArray(
+    tutor.subjects,
     tutor.teaching?.primarySubjects,
     tutor.teaching?.secondarySubjects,
-    tutor.teaching?.seniorSecondarySubjects,
-    tutor.subjects
+    tutor.teaching?.seniorSecondarySubjects
   );
 
   const city =
@@ -877,103 +962,127 @@ export default async function TutorDetailPage({
 
   /*
    * =======================================================
-   * SUBJECTS / CLASSES
+   * TEACHING BY CLASS LEVEL
    *
    * IMPORTANT:
-   * The public profile must preserve the three teaching
-   * levels captured by the registration form instead of
-   * flattening them into one combined list.
+   * Do not merge these into one generic subject list.
+   * The registration form stores teaching preferences
+   * separately for:
+   *
+   *   - Nursery / Class 1–8
+   *   - Class 9–10
+   *   - Class 11–12
+   *
+   * We preserve those three groups all the way to the
+   * public profile so parents can immediately understand
+   * what the tutor teaches at each level.
    * =======================================================
    */
 
   const primaryClasses = firstArray(
-    tutor.teaching?.primaryClasses
+    tutor.teaching?.primaryClasses,
+    tutor.primaryClasses
   );
 
-  const primarySubjects = getGroupSubjects(
-    tutor.teaching?.primarySubjects,
-    tutor.teaching?.primaryAllSubjects
+  const primarySubjects = uniqueArray(
+    firstArray(
+      tutor.teaching?.primarySubjects,
+      tutor.primarySubjects
+    )
+  );
+
+  const primaryAllSubjects = isTruthyBoolean(
+    tutor.teaching?.primaryAllSubjects ??
+    tutor.primaryAllSubjects
   );
 
   const secondaryClasses = firstArray(
-    tutor.teaching?.secondaryClasses
+    tutor.teaching?.secondaryClasses,
+    tutor.secondaryClasses
   );
 
-  const secondarySubjects = getGroupSubjects(
-    tutor.teaching?.secondarySubjects
+  const secondarySubjects = uniqueArray(
+    firstArray(
+      tutor.teaching?.secondarySubjects,
+      tutor.secondarySubjects
+    )
+  );
+
+  const secondaryAllSubjects = isTruthyBoolean(
+    tutor.teaching?.secondaryAllSubjects ??
+    tutor.secondaryAllSubjects
   );
 
   const seniorSecondaryClasses = firstArray(
-    tutor.teaching?.seniorSecondaryClasses
+    tutor.teaching?.seniorSecondaryClasses,
+    tutor.seniorSecondaryClasses
   );
 
-  const seniorSecondarySubjects = getGroupSubjects(
-    tutor.teaching?.seniorSecondarySubjects
+  const seniorSecondarySubjects = uniqueArray(
+    firstArray(
+      tutor.teaching?.seniorSecondarySubjects,
+      tutor.seniorSecondarySubjects
+    )
   );
 
-  const groupedAcademicDataAvailable =
-    hasGroupData({
-      classes: primaryClasses,
-      subjects: primarySubjects,
-      allSubjects: tutor.teaching?.primaryAllSubjects,
-    }) ||
-    hasGroupData({
-      classes: secondaryClasses,
-      subjects: secondarySubjects,
-    }) ||
-    hasGroupData({
-      classes: seniorSecondaryClasses,
-      subjects: seniorSecondarySubjects,
-    });
-
-  /*
-   * Fallback for older CRM records which do not have the
-   * level-specific teaching fields.
-   */
-  const subjects = firstArray(
-    tutor.subjects,
-    tutor.teaching?.primarySubjects,
-    tutor.teaching?.secondarySubjects,
-    tutor.teaching?.seniorSecondarySubjects
+  const seniorSecondaryAllSubjects = isTruthyBoolean(
+    tutor.teaching?.seniorSecondaryAllSubjects ??
+    tutor.seniorSecondaryAllSubjects
   );
 
-  const classes = firstArray(
-    tutor.classes,
-    tutor.teaching?.primaryClasses,
-    tutor.teaching?.secondaryClasses,
-    tutor.teaching?.seniorSecondaryClasses
-  );
-
-  /*
-   * Parent-facing class/subject groups.
-   */
-  const academicGroups = [
-    {
-      key: 'primary',
-      classes: formatClassGroup(primaryClasses),
-      subjects: primarySubjects,
-    },
-    {
-      key: 'secondary',
-      classes: formatClassGroup(secondaryClasses),
-      subjects: secondarySubjects,
-    },
-    {
-      key: 'senior-secondary',
-      classes: formatClassGroup(seniorSecondaryClasses),
-      subjects: seniorSecondarySubjects,
-    },
+  const teachingLevelGroups = [
+    buildTeachingLevelSummary(
+      'Primary',
+      primaryClasses,
+      primarySubjects,
+      primaryAllSubjects
+    ),
+    buildTeachingLevelSummary(
+      'Secondary',
+      secondaryClasses,
+      secondarySubjects,
+      secondaryAllSubjects
+    ),
+    buildTeachingLevelSummary(
+      'Senior Secondary',
+      seniorSecondaryClasses,
+      seniorSecondarySubjects,
+      seniorSecondaryAllSubjects
+    ),
   ].filter(
-    (group) =>
-      group.classes &&
-      group.subjects.length > 0
+    (
+      group
+    ): group is NonNullable<typeof group> =>
+      Boolean(group)
   );
 
   /*
-   * If the tutor record is an older record with no grouped
-   * teaching data, retain the old display rather than showing
-   * an empty academic section.
+   * Combined values are retained only for legacy summary /
+   * metadata uses. They are NOT used to render the main
+   * Academic Expertise teaching breakdown.
    */
+  const subjects = uniqueArray([
+    ...primarySubjects,
+    ...secondarySubjects,
+    ...seniorSecondarySubjects,
+  ]);
+
+  const classes = uniqueArray([
+    ...primaryClasses,
+    ...secondaryClasses,
+    ...seniorSecondaryClasses,
+  ]);
+
+  const teachingLevelSummary = teachingLevelGroups
+    .map(
+      (group) =>
+        `${group.label}: ${
+          group.allSubjects
+            ? 'All Subjects'
+            : group.subjectText || 'Subjects not specified'
+        }`
+    )
+    .join(' • ');
 
   /*
    * Boards
@@ -1397,21 +1506,10 @@ export default async function TutorDetailPage({
                 </p>
               )}
 
-              {groupedAcademicDataAvailable ? (
-                <p className="text-lg text-[#5F6B7A] mb-6">
-                  {academicGroups
-                    .map(
-                      (group) =>
-                        `${group.classes}: ${group.subjects.join(', ')}`
-                    )
-                    .join(' • ')}
+              {teachingLevelSummary && (
+                <p className="text-base sm:text-lg text-[#5F6B7A] mb-6 leading-7">
+                  {teachingLevelSummary}
                 </p>
-              ) : (
-                subjects.length > 0 && (
-                  <p className="text-lg text-[#5F6B7A] mb-6">
-                    {subjects.join(' • ')}
-                  </p>
-                )
               )}
 
               <div className="flex flex-wrap gap-3">
@@ -1546,60 +1644,108 @@ export default async function TutorDetailPage({
                     </div>
                   )}
 
-                  {(groupedAcademicDataAvailable || subjects.length > 0) && (
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 w-6 h-6 rounded-full bg-[#EBF4FF] flex items-center justify-center text-[#0A6FF7] flex-shrink-0">
-                        <CheckIcon />
-                      </div>
-
-                      <div className="text-[#374151] leading-7">
-                        {groupedAcademicDataAvailable
-                          ? academicGroups.map((group) => (
-                              <p key={`highlight-${group.key}`}>
-                                <span className="font-semibold">
-                                  {group.classes}:
-                                </span>{' '}
-                                {group.subjects.join(', ')}
-                              </p>
-                            ))
-                          : subjects.join(', ')}
-                      </div>
-                    </div>
-                  )}
-
-                  {classes.length > 0 && (
-                    <div className="flex items-start gap-3">
+                  {teachingLevelSummary && (
+                    <div className="flex items-start gap-3 sm:col-span-2">
                       <div className="mt-0.5 w-6 h-6 rounded-full bg-[#EBF4FF] flex items-center justify-center text-[#0A6FF7] flex-shrink-0">
                         <CheckIcon />
                       </div>
 
                       <p className="text-[#374151] leading-7">
-                        Classes: {classes.join(', ')}
+                        {teachingLevelSummary}
                       </p>
                     </div>
                   )}
 
                   {mode && (
                     <div className="flex items-start gap-3">
-                      <div className="mt-0.5 w-6 h-6 rounded-full bg-[#EBF4FF] flex items-center justify-center text-[#0A6FF7] flex-shrink-0">
-                        <CheckIcon />
+                      <div className="mt-0.5 w-6 h-6 rounded-full bg-[#EBF4FF] flex               {/* =================================================
+                  ACADEMIC EXPERTISE
+              ================================================= */}
+
+              <Section
+                title="Academic Expertise"
+                eyebrow="Subjects by class level"
+                icon={
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M4 19.5V6a2 2 0 012-2h13v15H6a2 2 0 00-2 2.5z" />
+                    <path d="M19 15H6" />
+                  </svg>
+                }
+              >
+
+                <div className="space-y-5">
+
+                  {teachingLevelGroups.length > 0 ? (
+                    teachingLevelGroups.map((group) => (
+                      <div
+                        key={group.key}
+                        className="rounded-2xl border border-[#E5E7EB] bg-[#F8FAFC] p-5 sm:p-6"
+                      >
+
+                        <h3 className="text-base sm:text-lg font-bold text-[#0D1118] mb-4">
+                          {group.label}
+                        </h3>
+
+                        <div className="flex flex-wrap gap-2.5">
+
+                          {group.allSubjects ? (
+                            <span className="inline-flex items-center px-4 py-2.5 rounded-xl bg-[#EBF4FF] border border-[#D6E9FF] text-[#0A6FF7] text-sm font-bold">
+                              All Subjects
+                            </span>
+                          ) : group.subjects.length > 0 ? (
+                            group.subjects.map((subject, index) => (
+                              <Tag
+                                key={`${group.key}-${subject}-${index}`}
+                                blue
+                              >
+                                {subject}
+                              </Tag>
+                            ))
+                          ) : (
+                            <span className="text-sm text-[#6B7280]">
+                              Subjects not specified
+                            </span>
+                          )}
+
+                        </div>
+
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-[#6B7280] leading-7">
+                      Teaching subjects and class levels have not been specified yet.
+                    </p>
+                  )}
+
+                  {boards.length > 0 && (
+                    <div>
+
+                      <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
+                        Boards
+                      </p>
+
+                      <div className="flex flex-wrap gap-2.5">
+                        {boards.map((board) => (
+                          <Tag key={board}>
+                            {board}
+                          </Tag>
+                        ))}
                       </div>
 
-                      <p className="text-[#374151] leading-7">
-                        {mode}
-                      </p>
                     </div>
                   )}
 
-                  {city && (
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 w-6 h-6 rounded-full bg-[#EBF4FF] flex items-center justify-center text-[#0A6FF7] flex-shrink-0">
-                        <CheckIcon />
-                      </div>
+                  {specialization && (
+                    <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl p-5">
+
+                      <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-2">
+                        Specialisation
+                      </p>
 
                       <p className="text-[#374151] leading-7">
-                        Teaching in {city}
+                        {specialization}
                       </p>
+
                     </div>
                   )}
 
@@ -1607,60 +1753,6 @@ export default async function TutorDetailPage({
 
               </Section>
 
-              {/* =================================================
-                  TUTOR AT A GLANCE
-              ================================================= */}
-
-              <Section
-                title="Tutor at a Glance"
-                eyebrow="Quick overview"
-                icon={
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="3" y="3" width="7" height="7" rx="1.5" />
-                    <rect x="14" y="3" width="7" height="7" rx="1.5" />
-                    <rect x="3" y="14" width="7" height="7" rx="1.5" />
-                    <rect x="14" y="14" width="7" height="7" rx="1.5" />
-                  </svg>
-                }
-              >
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
-
-                  {experience && (
-                    <InfoRow
-                      label="Teaching Experience"
-                      value={experience}
-                      icon={
-                        <svg
-                          width="19"
-                          height="19"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.8"
-                        >
-                          <circle cx="12" cy="12" r="9" />
-                          <path d="M12 7v5l3 2" />
-                        </svg>
-                      }
-                    />
-                  )}
-
-                  <InfoRow
-                    label="Highest Qualification"
-                    value={qualification}
-                    icon={
-                      <svg
-                        width="19"
-                        height="19"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                      >
-                        <path d="M22 10l-10-5-10 5 10 5 10-5Z" />
-                        <path d="M6 12v5c3 2 9 2 12 0v-5" />
-                      </svg>
                     }
                   />
 
@@ -1783,10 +1875,10 @@ export default async function TutorDetailPage({
 
               <Section
                 title="Academic Expertise"
-                eyebrow="Subjects by class level"
+                eyebrow="Subjects, classes & boards"
                 icon={
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M4 19.5V6a2 2 0 012-2h13v15H6a2 2 0 002 2.5z" />
+                    <path d="M4 19.5V6a2 2 0 012-2h13v15H6a2 2 0 00-2 2.5z" />
                     <path d="M19 15H6" />
                   </svg>
                 }
@@ -1794,70 +1886,48 @@ export default async function TutorDetailPage({
 
                 <div className="space-y-7">
 
-                  {groupedAcademicDataAvailable ? (
-                    <>
-                      {academicGroups.map((group) => (
-                        <div
-                          key={group.key}
-                          className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl p-5 sm:p-6"
-                        >
+                  {subjects.length > 0 && (
+                    <div>
 
-                          <p className="text-base sm:text-lg font-bold text-[#0D1118] mb-4">
-                            {group.classes}
-                          </p>
+                      <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
+                        Subjects
+                      </p>
 
-                          <div className="flex flex-wrap gap-2.5">
-                            {group.subjects.map((subject) => (
-                              <Tag
-                                key={`${group.key}-${subject}`}
-                                blue
-                              >
-                                {subject}
-                              </Tag>
-                            ))}
-                          </div>
+                      <div className="flex flex-wrap gap-2.5">
+                        {subjects.map((subject) => (
+                          <Tag
+                            key={subject}
+                            blue
+                          >
+                            {subject}
+                          </Tag>
+                        ))}
+                      </div>
 
-                        </div>
-                      ))}
-                    </>
-                  ) : (
-                    <>
-                      {subjects.length > 0 && (
-                        <div>
-                          <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
-                            Subjects
-                          </p>
+                    </div>
+                  )}
 
-                          <div className="flex flex-wrap gap-2.5">
-                            {subjects.map((subject) => (
-                              <Tag key={subject} blue>
-                                {subject}
-                              </Tag>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+                  {classes.length > 0 && (
+                    <div>
 
-                      {classes.length > 0 && (
-                        <div>
-                          <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
-                            Classes
-                          </p>
+                      <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
+                        Classes
+                      </p>
 
-                          <div className="flex flex-wrap gap-2.5">
-                            {classes.map((item) => (
-                              <Tag key={item}>
-                                {item}
-                              </Tag>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </>
+                      <div className="flex flex-wrap gap-2.5">
+                        {classes.map((item) => (
+                          <Tag key={item}>
+                            {item}
+                          </Tag>
+                        ))}
+                      </div>
+
+                    </div>
                   )}
 
                   {boards.length > 0 && (
                     <div>
+
                       <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
                         Boards
                       </p>
@@ -1869,11 +1939,13 @@ export default async function TutorDetailPage({
                           </Tag>
                         ))}
                       </div>
+
                     </div>
                   )}
 
                   {specialization && (
                     <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl p-5">
+
                       <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-2">
                         Specialisation
                       </p>
@@ -1881,6 +1953,7 @@ export default async function TutorDetailPage({
                       <p className="text-[#374151] leading-7">
                         {specialization}
                       </p>
+
                     </div>
                   )}
 
