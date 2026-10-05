@@ -387,6 +387,159 @@ function uniqueArray(values: string[]): string[] {
     });
 }
 
+/* =========================================================
+   CLASS-WISE SUBJECT DISPLAY
+========================================================= */
+
+type SubjectGroup = {
+  label: string;
+  subjects: string[];
+};
+
+function normalizeSubject(value: string) {
+  return value
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+function isAllSubjects(value: string) {
+  const normalized = normalizeSubject(value).replace(/[-_]+/g, ' ');
+
+  return (
+    normalized === 'all' ||
+    normalized === 'all subject' ||
+    normalized === 'all subjects'
+  );
+}
+
+function getClassNumber(value: string): number | null {
+  const text = normalizeSubject(value);
+
+  const match = text.match(/(?:class\s*)?(\d{1,2})(?:st|nd|rd|th)?/i);
+
+  if (!match) {
+    return null;
+  }
+
+  const number = Number(match[1]);
+
+  return number >= 1 && number <= 12 ? number : null;
+}
+
+function hasPreschoolClass(values: string[]) {
+  return values.some((value) =>
+    /^(nursery|pre[- ]?nursery|lkg|ukg|kg|kindergarten)$/i.test(
+      normalizeSubject(value)
+    )
+  );
+}
+
+function formatClassName(number: number) {
+  return `Class ${number}`;
+}
+
+function formatClassGroupLabel(
+  values: string[],
+  fallback: string
+) {
+  const classes = uniqueArray(values);
+  const numbers = classes
+    .map(getClassNumber)
+    .filter((value): value is number => value !== null)
+    .sort((a, b) => a - b);
+
+  const min = numbers[0];
+  const max = numbers[numbers.length - 1];
+
+  if (min === undefined || max === undefined) {
+    return classes.length ? classes.join(' • ') : fallback;
+  }
+
+  if (
+    fallback === 'primary' &&
+    hasPreschoolClass(classes) &&
+    max <= 8
+  ) {
+    return 'Nursery–8th';
+  }
+
+  if (numbers.length === 1) {
+    return formatClassName(min);
+  }
+
+  return `${formatClassName(min)}–${formatClassName(max).replace('Class ', '')}`;
+}
+
+function normalizeGroupSubjects(values: any[]) {
+  const subjects = uniqueArray(
+    values.flatMap((value) => cleanArray(value))
+  );
+
+  if (subjects.some(isAllSubjects)) {
+    return ['All Subjects'];
+  }
+
+  return subjects;
+}
+
+function buildSubjectGroups({
+  primaryClasses,
+  primarySubjects,
+  secondaryClasses,
+  secondarySubjects,
+  seniorSecondaryClasses,
+  seniorSecondarySubjects,
+  fallbackClasses,
+  fallbackSubjects,
+}: {
+  primaryClasses: string[];
+  primarySubjects: string[];
+  secondaryClasses: string[];
+  secondarySubjects: string[];
+  seniorSecondaryClasses: string[];
+  seniorSecondarySubjects: string[];
+  fallbackClasses: string[];
+  fallbackSubjects: string[];
+}): SubjectGroup[] {
+  const groups: SubjectGroup[] = [];
+
+  const addGroup = (
+    classesForGroup: string[],
+    subjectsForGroup: string[],
+    fallback: string
+  ) => {
+    const subjects = normalizeGroupSubjects([subjectsForGroup]);
+
+    if (!subjects.length) {
+      return;
+    }
+
+    groups.push({
+      label: formatClassGroupLabel(classesForGroup, fallback),
+      subjects,
+    });
+  };
+
+  addGroup(primaryClasses, primarySubjects, 'primary');
+  addGroup(secondaryClasses, secondarySubjects, 'secondary');
+  addGroup(
+    seniorSecondaryClasses,
+    seniorSecondarySubjects,
+    'seniorSecondary'
+  );
+
+  /*
+   * Backward compatibility for older CRM records that only
+   * contain the combined `classes` + `subjects` fields.
+   */
+  if (groups.length === 0 && fallbackSubjects.length > 0) {
+    addGroup(fallbackClasses, fallbackSubjects, 'Classes');
+  }
+
+  return groups;
+}
+
 function firstText(...values: any[]): string | null {
   for (const value of values) {
     if (
@@ -793,6 +946,47 @@ export default async function TutorDetailPage({
     tutor.boards,
     tutor.teaching?.boards
   );
+
+  /*
+   * Class-wise subject mapping for the public profile.
+   * This keeps the three teaching bands from the registration
+   * form separate so parents see exactly what the tutor teaches
+   * at each level instead of one confusing flat subject list.
+   */
+  const primaryClasses = firstArray(
+    tutor.teaching?.primaryClasses
+  );
+
+  const primarySubjects = firstArray(
+    tutor.teaching?.primarySubjects
+  );
+
+  const secondaryClasses = firstArray(
+    tutor.teaching?.secondaryClasses
+  );
+
+  const secondarySubjects = firstArray(
+    tutor.teaching?.secondarySubjects
+  );
+
+  const seniorSecondaryClasses = firstArray(
+    tutor.teaching?.seniorSecondaryClasses
+  );
+
+  const seniorSecondarySubjects = firstArray(
+    tutor.teaching?.seniorSecondarySubjects
+  );
+
+  const subjectGroups = buildSubjectGroups({
+    primaryClasses,
+    primarySubjects,
+    secondaryClasses,
+    secondarySubjects,
+    seniorSecondaryClasses,
+    seniorSecondarySubjects,
+    fallbackClasses: classes,
+    fallbackSubjects: subjects,
+  });
 
   /*
    * Location
@@ -1574,7 +1768,7 @@ export default async function TutorDetailPage({
 
               <Section
                 title="Academic Expertise"
-                eyebrow="Subjects, classes & boards"
+                eyebrow="Subjects by class level"
                 icon={
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M4 19.5V6a2 2 0 012-2h13v15H6a2 2 0 00-2 2.5z" />
@@ -1585,39 +1779,34 @@ export default async function TutorDetailPage({
 
                 <div className="space-y-7">
 
-                  {subjects.length > 0 && (
+                  {subjectGroups.length > 0 && (
                     <div>
 
                       <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
-                        Subjects
+                        What this tutor teaches
                       </p>
 
-                      <div className="flex flex-wrap gap-2.5">
-                        {subjects.map((subject) => (
-                          <Tag
-                            key={subject}
-                            blue
+                      <div className="space-y-3">
+                        {subjectGroups.map((group, index) => (
+                          <div
+                            key={`${group.label}-${index}`}
+                            className="rounded-2xl border border-[#E5E7EB] bg-[#F8FAFC] p-4 sm:p-5"
                           >
-                            {subject}
-                          </Tag>
-                        ))}
-                      </div>
+                            <p className="text-sm font-bold text-[#0D1118] mb-3">
+                              {group.label}
+                            </p>
 
-                    </div>
-                  )}
-
-                  {classes.length > 0 && (
-                    <div>
-
-                      <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
-                        Classes
-                      </p>
-
-                      <div className="flex flex-wrap gap-2.5">
-                        {classes.map((item) => (
-                          <Tag key={item}>
-                            {item}
-                          </Tag>
+                            <div className="flex flex-wrap gap-2.5">
+                              {group.subjects.map((subject) => (
+                                <Tag
+                                  key={`${group.label}-${subject}`}
+                                  blue
+                                >
+                                  {subject}
+                                </Tag>
+                              ))}
+                            </div>
+                          </div>
                         ))}
                       </div>
 
