@@ -144,6 +144,7 @@ type Tutor = {
     boards?: string[] | string;
 
     primaryClasses?: string[] | string;
+    primaryAllSubjects?: boolean | string;
     primarySubjects?: string[] | string;
 
     secondaryClasses?: string[] | string;
@@ -387,157 +388,112 @@ function uniqueArray(values: string[]): string[] {
     });
 }
 
-/* =========================================================
-   CLASS-WISE SUBJECT DISPLAY
-========================================================= */
 
-type SubjectGroup = {
-  label: string;
-  subjects: string[];
-};
+/*
+ * =========================================================
+ * CLASS-WISE SUBJECT DISPLAY
+ *
+ * The tutor registration form stores teaching information
+ * separately for:
+ *
+ * 1. Nursery/Class 1-8
+ * 2. Class 9-10
+ * 3. Class 11-12
+ *
+ * Do NOT use the combined `subjects` / `classes` fields when
+ * these group-specific fields are available. Those combined
+ * fields are useful as a fallback for older tutor records,
+ * but using them first causes the public profile to display
+ * everything as one generalized "Class 5-12" group.
+ * =========================================================
+ */
 
-function normalizeSubject(value: string) {
-  return value
-    .replace(/\s+/g, ' ')
-    .trim()
-    .toLowerCase();
+const CLASS_ORDER = [
+  'Nursery',
+  'LKG',
+  'UKG',
+  'Class 1',
+  'Class 2',
+  'Class 3',
+  'Class 4',
+  'Class 5',
+  'Class 6',
+  'Class 7',
+  'Class 8',
+  'Class 9',
+  'Class 10',
+  'Class 11',
+  'Class 12',
+];
+
+function normalizeBoolean(value: any): boolean {
+  if (value === true) return true;
+
+  if (typeof value === 'string') {
+    return ['true', 'yes', '1'].includes(
+      value.trim().toLowerCase()
+    );
+  }
+
+  return false;
 }
 
-function isAllSubjects(value: string) {
-  const normalized = normalizeSubject(value).replace(/[-_]+/g, ' ');
+function classOrderIndex(value: string): number {
+  const normalized = value.trim().toLowerCase();
 
-  return (
-    normalized === 'all' ||
-    normalized === 'all subject' ||
-    normalized === 'all subjects'
+  return CLASS_ORDER.findIndex(
+    (item) => item.toLowerCase() === normalized
   );
 }
 
-function getClassNumber(value: string): number | null {
-  const text = normalizeSubject(value);
+function formatClassGroup(values: any): string {
+  const selected = uniqueArray(cleanArray(values))
+    .filter((value) => classOrderIndex(value) >= 0)
+    .sort(
+      (a, b) =>
+        classOrderIndex(a) - classOrderIndex(b)
+    );
 
-  const match = text.match(/(?:class\s*)?(\d{1,2})(?:st|nd|rd|th)?/i);
+  if (!selected.length) return '';
 
-  if (!match) {
-    return null;
+  // Exact contiguous ranges are much easier for parents to scan.
+  if (selected.length >= 2) {
+    const indexes = selected.map(classOrderIndex);
+
+    const contiguous = indexes.every(
+      (index, i) =>
+        i === 0 || index === indexes[i - 1] + 1
+    );
+
+    if (contiguous) {
+      return `${selected[0]}–${selected[selected.length - 1]}`;
+    }
   }
 
-  const number = Number(match[1]);
-
-  return number >= 1 && number <= 12 ? number : null;
+  return selected.join(', ');
 }
 
-function hasPreschoolClass(values: string[]) {
-  return values.some((value) =>
-    /^(nursery|pre[- ]?nursery|lkg|ukg|kg|kindergarten)$/i.test(
-      normalizeSubject(value)
-    )
-  );
-}
-
-function formatClassName(number: number) {
-  return `Class ${number}`;
-}
-
-function formatClassGroupLabel(
-  values: string[],
-  fallback: string
-) {
-  const classes = uniqueArray(values);
-  const numbers = classes
-    .map(getClassNumber)
-    .filter((value): value is number => value !== null)
-    .sort((a, b) => a - b);
-
-  const min = numbers[0];
-  const max = numbers[numbers.length - 1];
-
-  if (min === undefined || max === undefined) {
-    return classes.length ? classes.join(' • ') : fallback;
-  }
-
-  if (
-    fallback === 'primary' &&
-    hasPreschoolClass(classes) &&
-    max <= 8
-  ) {
-    return 'Nursery–8th';
-  }
-
-  if (numbers.length === 1) {
-    return formatClassName(min);
-  }
-
-  return `${formatClassName(min)}–${formatClassName(max).replace('Class ', '')}`;
-}
-
-function normalizeGroupSubjects(values: any[]) {
-  const subjects = uniqueArray(
-    values.flatMap((value) => cleanArray(value))
-  );
-
-  if (subjects.some(isAllSubjects)) {
+function getGroupSubjects(
+  subjectsValue: any,
+  allSubjectsValue?: any
+): string[] {
+  if (normalizeBoolean(allSubjectsValue)) {
     return ['All Subjects'];
   }
 
-  return subjects;
+  return uniqueArray(cleanArray(subjectsValue));
 }
 
-function buildSubjectGroups({
-  primaryClasses,
-  primarySubjects,
-  secondaryClasses,
-  secondarySubjects,
-  seniorSecondaryClasses,
-  seniorSecondarySubjects,
-  fallbackClasses,
-  fallbackSubjects,
-}: {
-  primaryClasses: string[];
-  primarySubjects: string[];
-  secondaryClasses: string[];
-  secondarySubjects: string[];
-  seniorSecondaryClasses: string[];
-  seniorSecondarySubjects: string[];
-  fallbackClasses: string[];
-  fallbackSubjects: string[];
-}): SubjectGroup[] {
-  const groups: SubjectGroup[] = [];
-
-  const addGroup = (
-    classesForGroup: string[],
-    subjectsForGroup: string[],
-    fallback: string
-  ) => {
-    const subjects = normalizeGroupSubjects([subjectsForGroup]);
-
-    if (!subjects.length) {
-      return;
-    }
-
-    groups.push({
-      label: formatClassGroupLabel(classesForGroup, fallback),
-      subjects,
-    });
-  };
-
-  addGroup(primaryClasses, primarySubjects, 'primary');
-  addGroup(secondaryClasses, secondarySubjects, 'secondary');
-  addGroup(
-    seniorSecondaryClasses,
-    seniorSecondarySubjects,
-    'seniorSecondary'
+function hasGroupData(group: {
+  classes: any;
+  subjects: any;
+  allSubjects?: any;
+}): boolean {
+  return (
+    cleanArray(group.classes).length > 0 ||
+    cleanArray(group.subjects).length > 0 ||
+    normalizeBoolean(group.allSubjects)
   );
-
-  /*
-   * Backward compatibility for older CRM records that only
-   * contain the combined `classes` + `subjects` fields.
-   */
-  if (groups.length === 0 && fallbackSubjects.length > 0) {
-    addGroup(fallbackClasses, fallbackSubjects, 'Classes');
-  }
-
-  return groups;
 }
 
 function firstText(...values: any[]): string | null {
@@ -792,10 +748,10 @@ export async function generateMetadata({
     'Tutor';
 
   const subjects = firstArray(
-    tutor.subjects,
     tutor.teaching?.primarySubjects,
     tutor.teaching?.secondarySubjects,
-    tutor.teaching?.seniorSecondarySubjects
+    tutor.teaching?.seniorSecondarySubjects,
+    tutor.subjects
   );
 
   const city =
@@ -920,7 +876,59 @@ export default async function TutorDetailPage({
     '';
 
   /*
-   * Subjects
+   * =======================================================
+   * SUBJECTS / CLASSES
+   *
+   * IMPORTANT:
+   * The public profile must preserve the three teaching
+   * levels captured by the registration form instead of
+   * flattening them into one combined list.
+   * =======================================================
+   */
+
+  const primaryClasses = firstArray(
+    tutor.teaching?.primaryClasses
+  );
+
+  const primarySubjects = getGroupSubjects(
+    tutor.teaching?.primarySubjects,
+    tutor.teaching?.primaryAllSubjects
+  );
+
+  const secondaryClasses = firstArray(
+    tutor.teaching?.secondaryClasses
+  );
+
+  const secondarySubjects = getGroupSubjects(
+    tutor.teaching?.secondarySubjects
+  );
+
+  const seniorSecondaryClasses = firstArray(
+    tutor.teaching?.seniorSecondaryClasses
+  );
+
+  const seniorSecondarySubjects = getGroupSubjects(
+    tutor.teaching?.seniorSecondarySubjects
+  );
+
+  const groupedAcademicDataAvailable =
+    hasGroupData({
+      classes: primaryClasses,
+      subjects: primarySubjects,
+      allSubjects: tutor.teaching?.primaryAllSubjects,
+    }) ||
+    hasGroupData({
+      classes: secondaryClasses,
+      subjects: secondarySubjects,
+    }) ||
+    hasGroupData({
+      classes: seniorSecondaryClasses,
+      subjects: seniorSecondarySubjects,
+    });
+
+  /*
+   * Fallback for older CRM records which do not have the
+   * level-specific teaching fields.
    */
   const subjects = firstArray(
     tutor.subjects,
@@ -929,9 +937,6 @@ export default async function TutorDetailPage({
     tutor.teaching?.seniorSecondarySubjects
   );
 
-  /*
-   * Classes
-   */
   const classes = firstArray(
     tutor.classes,
     tutor.teaching?.primaryClasses,
@@ -940,53 +945,43 @@ export default async function TutorDetailPage({
   );
 
   /*
+   * Parent-facing class/subject groups.
+   */
+  const academicGroups = [
+    {
+      key: 'primary',
+      classes: formatClassGroup(primaryClasses),
+      subjects: primarySubjects,
+    },
+    {
+      key: 'secondary',
+      classes: formatClassGroup(secondaryClasses),
+      subjects: secondarySubjects,
+    },
+    {
+      key: 'senior-secondary',
+      classes: formatClassGroup(seniorSecondaryClasses),
+      subjects: seniorSecondarySubjects,
+    },
+  ].filter(
+    (group) =>
+      group.classes &&
+      group.subjects.length > 0
+  );
+
+  /*
+   * If the tutor record is an older record with no grouped
+   * teaching data, retain the old display rather than showing
+   * an empty academic section.
+   */
+
+  /*
    * Boards
    */
   const boards = firstArray(
     tutor.boards,
     tutor.teaching?.boards
   );
-
-  /*
-   * Class-wise subject mapping for the public profile.
-   * This keeps the three teaching bands from the registration
-   * form separate so parents see exactly what the tutor teaches
-   * at each level instead of one confusing flat subject list.
-   */
-  const primaryClasses = firstArray(
-    tutor.teaching?.primaryClasses
-  );
-
-  const primarySubjects = firstArray(
-    tutor.teaching?.primarySubjects
-  );
-
-  const secondaryClasses = firstArray(
-    tutor.teaching?.secondaryClasses
-  );
-
-  const secondarySubjects = firstArray(
-    tutor.teaching?.secondarySubjects
-  );
-
-  const seniorSecondaryClasses = firstArray(
-    tutor.teaching?.seniorSecondaryClasses
-  );
-
-  const seniorSecondarySubjects = firstArray(
-    tutor.teaching?.seniorSecondarySubjects
-  );
-
-  const subjectGroups = buildSubjectGroups({
-    primaryClasses,
-    primarySubjects,
-    secondaryClasses,
-    secondarySubjects,
-    seniorSecondaryClasses,
-    seniorSecondarySubjects,
-    fallbackClasses: classes,
-    fallbackSubjects: subjects,
-  });
 
   /*
    * Location
@@ -1402,10 +1397,21 @@ export default async function TutorDetailPage({
                 </p>
               )}
 
-              {subjects.length > 0 && (
+              {groupedAcademicDataAvailable ? (
                 <p className="text-lg text-[#5F6B7A] mb-6">
-                  {subjects.join(' • ')}
+                  {academicGroups
+                    .map(
+                      (group) =>
+                        `${group.classes}: ${group.subjects.join(', ')}`
+                    )
+                    .join(' • ')}
                 </p>
+              ) : (
+                subjects.length > 0 && (
+                  <p className="text-lg text-[#5F6B7A] mb-6">
+                    {subjects.join(' • ')}
+                  </p>
+                )
               )}
 
               <div className="flex flex-wrap gap-3">
@@ -1540,15 +1546,24 @@ export default async function TutorDetailPage({
                     </div>
                   )}
 
-                  {subjects.length > 0 && (
+                  {(groupedAcademicDataAvailable || subjects.length > 0) && (
                     <div className="flex items-start gap-3">
                       <div className="mt-0.5 w-6 h-6 rounded-full bg-[#EBF4FF] flex items-center justify-center text-[#0A6FF7] flex-shrink-0">
                         <CheckIcon />
                       </div>
 
-                      <p className="text-[#374151] leading-7">
-                        {subjects.join(', ')}
-                      </p>
+                      <div className="text-[#374151] leading-7">
+                        {groupedAcademicDataAvailable
+                          ? academicGroups.map((group) => (
+                              <p key={`highlight-${group.key}`}>
+                                <span className="font-semibold">
+                                  {group.classes}:
+                                </span>{' '}
+                                {group.subjects.join(', ')}
+                              </p>
+                            ))
+                          : subjects.join(', ')}
+                      </div>
                     </div>
                   )}
 
@@ -1771,7 +1786,7 @@ export default async function TutorDetailPage({
                 eyebrow="Subjects by class level"
                 icon={
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M4 19.5V6a2 2 0 012-2h13v15H6a2 2 0 00-2 2.5z" />
+                    <path d="M4 19.5V6a2 2 0 012-2h13v15H6a2 2 0 002 2.5z" />
                     <path d="M19 15H6" />
                   </svg>
                 }
@@ -1779,43 +1794,70 @@ export default async function TutorDetailPage({
 
                 <div className="space-y-7">
 
-                  {subjectGroups.length > 0 && (
-                    <div>
+                  {groupedAcademicDataAvailable ? (
+                    <>
+                      {academicGroups.map((group) => (
+                        <div
+                          key={group.key}
+                          className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl p-5 sm:p-6"
+                        >
 
-                      <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
-                        What this tutor teaches
-                      </p>
+                          <p className="text-base sm:text-lg font-bold text-[#0D1118] mb-4">
+                            {group.classes}
+                          </p>
 
-                      <div className="space-y-3">
-                        {subjectGroups.map((group, index) => (
-                          <div
-                            key={`${group.label}-${index}`}
-                            className="rounded-2xl border border-[#E5E7EB] bg-[#F8FAFC] p-4 sm:p-5"
-                          >
-                            <p className="text-sm font-bold text-[#0D1118] mb-3">
-                              {group.label}
-                            </p>
-
-                            <div className="flex flex-wrap gap-2.5">
-                              {group.subjects.map((subject) => (
-                                <Tag
-                                  key={`${group.label}-${subject}`}
-                                  blue
-                                >
-                                  {subject}
-                                </Tag>
-                              ))}
-                            </div>
+                          <div className="flex flex-wrap gap-2.5">
+                            {group.subjects.map((subject) => (
+                              <Tag
+                                key={`${group.key}-${subject}`}
+                                blue
+                              >
+                                {subject}
+                              </Tag>
+                            ))}
                           </div>
-                        ))}
-                      </div>
 
-                    </div>
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    <>
+                      {subjects.length > 0 && (
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
+                            Subjects
+                          </p>
+
+                          <div className="flex flex-wrap gap-2.5">
+                            {subjects.map((subject) => (
+                              <Tag key={subject} blue>
+                                {subject}
+                              </Tag>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {classes.length > 0 && (
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
+                            Classes
+                          </p>
+
+                          <div className="flex flex-wrap gap-2.5">
+                            {classes.map((item) => (
+                              <Tag key={item}>
+                                {item}
+                              </Tag>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
 
                   {boards.length > 0 && (
                     <div>
-
                       <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
                         Boards
                       </p>
@@ -1827,13 +1869,11 @@ export default async function TutorDetailPage({
                           </Tag>
                         ))}
                       </div>
-
                     </div>
                   )}
 
                   {specialization && (
                     <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl p-5">
-
                       <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-2">
                         Specialisation
                       </p>
@@ -1841,7 +1881,6 @@ export default async function TutorDetailPage({
                       <p className="text-[#374151] leading-7">
                         {specialization}
                       </p>
-
                     </div>
                   )}
 
