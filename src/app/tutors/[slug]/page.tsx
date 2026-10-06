@@ -1,4 +1,6 @@
 
+
+
 import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
@@ -28,9 +30,6 @@ type Tutor = {
 
   subjects?: string[] | string;
   classes?: string[] | string;
-  primaryAllSubjects?: boolean | string;
-  secondaryAllSubjects?: boolean | string;
-  seniorSecondaryAllSubjects?: boolean | string;
   boards?: string[] | string;
 
   mode?: string;
@@ -51,6 +50,7 @@ type Tutor = {
   fieldOfStudy?: string;
   course?: string;
   major?: string;
+  stream?: string;
 
   experienceYears?: number | string;
   experience?: number | string;
@@ -92,6 +92,8 @@ type Tutor = {
    * School / teaching background
    */
   schoolsTaught?: string[] | string;
+  studentsTaughtFrom?: string | string[] | Record<string, any> | Record<string, any>[];
+  schoolName?: string | string[];
   previousInstitutions?: string[] | string;
   institutions?: string[];
   schoolNames?: string[] | string;
@@ -100,6 +102,10 @@ type Tutor = {
   schoolExperience?: string;
   schoolTeachingExperience?: string;
   schoolExperienceYears?: string | number;
+  coachingExperience?: string;
+  coachingTeachingExperience?: string;
+  coachingExperienceYears?: string | number;
+  coachingBackground?: string;
 
   teachingExperience?: string;
   experienceDetails?: string;
@@ -126,8 +132,17 @@ type Tutor = {
     schoolTeachingExperience?: string;
     schoolExperienceYears?: number | string;
 
-    studentsTaughtFrom?: string | string[];
-    studentsTaughtFromSchools?: string | string[];
+    studentsTaughtFrom?: string | string[] | Record<string, any> | Record<string, any>[];
+    schoolName?: string | string[];
+    coachingExperience?: string;
+    coachingTeachingExperience?: string;
+    coachingExperienceYears?: string | number;
+    coachingBackground?: string;
+    studentsTaughtFromSchools?: string | string[] | Record<string, any> | Record<string, any>[];
+    schoolsTaught?: string | string[] | Record<string, any> | Record<string, any>[];
+    schoolNames?: string | string[] | Record<string, any> | Record<string, any>[];
+    previousInstitutions?: string | string[] | Record<string, any> | Record<string, any>[];
+    institutions?: string | string[] | Record<string, any> | Record<string, any>[];
 
     boards?: string[] | string;
 
@@ -137,13 +152,12 @@ type Tutor = {
 
     secondaryClasses?: string[] | string;
     secondarySubjects?: string[] | string;
-    secondaryAllSubjects?: boolean | string;
 
     seniorSecondaryClasses?: string[] | string;
     seniorSecondarySubjects?: string[] | string;
-    seniorSecondaryAllSubjects?: boolean | string;
 
     englishFluency?: string;
+    stream?: string;
   };
 
   education?: {
@@ -391,122 +405,6 @@ function firstText(...values: any[]): string | null {
   return null;
 }
 
-function isTruthyBoolean(value: unknown) {
-  if (typeof value === 'boolean') return value;
-  if (typeof value === 'number') return value === 1;
-
-  if (typeof value === 'string') {
-    const normalized = value.trim().toLowerCase();
-    return ['true', 'yes', '1', 'all', 'all subjects'].includes(normalized);
-  }
-
-  return false;
-}
-
-function classNumber(value: string) {
-  const text = String(value || '').trim().toLowerCase();
-
-  if (/^(nursery|nurs|pre[- ]?nursery|pre[- ]?n)$/i.test(text)) return 0;
-  if (/^(lkg|lower kindergarten)$/i.test(text)) return -2;
-  if (/^(ukg|upper kindergarten)$/i.test(text)) return -1;
-
-  const match = text.match(/(?:class|grade|std\.?|standard)?\s*(\d{1,2})\b/i);
-  if (!match) return null;
-
-  const number = Number(match[1]);
-  return number >= 1 && number <= 12 ? number : null;
-}
-
-function classDisplayLabel(value: string) {
-  const text = String(value || '').trim();
-
-  if (/^nursery$/i.test(text)) return 'Nursery';
-  if (/^(lkg|lower kindergarten)$/i.test(text)) return 'LKG';
-  if (/^(ukg|upper kindergarten)$/i.test(text)) return 'UKG';
-
-  const number = classNumber(text);
-  return number !== null ? `Class ${number}` : text;
-}
-
-function formatTeachingClassRange(values: string[]) {
-  const cleaned = uniqueArray(values);
-  if (cleaned.length === 0) return null;
-
-  const parsed = cleaned
-    .map((value) => ({ original: value, number: classNumber(value) }))
-    .filter((item): item is { original: string; number: number } => item.number !== null)
-    .sort((a, b) => a.number - b.number);
-
-  if (parsed.length !== cleaned.length) {
-    return cleaned.map(classDisplayLabel).join(' • ');
-  }
-
-  if (parsed.length === 1) return classDisplayLabel(parsed[0].original);
-
-  const numbers = [...new Set(parsed.map((item) => item.number))];
-  const isContinuous = numbers.every(
-    (number, index) => index === 0 || number === numbers[index - 1] + 1
-  );
-
-  if (!isContinuous) {
-    return parsed.map((item) => classDisplayLabel(item.original)).join(' • ');
-  }
-
-  const first = numbers[0];
-  const last = numbers[numbers.length - 1];
-
-  if (first < 1) {
-    const firstLabel = first === -2 ? 'LKG' : first === -1 ? 'UKG' : 'Nursery';
-    if (last === 0) return `${firstLabel} – Nursery`;
-    return `${firstLabel} – Class ${last}`;
-  }
-
-  return `Class ${first}–${last}`;
-}
-
-function buildTeachingLevelSummary(
-  key: string,
-  classesValue: string[] | string | undefined,
-  subjectsValue: string[] | string | undefined,
-  allSubjectsValue: boolean | string | undefined
-) {
-  const levelClasses = firstArray(classesValue);
-  const rawSubjects = uniqueArray(firstArray(subjectsValue));
-
-  /*
-   * Different CRM versions may represent "All Subjects" either
-   * as a dedicated boolean OR directly inside the subjects array.
-   * Support both representations so the public profile never loses
-   * the tutor's actual selection.
-   */
-  const containsAllSubjects = rawSubjects.some((subject) =>
-    /^(all subjects|all)$/i.test(subject.trim())
-  );
-
-  const allSubjects =
-    isTruthyBoolean(allSubjectsValue) ||
-    containsAllSubjects;
-
-  const levelSubjects = rawSubjects.filter(
-    (subject) => !/^(all subjects|all)$/i.test(subject.trim())
-  );
-
-  if (
-    levelClasses.length === 0 &&
-    levelSubjects.length === 0 &&
-    !allSubjects
-  ) {
-    return null;
-  }
-
-  return {
-    key,
-    label: formatTeachingClassRange(levelClasses) || key,
-    subjects: levelSubjects,
-    allSubjects,
-  };
-}
-
 function formatExperience(value?: number | string | null) {
   if (
     value === undefined ||
@@ -546,16 +444,27 @@ function formatMode(
     value.toLowerCase().trim()
   );
 
+  // The CRM can store the combined mode as "Both".
+  // Never expose that internal value to parents.
+  const hasBoth =
+    normalized.includes('both') ||
+    normalized.includes('home & online') ||
+    normalized.includes('home and online') ||
+    normalized.includes('home + online') ||
+    normalized.includes('home/online');
+
   const hasHome =
     normalized.includes('home') ||
     normalized.includes('offline') ||
-    normalized.includes('home tuition');
+    normalized.includes('home tuition') ||
+    normalized.includes('home classes');
 
   const hasOnline =
     normalized.includes('online') ||
-    normalized.includes('online tuition');
+    normalized.includes('online tuition') ||
+    normalized.includes('online classes');
 
-  if (hasHome && hasOnline) {
+  if (hasBoth || (hasHome && hasOnline)) {
     return 'Available for Home Tuition & Online Classes';
   }
 
@@ -721,10 +630,10 @@ export async function generateMetadata({
     'Tutor';
 
   const subjects = firstArray(
+    tutor.subjects,
     tutor.teaching?.primarySubjects,
     tutor.teaching?.secondarySubjects,
-    tutor.teaching?.seniorSecondarySubjects,
-    tutor.subjects
+    tutor.teaching?.seniorSecondarySubjects
   );
 
   const city =
@@ -826,6 +735,132 @@ export default async function TutorDetailPage({
   }
 
   /* =======================================================
+     CLASS-WISE SUBJECT DISPLAY
+
+     Keep the existing CRM fields and page structure intact.
+     This only creates a parent-friendly display from the
+     three teaching groups captured by the tutor form.
+  ======================================================= */
+
+  const primaryClasses = firstArray(
+    tutor.teaching?.primaryClasses
+  );
+
+  const primarySubjectsRaw = firstArray(
+    tutor.teaching?.primarySubjects
+  );
+
+  const primaryAllSubjects =
+    tutor.teaching?.primaryAllSubjects === true ||
+    String(tutor.teaching?.primaryAllSubjects ?? '')
+      .trim()
+      .toLowerCase() === 'true' ||
+    primarySubjectsRaw.some(
+      (subject) =>
+        subject.trim().toLowerCase() === 'all subjects'
+    );
+
+  const primarySubjects = primaryAllSubjects
+    ? ['All Subjects']
+    : primarySubjectsRaw.filter(
+        (subject) =>
+          subject.trim().toLowerCase() !== 'all subjects'
+      );
+
+  const secondaryClasses = firstArray(
+    tutor.teaching?.secondaryClasses
+  );
+
+  const secondarySubjects = firstArray(
+    tutor.teaching?.secondarySubjects
+  ).filter(
+    (subject) =>
+      subject.trim().toLowerCase() !== 'all subjects'
+  );
+
+  const seniorSecondaryClasses = firstArray(
+    tutor.teaching?.seniorSecondaryClasses
+  );
+
+  const seniorSecondarySubjects = firstArray(
+    tutor.teaching?.seniorSecondarySubjects
+  ).filter(
+    (subject) =>
+      subject.trim().toLowerCase() !== 'all subjects'
+  );
+
+  /*
+   * Keep the exact classes selected by the tutor, but group
+   * contiguous classes into a compact range for parents.
+   *
+   * Examples:
+   * Class 5,6,7,8  -> Class 5–8
+   * Class 9,10     -> Class 9–10
+   * Class 11,12    -> Class 11–12
+   */
+  const classRank = (value: string) => {
+    const text = value
+      .trim()
+      .toLowerCase()
+      .replace(/^class\s*/i, '');
+
+    if (text === 'nursery') return 0;
+    if (text === 'lkg') return 1;
+    if (text === 'ukg') return 2;
+
+    const number = Number(text);
+    return Number.isNaN(number) ? 999 : number + 2;
+  };
+
+  const formatClassRange = (values: string[]) => {
+    const clean = uniqueArray(values);
+
+    if (!clean.length) return '';
+
+    const sorted = [...clean].sort(
+      (a, b) => classRank(a) - classRank(b)
+    );
+
+    if (sorted.length === 1) {
+      return sorted[0];
+    }
+
+    const ranks = sorted.map(classRank);
+    const contiguous = ranks.every(
+      (rank, index) =>
+        index === 0 || rank === ranks[index - 1] + 1
+    );
+
+    if (contiguous) {
+      return `${sorted[0]}–${sorted[sorted.length - 1]}`;
+    }
+
+    return sorted.join(' • ');
+  };
+
+  const academicSubjectGroups = [
+    {
+      key: 'primary',
+      label: formatClassRange(primaryClasses),
+      subjects: primarySubjects,
+    },
+    {
+      key: 'secondary',
+      label: formatClassRange(secondaryClasses),
+      subjects: secondarySubjects,
+    },
+    {
+      key: 'senior-secondary',
+      label: formatClassRange(seniorSecondaryClasses),
+      subjects: seniorSecondarySubjects,
+    },
+  ].filter(
+    (group) =>
+      group.label &&
+      group.subjects.length > 0
+  );
+
+  /* =======================================================
      NORMALIZED DATA
   ======================================================= */
 
@@ -858,88 +893,6 @@ export default async function TutorDetailPage({
     tutor.teaching?.secondaryClasses,
     tutor.teaching?.seniorSecondaryClasses
   );
-
-  /*
-   * Teaching by class level.
-   * Keep these three groups separate so the public profile never
-   * generalises all subjects into one combined list.
-   */
-  const primaryClasses = firstArray(
-    tutor.teaching?.primaryClasses,
-    (tutor as any).primaryClasses
-  );
-
-  const primarySubjects = uniqueArray(
-    firstArray(
-      tutor.teaching?.primarySubjects,
-      (tutor as any).primarySubjects
-    )
-  );
-
-  const primaryAllSubjects = isTruthyBoolean(
-    tutor.teaching?.primaryAllSubjects ??
-    (tutor as any).primaryAllSubjects
-  );
-
-  const secondaryClasses = firstArray(
-    tutor.teaching?.secondaryClasses,
-    (tutor as any).secondaryClasses
-  );
-
-  const secondarySubjects = uniqueArray(
-    firstArray(
-      tutor.teaching?.secondarySubjects,
-      (tutor as any).secondarySubjects
-    )
-  );
-
-  const secondaryAllSubjects = isTruthyBoolean(
-    tutor.teaching?.secondaryAllSubjects ??
-    (tutor as any).secondaryAllSubjects
-  );
-
-  const seniorSecondaryClasses = firstArray(
-    tutor.teaching?.seniorSecondaryClasses,
-    (tutor as any).seniorSecondaryClasses
-  );
-
-  const seniorSecondarySubjects = uniqueArray(
-    firstArray(
-      tutor.teaching?.seniorSecondarySubjects,
-      (tutor as any).seniorSecondarySubjects
-    )
-  );
-
-  const seniorSecondaryAllSubjects = isTruthyBoolean(
-    tutor.teaching?.seniorSecondaryAllSubjects ??
-    (tutor as any).seniorSecondaryAllSubjects
-  );
-
-  const teachingLevelGroups = [
-    buildTeachingLevelSummary(
-      'Primary',
-      primaryClasses,
-      primarySubjects,
-      primaryAllSubjects
-    ),
-    buildTeachingLevelSummary(
-      'Secondary',
-      secondaryClasses,
-      secondarySubjects,
-      secondaryAllSubjects
-    ),
-    buildTeachingLevelSummary(
-      'Senior Secondary',
-      seniorSecondaryClasses,
-      seniorSecondarySubjects,
-      seniorSecondaryAllSubjects
-    ),
-  ].filter(Boolean) as Array<{
-    key: string;
-    label: string;
-    subjects: string[];
-    allSubjects: boolean;
-  }>;
 
   /*
    * Boards
@@ -1050,7 +1003,9 @@ export default async function TutorDetailPage({
   const qualificationStreams =
     uniqueArray(
       firstArray(
+        tutor.stream,
         tutor.education?.stream,
+        tutor.teaching?.stream,
         tutor.qualificationStream,
         tutor.educationStream,
         tutor.fieldOfStudy,
@@ -1095,33 +1050,76 @@ export default async function TutorDetailPage({
       tutor.teaching?.schoolExperienceYears
     );
 
+  const coachingExperience =
+    firstText(
+      tutor.coachingExperience,
+      tutor.coachingTeachingExperience,
+      tutor.coachingExperienceYears,
+      tutor.coachingBackground,
+      tutor.teaching?.coachingExperience,
+      tutor.teaching?.coachingTeachingExperience,
+      tutor.teaching?.coachingExperienceYears,
+      tutor.teaching?.coachingBackground
+    );
+
   /*
    * =======================================================
-   * STUDENTS TAUGHT FROM / SCHOOL NAMES
+   * SCHOOLS / INSTITUTIONS TAUGHT FROM
    *
-   * The registration form submits:
-   *
-   * teaching.studentsTaughtFrom
-   *
-   * This is the important fix.
+   * Read both direct and nested CRM fields. In particular,
+   * `studentsTaughtFrom` can exist at the top level in the
+   * public tutor response.
    * =======================================================
    */
 
-  const schoolsTaught = firstArray(
-    /*
-     * Direct CRM fields
-     */
+  const schoolSourceValues = [
     tutor.schoolsTaught,
     tutor.schoolNames,
+    tutor.schoolName,
+    tutor.studentsTaughtFrom,
     tutor.studentsTaughtFromSchools,
     tutor.previousInstitutions,
     tutor.institutions,
-
-    /*
-     * Nested CRM fields
-     */
     tutor.teaching?.studentsTaughtFrom,
-    tutor.teaching?.studentsTaughtFromSchools
+    tutor.teaching?.studentsTaughtFromSchools,
+    tutor.teaching?.schoolsTaught,
+    tutor.teaching?.schoolNames,
+    tutor.teaching?.previousInstitutions,
+    tutor.teaching?.institutions,
+  ];
+
+  const schoolsTaught = uniqueArray(
+    schoolSourceValues.flatMap((value: any) => {
+      if (value === undefined || value === null || value === '') return [];
+
+      const items = Array.isArray(value) ? value.flat(Infinity) : [value];
+
+      return items.flatMap((item: any) => {
+        if (item === undefined || item === null || item === '') return [];
+
+        if (typeof item === 'object') {
+          return cleanArray([
+            item.schoolName,
+            item.school,
+            item.name,
+            item.institution,
+            item.institutionName,
+            item.school_name,
+            item.school_name_value,
+            item.title,
+            item.label,
+            item.value,
+          ]);
+        }
+
+        const text = String(item).trim();
+
+        // Do not expose a boolean/Yes/No as a school name.
+        if (/^(yes|no|true|false)$/i.test(text)) return [];
+
+        return cleanArray(text);
+      });
+    })
   );
 
   /*
@@ -1186,46 +1184,27 @@ export default async function TutorDetailPage({
     );
 
   /*
-   * Verification
-   */
-  const isVerified =
-    tutor.isVerified === true ||
-    tutor.verified === true ||
-    String(tutor.verificationStatus || '')
-      .toLowerCase() === 'verified' ||
-    String(tutor.status || '')
-      .toLowerCase() === 'verified';
-
-  /*
-   * Rating
-   *
-   * Kept only if the CRM actually has a rating.
-   * No placements.
-   */
-  const ratingValue =
-    tutor.rating ??
-    tutor.averageRating;
-
-  const rating =
-    ratingValue !== undefined &&
-    ratingValue !== null &&
-    ratingValue !== ''
-      ? Number(ratingValue)
-      : null;
-
-  /*
    * Achievements
    */
   const achievements =
     cleanArray(tutor.achievements);
 
   /*
-   * Certifications
+   * Additional Qualifications
+   *
+   * The CRM may store these under different fields depending
+   * on when/how the tutor profile was created. Consolidate all
+   * supported fields into ONE clean, de-duplicated list so the
+   * profile never shows the same qualification twice.
    */
-  const certifications =
-    uniqueArray(
-      cleanArray(tutor.certifications)
-    );
+  const additionalQualifications =
+    uniqueArray([
+      ...cleanArray(tutor.additionalQualification),
+      ...cleanArray(tutor.additionalQualifications),
+      ...cleanArray(tutor.education?.additionalQualification),
+      ...cleanArray(tutor.education?.additionalQualifications),
+      ...cleanArray(tutor.certifications),
+    ]);
 
   /* =======================================================
      RETURN
@@ -1280,7 +1259,7 @@ export default async function TutorDetailPage({
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-8 sm:py-10">
 
-          <div className="grid grid-cols-1 lg:grid-cols-[180px_1fr_auto] gap-7 lg:gap-10 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-[180px_1fr] gap-7 lg:gap-10 items-start">
 
             {/* PHOTO */}
 
@@ -1311,12 +1290,21 @@ export default async function TutorDetailPage({
                   {name}
                 </h1>
 
-                {isVerified && (
-                  <span className="inline-flex items-center gap-1.5 bg-[#E6F7F5] text-[#0C8F81] px-3 py-1.5 rounded-full text-xs font-bold">
-                    <CheckIcon />
-                    Verified Tutor
-                  </span>
-                )}
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#ECFDF5] text-[#059669] text-xs sm:text-sm font-bold border border-[#A7F3D0]">
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                  Verified
+                </span>
 
               </div>
 
@@ -1397,49 +1385,6 @@ export default async function TutorDetailPage({
 
                   </div>
                 )}
-
-              </div>
-
-            </div>
-
-            {/* QUICK STATS */}
-
-            <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
-
-              {rating !== null &&
-                !Number.isNaN(rating) && (
-                  <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl px-5 py-4 min-w-[145px]">
-
-                    <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-1">
-                      Rating
-                    </p>
-
-                    <div className="flex items-center gap-2">
-
-                      <span className="text-2xl font-bold text-[#0D1118]">
-                        {rating.toFixed(1)}
-                      </span>
-
-                      <span className="text-[#F59E0B]">
-                        ★
-                      </span>
-
-                    </div>
-
-                  </div>
-                )}
-
-              <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl px-5 py-4 min-w-[145px]">
-
-                <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-1">
-                  Profile
-                </p>
-
-                <span className="text-base font-bold text-[#0D1118]">
-                  {isVerified
-                    ? 'Verified'
-                    : 'TutorWave Tutor'}
-                </span>
 
               </div>
 
@@ -1722,44 +1667,82 @@ export default async function TutorDetailPage({
 
               <Section
                 title="Academic Expertise"
-                eyebrow="Subjects by class level"
+                eyebrow="Subjects, classes & boards"
               >
 
-                <div className="space-y-5">
+                <div className="space-y-6">
 
-                  {teachingLevelGroups.length > 0 ? (
-                    teachingLevelGroups.map((group) => (
-                      <div
-                        key={group.key}
-                        className="rounded-2xl border border-[#E5E7EB] bg-[#F8FAFC] p-5 sm:p-6"
-                      >
-                        <h3 className="text-base sm:text-lg font-bold text-[#0D1118] mb-3">
-                          {group.label}
-                        </h3>
+                  {academicSubjectGroups.length > 0 ? (
+                    <div className="space-y-5">
 
-                        {group.allSubjects ? (
-                          <p className="text-base font-semibold text-[#0A6FF7]">
-                            All Subjects
+                      {academicSubjectGroups.map((group) => (
+                        <div key={group.key}>
+
+                          <p className="text-base font-bold text-[#0D1118] mb-2">
+                            {group.label}
                           </p>
-                        ) : group.subjects.length > 0 ? (
-                          <p className="text-base font-semibold text-[#374151] leading-7">
-                            {group.subjects.join(' · ')}
-                          </p>
-                        ) : (
-                          <p className="text-sm text-[#6B7280]">
-                            Subjects not specified
-                          </p>
-                        )}
-                      </div>
-                    ))
+
+                          <div className="flex flex-wrap gap-2.5">
+                            {group.subjects.map((subject) => (
+                              <Tag
+                                key={`${group.key}-${subject}`}
+                                blue
+                              >
+                                {subject}
+                              </Tag>
+                            ))}
+                          </div>
+
+                        </div>
+                      ))}
+
+                    </div>
                   ) : (
-                    <p className="text-[#6B7280] leading-7">
-                      Teaching subjects and class levels have not been specified yet.
-                    </p>
+                    <>
+                      {subjects.length > 0 && (
+                        <div>
+
+                          <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
+                            Subjects
+                          </p>
+
+                          <div className="flex flex-wrap gap-2.5">
+                            {subjects.map((subject) => (
+                              <Tag
+                                key={subject}
+                                blue
+                              >
+                                {subject}
+                              </Tag>
+                            ))}
+                          </div>
+
+                        </div>
+                      )}
+
+                      {classes.length > 0 && (
+                        <div>
+
+                          <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
+                            Classes
+                          </p>
+
+                          <div className="flex flex-wrap gap-2.5">
+                            {classes.map((item) => (
+                              <Tag key={item}>
+                                {item}
+                              </Tag>
+                            ))}
+                          </div>
+
+                        </div>
+                      )}
+                    </>
                   )}
 
                   {boards.length > 0 && (
                     <div>
+
                       <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
                         Boards
                       </p>
@@ -1771,11 +1754,13 @@ export default async function TutorDetailPage({
                           </Tag>
                         ))}
                       </div>
+
                     </div>
                   )}
 
                   {specialization && (
                     <div>
+
                       <p className="text-xs font-bold uppercase tracking-wider text-[#6B7280] mb-3">
                         Specialisation
                       </p>
@@ -1783,6 +1768,7 @@ export default async function TutorDetailPage({
                       <p className="text-[#374151] leading-7">
                         {specialization}
                       </p>
+
                     </div>
                   )}
 
@@ -1802,7 +1788,7 @@ export default async function TutorDetailPage({
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
 
-                    {qualification && (
+                    {(qualification || qualificationStreams.length > 0) && (
                       <div className="border border-[#E5E7EB] rounded-2xl p-5">
 
                         <div className="w-11 h-11 rounded-xl bg-[#EBF4FF] flex items-center justify-center text-[#0A6FF7] mb-4">
@@ -1821,24 +1807,37 @@ export default async function TutorDetailPage({
 
                         </div>
 
-                        <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-2">
-                          Highest Qualification
-                        </p>
-
                         {qualification && (
-                          <p className="font-semibold text-[#0D1118]">
-                            {qualification}
-                          </p>
+                          <>
+                            <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-2">
+                              Highest Qualification
+                            </p>
+
+                            <p className="font-semibold text-[#0D1118]">
+                              {qualification}
+                            </p>
+                          </>
                         )}
 
                         {qualificationStreams.length > 0 && (
-                          <ul className="mt-2 space-y-1.5 text-sm font-medium text-[#4B5563] leading-6 list-disc pl-5">
-                            {qualificationStreams.map((stream, index) => (
-                              <li key={`${stream}-${index}`}>
-                                {stream}
-                              </li>
-                            ))}
-                          </ul>
+                          <div className={`${qualification ? 'mt-5 pt-5 border-t border-[#E5E7EB]' : ''}`}>
+
+                            <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280] mb-2">
+                              Stream
+                            </p>
+
+                            <div className="space-y-1">
+                              {qualificationStreams.map((stream, index) => (
+                                <p
+                                  key={`${stream}-${index}`}
+                                  className="font-semibold text-[#0D1118]"
+                                >
+                                  {stream}
+                                </p>
+                              ))}
+                            </div>
+
+                          </div>
                         )}
 
                       </div>
@@ -1940,35 +1939,82 @@ export default async function TutorDetailPage({
                   SCHOOL TEACHING EXPERIENCE
               ================================================= */}
 
-              {schoolExperience && (
+              {(schoolExperience || coachingExperience) && (
                 <Section
-                  title="School Teaching Experience"
+                  title={
+                    schoolExperience && coachingExperience
+                      ? "School & Coaching Teaching Experience"
+                      : schoolExperience
+                        ? "School Teaching Experience"
+                        : "Coaching Teaching Experience"
+                  }
                   eyebrow="School / coaching background"
                 >
 
-                  <div className="flex items-start gap-5">
+                  <div className="space-y-5">
 
-                    <div className="w-12 h-12 rounded-2xl bg-[#EBF4FF] flex items-center justify-center flex-shrink-0 text-[#0A6FF7]">
+                    {schoolExperience && (
+                      <div className="flex items-start gap-5">
 
-                      <svg
-                        width="22"
-                        height="22"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                      >
-                        <path d="M3 21h18" />
-                        <path d="M5 21V9l7-5 7 5v12" />
-                        <path d="M9 21v-6h6v6" />
-                        <path d="M8 11h2M14 11h2" />
-                      </svg>
+                        <div className="w-12 h-12 rounded-2xl bg-[#EBF4FF] flex items-center justify-center flex-shrink-0 text-[#0A6FF7]">
 
-                    </div>
+                          <svg
+                            width="22"
+                            height="22"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                          >
+                            <path d="M3 21h18" />
+                            <path d="M5 21V9l7-5 7 5v12" />
+                            <path d="M9 21v-6h6v6" />
+                            <path d="M8 11h2M14 11h2" />
+                          </svg>
 
-                    <p className="text-[#374151] leading-8">
-                      {schoolExperience}
-                    </p>
+                        </div>
+
+                        <div>
+                          <p className="text-[#374151] leading-8">
+                            {schoolExperience}
+                          </p>
+                        </div>
+
+                      </div>
+                    )}
+
+                    {coachingExperience && (
+                      <div className="flex items-start gap-5">
+
+                        <div className="w-12 h-12 rounded-2xl bg-[#EBF4FF] flex items-center justify-center flex-shrink-0 text-[#0A6FF7]">
+
+                          <svg
+                            width="22"
+                            height="22"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                          >
+                            <path d="M4 19h16" />
+                            <path d="M6 17V7h12v10" />
+                            <path d="M9 7V5h6v2" />
+                            <path d="M8 11h8M8 14h5" />
+                          </svg>
+
+                        </div>
+
+                        <div>
+                          <p className="text-sm font-semibold uppercase tracking-wide text-[#6B7280] mb-1">
+                            Coaching / Institute Teaching Experience
+                          </p>
+                          <p className="text-[#374151] leading-8">
+                            {coachingExperience}
+                          </p>
+                        </div>
+
+                      </div>
+                    )}
 
                   </div>
 
@@ -1981,8 +2027,8 @@ export default async function TutorDetailPage({
 
               {schoolsTaught.length > 0 && (
                 <Section
-                  title="Students Taught From"
-                  eyebrow="School exposure"
+                  title="Students Taught From Schools"
+                  eyebrow="School / institution exposure"
                 >
 
                   <p className="text-[#6B7280] mb-5 leading-7">
@@ -2003,21 +2049,6 @@ export default async function TutorDetailPage({
 
                 </Section>
               )}
-
-              {/* =================================================
-                  ABOUT
-              ================================================= */}
-
-              <Section
-                title={`About ${name}`}
-                eyebrow="Tutor introduction"
-              >
-
-                <p className="text-[#4B5563] leading-8 text-[15px] sm:text-base">
-                  {bio}
-                </p>
-
-              </Section>
 
               {/* =================================================
                   TEACHING APPROACH
@@ -2242,23 +2273,23 @@ export default async function TutorDetailPage({
               )}
 
               {/* =================================================
-                  CERTIFICATIONS
+                  ADDITIONAL QUALIFICATIONS
               ================================================= */}
 
-              {certifications.length > 0 && (
+              {additionalQualifications.length > 0 && (
                 <Section
-                  title="Certifications"
-                  eyebrow="Additional qualifications"
+                  title="Additional Qualifications"
+                  eyebrow="Certifications & other qualifications"
                 >
 
                   <div className="flex flex-wrap gap-2.5">
 
-                    {certifications.map(
-                      (certificate, index) => (
+                    {additionalQualifications.map(
+                      (qualificationItem, index) => (
                         <Tag
-                          key={`${certificate}-${index}`}
+                          key={`${qualificationItem}-${index}`}
                         >
-                          {certificate}
+                          {qualificationItem}
                         </Tag>
                       )
                     )}
@@ -2410,87 +2441,6 @@ export default async function TutorDetailPage({
                 </div>
 
                 {/* =================================================
-                    TUTORWAVE VERIFICATION
-                ================================================= */}
-
-                <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6">
-
-                  <div className="flex items-center gap-3 mb-5">
-
-                    <div className="w-10 h-10 rounded-xl bg-[#E6F7F5] flex items-center justify-center text-[#0C8F81]">
-                      <CheckIcon />
-                    </div>
-
-                    <div>
-
-                      <p className="text-xs uppercase tracking-wider font-bold text-[#6B7280]">
-                        TutorWave
-                      </p>
-
-                      <h3 className="font-bold text-[#0D1118]">
-                        Verification
-                      </h3>
-
-                    </div>
-
-                  </div>
-
-                  <div className="space-y-3">
-
-                    <div className="flex items-start gap-3">
-                      <span className="text-[#0C8F81] mt-0.5">
-                        <CheckIcon />
-                      </span>
-
-                      <p className="text-sm text-[#374151] leading-6">
-                        Profile reviewed by TutorWave
-                      </p>
-                    </div>
-
-                    {qualification && (
-                      <div className="flex items-start gap-3">
-                        <span className="text-[#0C8F81] mt-0.5">
-                          <CheckIcon />
-                        </span>
-
-                        <p className="text-sm text-[#374151] leading-6">
-                          Qualification information provided
-                        </p>
-                      </div>
-                    )}
-
-                    {photo && (
-                      <div className="flex items-start gap-3">
-                        <span className="text-[#0C8F81] mt-0.5">
-                          <CheckIcon />
-                        </span>
-
-                        <p className="text-sm text-[#374151] leading-6">
-                          Profile photo provided
-                        </p>
-                      </div>
-                    )}
-
-                    {isVerified && (
-                      <div className="pt-3 mt-3 border-t border-[#E5E7EB]">
-
-                        <p className="text-sm font-bold text-[#0C8F81]">
-                          ✓ Verified Tutor Profile
-                        </p>
-
-                        <p className="text-xs text-[#6B7280] mt-1 leading-5">
-                          This profile has been reviewed and
-                          verified by the TutorWave team.
-                        </p>
-
-                      </div>
-                    )}
-
-                  </div>
-
-                </div>
-
-                {/* =================================================
                     BROWSE OTHER TUTORS
                 ================================================= */}
 
@@ -2517,83 +2467,6 @@ export default async function TutorDetailPage({
                     Browse Tutors
                     <span>→</span>
                   </Link>
-
-                </div>
-
-                {/* =================================================
-                    HOW IT WORKS
-                ================================================= */}
-
-                <div className="bg-[#0D1118] rounded-3xl p-6 text-white">
-
-                  <p className="text-xs uppercase tracking-[0.12em] font-bold text-[#5DB8FF] mb-2">
-                    TutorWave
-                  </p>
-
-                  <h3 className="text-xl font-bold mb-5">
-                    How It Works
-                  </h3>
-
-                  <div className="space-y-5">
-
-                    <div className="flex items-start gap-4">
-
-                      <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold flex-shrink-0">
-                        1
-                      </div>
-
-                      <div>
-                        <p className="font-semibold">
-                          Share your requirement
-                        </p>
-
-                        <p className="text-sm text-white/60 mt-1 leading-5">
-                          Tell us your child's class,
-                          subject and location.
-                        </p>
-                      </div>
-
-                    </div>
-
-                    <div className="flex items-start gap-4">
-
-                      <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold flex-shrink-0">
-                        2
-                      </div>
-
-                      <div>
-                        <p className="font-semibold">
-                          We confirm suitability
-                        </p>
-
-                        <p className="text-sm text-white/60 mt-1 leading-5">
-                          Our team reviews your requirement
-                          and tutor preferences.
-                        </p>
-                      </div>
-
-                    </div>
-
-                    <div className="flex items-start gap-4">
-
-                      <div className="w-8 h-8 rounded-full bg-[#0A6FF7] flex items-center justify-center text-sm font-bold flex-shrink-0">
-                        3
-                      </div>
-
-                      <div>
-                        <p className="font-semibold">
-                          We help you proceed
-                        </p>
-
-                        <p className="text-sm text-white/60 mt-1 leading-5">
-                          We help you take the next step
-                          with the selected tutor.
-                        </p>
-                      </div>
-
-                    </div>
-
-                  </div>
 
                 </div>
 
